@@ -4,6 +4,12 @@
 
 -include("erlang_fast_context.hrl").
 
+-import(erlang_fast_decode_types,
+   [
+      decode_pmap/1
+      ,decode_uint/2
+   ]).
+
 decode_segment(Data, Context) ->
    F = fun() ->
       {NewContext1, Rest} = decode_pmap(Data, Context),
