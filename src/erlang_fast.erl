@@ -8,7 +8,6 @@
       ,decode/2
 ]).
 
-
 create_context(TemplatesFileName) ->
    Templates = erlang_fast_xml:parse(TemplatesFileName),
    #fast_context{templates = Templates}.

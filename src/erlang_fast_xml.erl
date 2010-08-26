@@ -7,7 +7,7 @@
 -include_lib("xmerl/include/xmerl.hrl").
 -include("erlang_fast_template.hrl").
 
--import(erlang_fast_xml_tools, [get_attribute/2, get_attribute/3]).
+-import(erlang_fast_xml_utils, [get_attribute/2, get_attribute/3]).
 
 parse(XmlFile) ->
    {RootElem, []} = xmerl_scan:file(XmlFile),
@@ -15,7 +15,7 @@ parse(XmlFile) ->
       ns = get_attribute(ns, RootElem),
       templateNs = get_attribute(templateNs, RootElem),
       dictionary = string_to_dic(string_to_dic(get_attribute(dictionary, RootElem))),
-      template = parse_template(RootElem)}.
+      tlist = parse_template(RootElem)}.
 
 parse_template([]) ->
    [];
@@ -27,7 +27,7 @@ parse_template([XmlElem = #xmlElement{content = Childs} | Rest]) ->
    [#template{
          name = get_attribute(name, XmlElem),
          templateNs = get_attribute(templateNs, XmlElem),
-         id = get_attribute(id, XmlElem),
+         id = string_to_id(get_attribute(id, XmlElem)),
          ns = get_attribute(ns, XmlElem),
          dictionary = get_attribute(dictionary, XmlElem),
          typeRef = get_attribute(typeRef, XmlElem),
@@ -224,6 +224,6 @@ string_to_type(_Type, Str) ->
 -include_lib("eunit/include/eunit.hrl").
 
 parse_test() ->
-   {templates, _, _, _, Templates} = parse("doc/templates.xml").
+   {templates, _, _, _, _Templates} = parse("doc/templates.xml").
 
 -endif.

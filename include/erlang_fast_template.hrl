@@ -1,4 +1,4 @@
--record(templates, {ns = undef, templateNs = undef, dictionary = undef, template}).
+-record(templates, {ns = undef, templateNs = undef, dictionary = undef, tlist}).
 -record(template, {name, templateNs = undef, id= undef, ns = undef, dictionary = undef, typeRef = undef, instructions}).
 -record(typeRef, {name, ns = undef}).
 -record(templateRef, {name, templateNs = undef, ns = undef}).
