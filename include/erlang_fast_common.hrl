@@ -1,0 +1,1 @@
+-define(FieldId(Rec, Field), string:str(record_info(fields, Rec), [Field]) + 1).
