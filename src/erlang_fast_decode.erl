@@ -2,6 +2,7 @@
 
 -export([decode_segment/2]).
 
+-include("erlang_fast_template.hrl").
 -include("erlang_fast_context.hrl").
 
 -import(erlang_fast_decode_types,
@@ -23,27 +24,37 @@ decode_segment(Data, Context) ->
          Err
    end.
 
-decode_template_id(Data, Context) ->
+decode_template_id(Data, Context = #fast_context{logger = L}) ->
    Res = erlang_fast_decode_types:decode_uint(Data, false),
    case Res of
       not_enough_data ->
          throw({not_enough_data, Context});
       {Tid, Err, Rest} ->
          Template = erlang_fast_utils:find_template(Tid, Context),
-         {Context#fast_context{template = {Template, Err}}, Rest}
+         L(Err, Res),
+         {Context#fast_context{template = Template}, Rest}
    end.
 
-decode_pmap(Data, Context) ->
+decode_pmap(Data, Context = #fast_context{logger = L}) ->
    Res = erlang_fast_decode_types:decode_pmap(Data),
    case Res of
       not_enough_data ->
          throw({not_enough_data, Context});
       {Value, Err, Rest} ->
-         {Context#fast_context{pmap = {Value, Err}}, Rest}
+         L(Err, Res),
+         {Context#fast_context{pmap = Value}, Rest}
    end.
 
-decode_message(_Data, _Context) ->
-   ok.
+decode_template(_, #fast_context{template = #template{instructions = []}}) ->
+   [];
+decode_template(Data, #fast_context{template = #template{instructions = [Instr | Rest]}}) ->
+   {DecodedField, Context, Rest} = decode_instruction(
+      Data,
+      Instr,
+      #fast_context{template = #template{instructions = Rest}}),
+   {[DecodedField | decode_template(Rest, Context)], Data, Context}.
+
+decode_instruction(_, _, _) -> ok.
 
 %% ====================================================================================================================
 %% unit testing
@@ -53,7 +64,10 @@ decode_message(_Data, _Context) ->
 
 decode_segment_test() ->
    Templates = erlang_fast_xml:parse("doc/templates.xml"),
-   Context = #fast_context{templates = Templates},
+   F = fun([], _) -> ok;
+          (Err, Val) -> io:format("~p: ~p~n", [Err, Val])
+       end,
+   Context = #fast_context{templates = Templates, logger = F},
    Data = <<16#c0, 16#d3, 16#01, 16#39, 16#14, 16#c2, 16#23, 16#5a, 16#2f, 16#5f, 16#3d, 16#31, 16#42, 16#b3>>,
    ?assertEqual(null, decode_segment(Data, Context)).
 

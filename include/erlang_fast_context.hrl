@@ -1,1 +1,1 @@
--record(fast_context, {msg = undef, pmap = undef, template = undef, data = undef, templates}).
+-record(fast_context, {msg = undef, pmap = undef, data = undef, logger, template = undef, templates}).
