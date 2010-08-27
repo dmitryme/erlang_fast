@@ -14,7 +14,7 @@ init() ->
 new_dict(Name, Dicts) ->
    case lists:keyfind(Name, 1, Dicts) of
       false ->
-         [{Name, dict:new()}, Dicts];
+         [{Name, dict:new()} | Dicts];
       _ ->
          Dicts
    end.
