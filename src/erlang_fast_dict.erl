@@ -16,7 +16,7 @@ new_dict(Name, Dicts) ->
       false ->
          [{Name, dict:new()}, Dicts];
       _ ->
-         already_exists
+         Dicts
    end.
 
 get_value(DictName, Key, Dicts) ->
