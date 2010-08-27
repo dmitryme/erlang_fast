@@ -14,7 +14,7 @@ parse(XmlFile) ->
    #templates{
       ns = get_attribute(ns, RootElem),
       templateNs = get_attribute(templateNs, RootElem),
-      dictionary = string_to_dic(string_to_dic(get_attribute(dictionary, RootElem))),
+      dictionary = string_to_dic(get_attribute(dictionary, RootElem, global)),
       tlist = parse_template(RootElem)}.
 
 parse_template([]) ->
@@ -29,15 +29,29 @@ parse_template([XmlElem = #xmlElement{content = Childs} | Rest]) ->
          templateNs = get_attribute(templateNs, XmlElem),
          id = string_to_id(get_attribute(id, XmlElem)),
          ns = get_attribute(ns, XmlElem),
-         dictionary = get_attribute(dictionary, XmlElem),
-         typeRef = get_attribute(typeRef, XmlElem),
+         dictionary = string_to_dic(get_attribute(dictionary, XmlElem, global)),
+         typeRef = parse_typeRef(Childs),
          instructions = parse_instruction(Childs)} | parse_template(Rest)];
 
 parse_template([#xmlText{} | Rest]) ->
       parse_template(Rest).
 
+parse_typeRef([]) ->
+   undef;
+parse_typeRef([I = #xmlElement{name = typeRef} | _Tail]) ->
+   get_attribute(name, I);
+parse_typeRef([_|Tail]) ->
+   parse_typeRef(Tail).
+
 parse_instruction([]) ->
    [];
+
+parse_instruction([I = #xmlElement{name = templateRef} | Tail]) ->
+  [#templateRef{
+        name = get_attribute(name, I),
+        templateNs = get_attribute(templateNs, I),
+        ns = get_attribute(ns, I)} | parse_instruction(Tail)];
+
 parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail]) ->
    [#string{
          name = get_attribute(name, I),
@@ -109,8 +123,8 @@ parse_instruction([I = #xmlElement{name = sequence, content = Childs} | Tail]) -
          ns = get_attribute(ns, I),
          id = string_to_id(get_attribute(id, I)),
          presence = string_to_presence(get_attribute(presence, I, "mandatory")),
-         dictionary = get_attribute(dictionary, I),
-         typeRef = get_attribute(typeRef, I),
+         dictionary = string_to_dic(get_attribute(dictionary, I, global)),
+         typeRef = parse_typeRef(Childs),
          instructions = parse_instruction(Childs)} | parse_instruction(Tail)];
 
 parse_instruction([I = #xmlElement{name = group, content = Childs} | Tail]) ->
@@ -119,8 +133,8 @@ parse_instruction([I = #xmlElement{name = group, content = Childs} | Tail]) ->
          ns = get_attribute(ns, I),
          id = string_to_id(get_attribute(id, I)),
          presence = string_to_presence(get_attribute(presence, I, "mandatory")),
-         dictionary = get_attribute(dictionary, I),
-         typeRef = get_attribute(typeRef, I),
+         dictionary = string_to_dic(get_attribute(dictionary, I, global)),
+         typeRef = parse_typeRef(Childs),
          instructions = parse_instruction(Childs)} | parse_instruction(Tail)];
 
 parse_instruction([#xmlText{} | Tail]) ->
@@ -154,25 +168,25 @@ parse_op(Type, Childs) ->
          #default{value = string_to_type(Type, get_attribute(value, XmlElem))};
       XmlElem = #xmlElement{name = copy} ->
          #copy{
-            dictionary = get_attribute(dictionary, XmlElem),
+            dictionary = string_to_dic(get_attribute(dictionary, XmlElem, global)),
             key = get_attribute(key, XmlElem),
             ns = get_attribute(ns, XmlElem),
             value = string_to_type(Type, get_attribute(value, XmlElem))};
       XmlElem = #xmlElement{name = increment} ->
          #increment{
-            dictionary = get_attribute(dictionary, XmlElem),
+            dictionary = string_to_dic(get_attribute(dictionary, XmlElem, global)),
             key = get_attribute(key, XmlElem),
             ns = get_attribute(ns, XmlElem),
             value = string_to_type(Type, get_attribute(value, XmlElem))};
       XmlElem = #xmlElement{name = delta} ->
          #delta{
-            dictionary = get_attribute(dictionary, XmlElem),
+            dictionary = string_to_dic(get_attribute(dictionary, XmlElem, global)),
             key = get_attribute(key, XmlElem),
             ns = get_attribute(ns, XmlElem),
             value = string_to_type(Type, get_attribute(value, XmlElem))};
       XmlElem = #xmlElement{name = tail} ->
          #tail{
-            dictionary = get_attribute(dictionary, XmlElem),
+            dictionary = string_to_dic(get_attribute(dictionary, XmlElem, global)),
             key = get_attribute(key, XmlElem),
             ns = get_attribute(ns, XmlElem),
             value = string_to_type(Type, get_attribute(value, XmlElem))}

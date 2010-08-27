@@ -15,8 +15,7 @@ decode_segment(Data, Context) ->
    F = fun() ->
       {NewContext, Rest} = decode_pmap(Data, Context),
       {NewContext1, Rest1} = decode_template_id(Rest, NewContext),
-      decode_message(Rest1, NewContext1),
-      {NewContext1, Rest1}
+      decode_template(Rest1, NewContext1)
    end,
    try F()
    catch
