@@ -4,13 +4,13 @@
 
 -export
 ([
-      create_context/1
+      create_context/2
       ,decode/2
 ]).
 
-create_context(TemplatesFileName) ->
-   Templates = erlang_fast_xml:parse(TemplatesFileName),
-   #fast_context{templates = Templates}.
+create_context(TemplatesFileName, Logger) ->
+   {Dicts, Templates} = erlang_fast_xml:parse(TemplatesFileName),
+   #fast_context{dicts = Dicts, templates = Templates, logger = Logger}.
 
-decode(Data, Context) ->
+decode(_Data, _Context) ->
    ok.
