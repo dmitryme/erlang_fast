@@ -18,11 +18,12 @@ decode_segment(Data, Context) ->
       {Context2, Rest2} = decode_template_id(Rest1, Context1),
       decode_template(Rest2, Context2)
    end,
-   try F()
-   catch
-     _:Err ->
-        Err
-   end.
+   F().
+   %try F()
+   %catch
+   %  _:Err ->
+   %     Err
+   %end.
 
 decode_template_id(Data, Context = #fast_context{dicts = Dicts, pmap = <<0:1, PMapRest/bitstring>>, logger = L}) -> %
    Tid = erlang_fast_dict:get_value(global, ?common_template_id_key, Dicts),
@@ -70,49 +71,63 @@ decode_template(Data, Context = #fast_context{template = Template = #template{in
    {DecodedFields, Context2, Rest1} = decode_template(Rest, Context1),
   {[DecodedField | DecodedFields], Context2, Rest1}.
 
-% ascii string decoding
-decode_instruction(Data, {string, FieldName, _, _Id, _, ascii, _, #constant{value = InitialValue}}, Context) ->
-   {{FieldName, InitialValue}, Context, Data};
+is_nullable(optional) -> true;
+is_nullable(mandatory) -> false.
 
-decode_instruction(Data, {string, FieldName, _, _Id, optional, ascii, _, #default{value = InitialValue}},
+% ascii string decoding
+decode_instruction(Data, {string, FieldName, _, _, Presence, ascii, _, {constant, InitialValue}},
+   Context = #fast_context{pmap = <<PresenceBit:1, PMapRest/bitstring>>})
+   when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
+      case Presence of
+         mandatory ->
+            {{FieldName, InitialValue}, Context, Data};
+         optional ->
+            {{FieldName, InitialValue}, Context#fast_context{pmap = PMapRest}, Data}
+      end;
+
+   decode_instruction(Data, {string, FieldName, _, _, optional, ascii, _, {constant, _}},
+   Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>}) ->
+   {{FieldName, undef}, Context#fast_context{pmap = PMapRest}, Data};
+
+decode_instruction(Data, {string, FieldName, _, _, optional, ascii, _, #default{value = InitialValue}},
       Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>}) ->
    {{FieldName, InitialValue}, Context#fast_context{pmap = PMapRest}, Data};
 
-decode_instruction(Data, {string, FieldName, _, _Id, Presence, ascii, _, #default{value = _InitialValue}},
+decode_instruction(Data, {string, FieldName, _, _, Presence, ascii, _, #default{value = _InitialValue}},
      Context = #fast_context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>})
-  when Presence == mandatory or (Presence == optional andalso PresenceBit == 1) ->
-  Res = erlang_fast_decode_types:decode_string(Data),
-  case Res of
-     not_enough_data ->
-        throw({not_enough_data, Context});
-     {Value, Err, DataRest} ->
-        L(Err, Value),
-        case Presence of
-           mandatory ->
-              {{FieldName, Value}, Context, DataRest};
-           optional ->
-              {{FieldName, Value}, Context#fast_context{pmap = PMapRest}, DataRest}
-        end
-  end;
+  when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
+     Res = erlang_fast_decode_types:decode_string(Data, is_nullable(Presence)),
+     case Res of
+        not_enough_data ->
+           throw({not_enough_data, Context});
+        {Value, Err, DataRest} ->
+           L(Err, Value),
+           case Presence of
+              mandatory ->
+                 {{FieldName, Value}, Context, DataRest};
+              optional ->
+                 {{FieldName, Value}, Context#fast_context{pmap = PMapRest}, DataRest}
+           end
+     end;
 
 decode_instruction(Data, {string, FieldName, _, _, Presence, ascii, _, #copy{dictionary = Dict, key = Key}},
   Context = #fast_context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>, dicts = Dicts})
-  when Presence == mandatory or (Presence == optional andalso PresenceBit == 1)->
-  Res = erlang_fast_decode_types:decode_string(Data),
-  case Res of
-     not_enough_data ->
-        throw({not_enough_data, Context});
-     {Value, Err, DataRest} ->
-        L(Err, Value),
-        case Presence of
-           mandatory ->
-              Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-              {{FieldName, Value}, Context#fast_context{dicts = Dicts1}, DataRest};
-           optional ->
-              Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-              {{FieldName, Value}, Context#fast_context{dicts = Dicts1, pmap = PMapRest}, DataRest}
-         end
-  end;
+  when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1)->
+     Res = erlang_fast_decode_types:decode_string(Data, is_nullable(Presence)),
+     case Res of
+        not_enough_data ->
+           throw({not_enough_data, Context});
+        {Value, Err, DataRest} ->
+           L(Err, Value),
+           case Presence of
+              mandatory ->
+                 Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
+                 {{FieldName, Value}, Context#fast_context{dicts = Dicts1}, DataRest};
+              optional ->
+                 Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
+                 {{FieldName, Value}, Context#fast_context{dicts = Dicts1, pmap = PMapRest}, DataRest}
+           end
+     end;
 
 decode_instruction(Data, {string, FieldName, _, _, optional, ascii, _, #copy{dictionary = Dict, key = Key, value = InitialValue}},
   Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>, dicts = Dicts}) ->
@@ -129,8 +144,14 @@ decode_instruction(Data, {string, FieldName, _, _, optional, ascii, _, #copy{dic
         {{FieldName, Value}, Context#fast_context{pmap = PMapRest}, Data}
   end;
 
-decode_instruction(Data, {string, FieldName, _, _, _, ascii, _, _}, Context) ->
-  {{FieldName, "<delta>"}, Context, Data}.
+decode_instruction(Data, {string, FieldName, _, _, _, ascii, _, #delta{}}, Context) ->
+  {{FieldName, "<delta>"}, Context, Data};
+
+decode_instruction(Data, {string, FieldName, _, _, _, ascii, _, undef}, Context) ->
+  {{FieldName, "<no op>"}, Context, Data};
+
+decode_instruction(Data, Instr, Context) ->
+   {Instr, Context, Data}.
 
 %% ====================================================================================================================
 %% unit testing

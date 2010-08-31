@@ -6,6 +6,7 @@
       decode_int/2
       ,decode_uint/2
       ,decode_string/2
+      ,decode_string_delta/2
       ,decode_vector/2
       ,decode_scaled/2
       ,decode_pmap/1
@@ -60,6 +61,19 @@ decode_string(Data, _Nullable) ->
          {<<Remainder>>, ['ERR R9'], Rest};
       _ ->
          Result
+   end.
+
+decode_string_delta(Data, Nullable) ->
+   case decode_int(Data, Nullable) of
+      not_enough_data ->
+         not_enough_data;
+      {Len, Err, Rest} ->
+         case decode_string(Rest, Nullable) of
+            not_enough_data ->
+               not_enough_data;
+            {String, Err1, Rest2} ->
+               {{Len, String}, Err ++ Err1, Rest2}
+         end
    end.
 
 decode_vector(Data, Nullable) ->
@@ -195,57 +209,57 @@ decode_pmap_aux(<<1:1, Data:7/bitstring, Rest/binary>>, Acc) ->
 -ifdef(EUNIT).
 -include_lib("eunit/include/eunit.hrl").
 
-%decode_int_test() ->
-%   ?assertEqual({942755, [], <<>>}, decode_int(<<16#39, 16#45, 16#a4>>, true)),
-%   ?assertEqual({942755, [], <<>>}, decode_int(<<16#39, 16#45, 16#a3>>, false)),
-%   ?assertEqual({-942755, [], <<>>}, decode_int(<<16#46, 16#3a, 16#dd>>, true)),
-%   ?assertEqual({-7942755, [], <<>>}, decode_int(<<16#7c, 16#1b, 16#1b, 16#9d>>, false)),
-%   ?assertEqual({8193, [], <<>>}, decode_int(<<16#00, 16#40, 16#81>>, false)),
-%   ?assertEqual({-8193, [], <<>>}, decode_int(<<16#7f, 16#3f, 16#ff>>, false)),
-%   ?assertEqual({null, [], <<>>}, decode_int(<<16#80>>, true)),
-%   ?assertEqual({11, [], <<>>}, decode_int(<<2#10001011>>, false)),
-%   ?assertEqual({-2, [], <<>>}, decode_int(<<16#fe>>, true)),
-%   ?assertEqual(not_enough_data, decode_int(<<2#0001>>, true)),
-%   ?assertEqual(not_enough_data, decode_int(<<2#00011111>>, true)),
-%   ?assertEqual(not_enough_data, decode_int(<<>>, true)).
+decode_int_test() ->
+  ?assertEqual({942755, [], <<>>}, decode_int(<<16#39, 16#45, 16#a4>>, true)),
+  ?assertEqual({942755, [], <<>>}, decode_int(<<16#39, 16#45, 16#a3>>, false)),
+  ?assertEqual({-942755, [], <<>>}, decode_int(<<16#46, 16#3a, 16#dd>>, true)),
+  ?assertEqual({-7942755, [], <<>>}, decode_int(<<16#7c, 16#1b, 16#1b, 16#9d>>, false)),
+  ?assertEqual({8193, [], <<>>}, decode_int(<<16#00, 16#40, 16#81>>, false)),
+  ?assertEqual({-8193, [], <<>>}, decode_int(<<16#7f, 16#3f, 16#ff>>, false)),
+  ?assertEqual({null, [], <<>>}, decode_int(<<16#80>>, true)),
+  ?assertEqual({11, [], <<>>}, decode_int(<<2#10001011>>, false)),
+  ?assertEqual({-2, [], <<>>}, decode_int(<<16#fe>>, true)),
+  ?assertEqual(not_enough_data, decode_int(<<2#0001>>, true)),
+  ?assertEqual(not_enough_data, decode_int(<<2#00011111>>, true)),
+  ?assertEqual(not_enough_data, decode_int(<<>>, true)).
 
-%decode_uint_test() ->
-%   ?assertEqual({null, [], <<>>}, decode_uint(<<16#80>>, true)),
-%   ?assertEqual({0, [], <<>>}, decode_uint(<<16#81>>, true)),
-%   ?assertEqual({1, [], <<>>}, decode_uint(<<16#82>>, true)),
-%   ?assertEqual({0, [], <<>>}, decode_uint(<<16#80>>, false)),
-%   ?assertEqual({1, [], <<>>}, decode_uint(<<16#81>>, false)),
-%   ?assertEqual({942755, [], <<>>}, decode_uint(<<16#39, 16#45, 16#a3>>, false)),
-%   ?assertEqual(not_enough_data, decode_uint(<<2#0001>>, true)),
-%   ?assertEqual(not_enough_data, decode_uint(<<2#00011111>>, true)),
-%   ?assertEqual(not_enough_data, decode_uint(<<>>, true)).
+decode_uint_test() ->
+  ?assertEqual({null, [], <<>>}, decode_uint(<<16#80>>, true)),
+  ?assertEqual({0, [], <<>>}, decode_uint(<<16#81>>, true)),
+  ?assertEqual({1, [], <<>>}, decode_uint(<<16#82>>, true)),
+  ?assertEqual({0, [], <<>>}, decode_uint(<<16#80>>, false)),
+  ?assertEqual({1, [], <<>>}, decode_uint(<<16#81>>, false)),
+  ?assertEqual({942755, [], <<>>}, decode_uint(<<16#39, 16#45, 16#a3>>, false)),
+  ?assertEqual(not_enough_data, decode_uint(<<2#0001>>, true)),
+  ?assertEqual(not_enough_data, decode_uint(<<2#00011111>>, true)),
+  ?assertEqual(not_enough_data, decode_uint(<<>>, true)).
 
-%decode_string_test() ->
-%   ?assertEqual({<<"ABC">>, <<>>}, decode_string(<<16#41, 16#42, 16#c3>>, true)),
-%   ?assertEqual({null, <<>>}, decode_string(<<16#80>>, true)),
-%   ?assertEqual({<<>>, <<>>}, decode_string(<<16#00, 16#80>>, true)),
-%   ?assertEqual({<<"ABC">>, <<>>}, decode_string(<<16#41, 16#42, 16#c3>>, false)),
-%   ?assertEqual({<<>>, <<>>}, decode_string(<<16#80>>, false)),
-%   ?assertEqual(not_enough_data, decode_string(<<>>, false)),
-%   ?assertEqual(not_enough_data, decode_string(<<16#41, 16#42, 16#43>>, false)).
+decode_string_test() ->
+  ?assertEqual({<<"ABC">>, <<>>}, decode_string(<<16#41, 16#42, 16#c3>>, true)),
+  ?assertEqual({null, <<>>}, decode_string(<<16#80>>, true)),
+  ?assertEqual({<<>>, <<>>}, decode_string(<<16#00, 16#80>>, true)),
+  ?assertEqual({<<"ABC">>, <<>>}, decode_string(<<16#41, 16#42, 16#c3>>, false)),
+  ?assertEqual({<<>>, <<>>}, decode_string(<<16#80>>, false)),
+  ?assertEqual(not_enough_data, decode_string(<<>>, false)),
+  ?assertEqual(not_enough_data, decode_string(<<16#41, 16#42, 16#43>>, false)).
 
-%decode_vector_test() ->
-%   ?assertEqual({null, [], <<>>}, decode_vector(<<16#80>>, true)),
-%   ?assertEqual({<<16#41, 16#42, 16#43>>, [], <<>>}, decode_vector(<<16#84, 16#41, 16#42, 16#43>>, true)),
-%   ?assertEqual({<<>>, [], <<>>}, decode_vector(<<16#81>>, true)),
-%   ?assertEqual({<<>>, [], <<>>}, decode_vector(<<16#80>>, false)),
-%   ?assertEqual({<<16#41, 16#42, 16#43>>, [], <<>>}, decode_vector(<<16#83, 16#41, 16#42, 16#43>>, false)),
-%   ?assertEqual(not_enough_data, decode_vector(<<16#83, 16#41, 16#42>>, false)),
-%   ?assertEqual(not_enough_data, decode_vector(<<16#83>>, false)),
-%   ?assertEqual(not_enough_data, decode_vector(<<>>, false)).
+decode_vector_test() ->
+  ?assertEqual({null, [], <<>>}, decode_vector(<<16#80>>, true)),
+  ?assertEqual({<<16#41, 16#42, 16#43>>, [], <<>>}, decode_vector(<<16#84, 16#41, 16#42, 16#43>>, true)),
+  ?assertEqual({<<>>, [], <<>>}, decode_vector(<<16#81>>, true)),
+  ?assertEqual({<<>>, [], <<>>}, decode_vector(<<16#80>>, false)),
+  ?assertEqual({<<16#41, 16#42, 16#43>>, [], <<>>}, decode_vector(<<16#83, 16#41, 16#42, 16#43>>, false)),
+  ?assertEqual(not_enough_data, decode_vector(<<16#83, 16#41, 16#42>>, false)),
+  ?assertEqual(not_enough_data, decode_vector(<<16#83>>, false)),
+  ?assertEqual(not_enough_data, decode_vector(<<>>, false)).
 
-%decode_decimal_test() ->
-%   ?assertEqual({{942755, 2}, [], <<>>}, decode_scaled(<<16#82, 16#39, 16#45, 16#a3>>, false)),
-%   ?assertEqual({{9427550, 1}, [], <<>>}, decode_scaled(<<16#81, 16#04, 16#3f, 16#34, 16#de>>, false)),
-%   ?assertEqual({{942754,2}, [], <<>>}, decode_scaled(<<16#83, 16#39, 16#45, 16#a3>>, true)),
-%   ?assertEqual({{942755,-2}, [], <<>>}, decode_scaled(<<16#fe, 16#39, 16#45, 16#a3>>, false)),
-%   ?assertEqual({{-942755,-2}, [], <<>>}, decode_scaled(<<16#fe, 16#46, 16#3a, 16#dd>>, true)),
-%   ?assertEqual({{-8193,-3}, [], <<>>}, decode_scaled(<<16#fd, 16#7f, 16#3f, 16#ff>>, true)).
+decode_decimal_test() ->
+  ?assertEqual({{942755, 2}, [], <<>>}, decode_scaled(<<16#82, 16#39, 16#45, 16#a3>>, false)),
+  ?assertEqual({{9427550, 1}, [], <<>>}, decode_scaled(<<16#81, 16#04, 16#3f, 16#34, 16#de>>, false)),
+  ?assertEqual({{942754,2}, [], <<>>}, decode_scaled(<<16#83, 16#39, 16#45, 16#a3>>, true)),
+  ?assertEqual({{942755,-2}, [], <<>>}, decode_scaled(<<16#fe, 16#39, 16#45, 16#a3>>, false)),
+  ?assertEqual({{-942755,-2}, [], <<>>}, decode_scaled(<<16#fe, 16#46, 16#3a, 16#dd>>, true)),
+  ?assertEqual({{-8193,-3}, [], <<>>}, decode_scaled(<<16#fd, 16#7f, 16#3f, 16#ff>>, true)).
 
 decode_pmap_test() ->
    ?assertEqual({<<36:7>>, [], <<>>}, decode_pmap(<<16#a4>>)),

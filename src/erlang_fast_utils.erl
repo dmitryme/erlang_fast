@@ -13,3 +13,21 @@ find_template(Tid, Context = #fast_context{templates = Templates}) ->
       Template ->
          Template
    end.
+
+%% ====================================================================================================================
+%% unit testing
+%% ====================================================================================================================
+-ifdef(EUNIT).
+-include_lib("eunit/include/eunit.hrl").
+
+create_fake_context() ->
+   F = fun([], _) -> ok;
+          (Err, Val) -> io:format("~p: ~p~n", [Err, Val])
+       end,
+   erlang_fast:create_context("doc/templates.xml", F).
+
+find_template_test() ->
+   Context = create_fake_context(),
+   ?assertMatch({template, "MDIncRefresh_83", _, 83, _, "83", _, _}, find_template(83, Context)).
+
+-endif.
