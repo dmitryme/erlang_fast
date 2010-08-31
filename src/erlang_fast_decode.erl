@@ -64,93 +64,21 @@ decode_template(Data, Context = #fast_context{template = #template{instructions 
   {[], Context, Data};
 
 decode_template(Data, Context = #fast_context{template = Template = #template{instructions = [Instr | Tail]}}) ->
-  {DecodedField, Context1, Rest} = decode_instruction(
-     Data,
-     Instr,
-     Context#fast_context{template = Template#template{instructions = Tail}}),
+   {DecodedField, Context1, Rest} = decode_instruction(
+      Data,
+      Instr,
+      Context#fast_context{template = Template#template{instructions = Tail}}),
    {DecodedFields, Context2, Rest1} = decode_template(Rest, Context1),
-  {[DecodedField | DecodedFields], Context2, Rest1}.
+   case DecodedField of
+      {_FieldName, absent} ->
+         {DecodedFields, Context2, Rest1};
+      DecodedField ->
+         {[DecodedField | DecodedFields], Context2, Rest1}
+   end.
 
-is_nullable(optional) -> true;
-is_nullable(mandatory) -> false.
-
-% ascii string decoding
-decode_instruction(Data, {string, FieldName, _, _, Presence, ascii, _, {constant, InitialValue}},
-   Context = #fast_context{pmap = <<PresenceBit:1, PMapRest/bitstring>>})
-   when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
-      case Presence of
-         mandatory ->
-            {{FieldName, InitialValue}, Context, Data};
-         optional ->
-            {{FieldName, InitialValue}, Context#fast_context{pmap = PMapRest}, Data}
-      end;
-
-   decode_instruction(Data, {string, FieldName, _, _, optional, ascii, _, {constant, _}},
-   Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>}) ->
-   {{FieldName, undef}, Context#fast_context{pmap = PMapRest}, Data};
-
-decode_instruction(Data, {string, FieldName, _, _, optional, ascii, _, #default{value = InitialValue}},
-      Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>}) ->
-   {{FieldName, InitialValue}, Context#fast_context{pmap = PMapRest}, Data};
-
-decode_instruction(Data, {string, FieldName, _, _, Presence, ascii, _, #default{value = _InitialValue}},
-     Context = #fast_context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>})
-  when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
-     Res = erlang_fast_decode_types:decode_string(Data, is_nullable(Presence)),
-     case Res of
-        not_enough_data ->
-           throw({not_enough_data, Context});
-        {Value, Err, DataRest} ->
-           L(Err, Value),
-           case Presence of
-              mandatory ->
-                 {{FieldName, Value}, Context, DataRest};
-              optional ->
-                 {{FieldName, Value}, Context#fast_context{pmap = PMapRest}, DataRest}
-           end
-     end;
-
-decode_instruction(Data, {string, FieldName, _, _, Presence, ascii, _, #copy{dictionary = Dict, key = Key}},
-  Context = #fast_context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>, dicts = Dicts})
-  when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1)->
-     Res = erlang_fast_decode_types:decode_string(Data, is_nullable(Presence)),
-     case Res of
-        not_enough_data ->
-           throw({not_enough_data, Context});
-        {Value, Err, DataRest} ->
-           L(Err, Value),
-           case Presence of
-              mandatory ->
-                 Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-                 {{FieldName, Value}, Context#fast_context{dicts = Dicts1}, DataRest};
-              optional ->
-                 Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-                 {{FieldName, Value}, Context#fast_context{dicts = Dicts1, pmap = PMapRest}, DataRest}
-           end
-     end;
-
-decode_instruction(Data, {string, FieldName, _, _, optional, ascii, _, #copy{dictionary = Dict, key = Key, value = InitialValue}},
-  Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>, dicts = Dicts}) ->
-  case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
-     empty ->
-        {FieldName, empty, Context};
-     undef when InitialValue == undef -> % it becomes empty
-        Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
-        {FieldName, empty, Context#fast_context{dicts = Dicts1}, Data};
-     undef ->
-        Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
-        {FieldName, InitialValue, Context#fast_context{dicts = Dicts1}, Data};
-     Value ->
-        {{FieldName, Value}, Context#fast_context{pmap = PMapRest}, Data}
-  end;
-
-decode_instruction(Data, {string, FieldName, _, _, _, ascii, _, #delta{}}, Context) ->
-  {{FieldName, "<delta>"}, Context, Data};
-
-decode_instruction(Data, {string, FieldName, _, _, _, ascii, _, undef}, Context) ->
-  {{FieldName, "<no op>"}, Context, Data};
-
-decode_instruction(Data, Instr, Context) ->
+decode_instruction(Data, Instr, Context) when is_record(Instr, string) ->
+   erlang_fast_decode_string:decode_instruction(Data, Instr, Context);
+decode_instruction(Data, Instr, Context)  ->
    {Instr, Context, Data}.
 
 %% ====================================================================================================================

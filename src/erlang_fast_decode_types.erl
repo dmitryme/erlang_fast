@@ -67,6 +67,8 @@ decode_string_delta(Data, Nullable) ->
    case decode_int(Data, Nullable) of
       not_enough_data ->
          not_enough_data;
+      {null, Err, Rest} ->
+         {null, Err, Rest};
       {Len, Err, Rest} ->
          case decode_string(Rest, Nullable) of
             not_enough_data ->
