@@ -12,10 +12,10 @@
 -include("include/erlang_fast_template.hrl").
 
 find_template(Tid, Context = #fast_context{templates = Templates}) ->
-   case lists:keyfind(Tid, ?FieldId(template, id), Templates#templates.tlist) of
-      false ->
+   case gb_trees:lookup(Tid, Templates#templates.tlist) of
+      none ->
          throw({'ERR D9', Tid, Context});
-      Template ->
+      {value, Template} ->
          Template
    end.
 

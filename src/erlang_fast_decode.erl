@@ -12,11 +12,14 @@
       ,decode_uint/2
    ]).
 
+-compile([export_all]).
+
 decode_segment(Data, Context) ->
    F = fun() ->
-      {Context1, Rest1} = decode_pmap(Data, Context),
-      {Context2, Rest2} = decode_template_id(Rest1, Context1),
-      decode_template(Rest2, Context2)
+      {T1, {Context1, Rest1}} = timer:tc(erlang_fast_decode, decode_pmap, [Data, Context]),
+      {T2, {Context2, Rest2}} = timer:tc(erlang_fast_decode, decode_template_id, [Rest1, Context1]),
+      {T3, Res} = timer:tc(erlang_fast_decode, decode_template, [Rest2, Context2]),
+      {[T1, T2, T3], Res}
    end,
    F().
    %try F()
@@ -96,7 +99,7 @@ create_fake_context() ->
 decode_segment_test() ->
    Context = create_fake_context(),
    Data = <<16#c0, 16#d3, 16#01, 16#39, 16#14, 16#c2, 16#23, 16#5a, 16#2f, 16#5f, 16#3d, 16#31, 16#42, 16#b3>>,
-   {Msg, #fast_context{pmap = Pmap}, _D} = decode_segment(Data, Context),
-   ?debugFmt("~p ~p~n", [Pmap, Msg]).
+   {PTime, {TT, {Msg, #fast_context{pmap = _Pmap}, _D}}} = timer:tc(erlang_fast_decode, decode_segment, [Data, Context]),
+   ?debugFmt("~p ~p ~p~n", [PTime, TT, Msg]).
 
 -endif.

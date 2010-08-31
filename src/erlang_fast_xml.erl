@@ -14,35 +14,36 @@ parse(XmlFile) ->
    Dicts = erlang_fast_dict:init(),
    DictName = string_to_dic(get_attribute(dictionary, RootElem, global)),
    Dicts1 = erlang_fast_dict:new_dict(DictName, Dicts),
-   {Dicts2, TList} = parse_template(RootElem, Dicts1, DictName),
+   {Dicts2, TList} = parse_template(RootElem, Dicts1, DictName, gb_trees:empty()),
    {Dicts2, #templates{
          ns = get_attribute(ns, RootElem),
          templateNs = get_attribute(templateNs, RootElem),
          dictionary = DictName,
          tlist = TList}}.
 
-parse_template([], Dicts, _DefDict) ->
-   {Dicts, []};
+parse_template([], Dicts, _DefDict, Templates) ->
+   {Dicts, Templates};
 
-parse_template(#xmlElement{name = templates, content = Childs}, Dicts, DefDict) ->
-   parse_template(Childs, Dicts, DefDict);
+parse_template(#xmlElement{name = templates, content = Childs}, Dicts, DefDict, Templates) ->
+   parse_template(Childs, Dicts, DefDict, Templates);
 
-parse_template([XmlElem = #xmlElement{content = Childs} | Rest], Dicts, DefDict) ->
+parse_template([XmlElem = #xmlElement{content = Childs} | Rest], Dicts, DefDict, Templates) ->
    DictName = string_to_dic(get_attribute(dictionary, XmlElem, DefDict)),
    Dicts1 = erlang_fast_dict:new_dict(DictName, Dicts),
    {Dicts2, Instructions} = parse_instruction(Childs, Dicts1, DictName),
-   {Dicts3, Templates} = parse_template(Rest, Dicts2, DefDict),
-   {Dicts3, [#template{
-            name = get_attribute(name, XmlElem),
-            templateNs = get_attribute(templateNs, XmlElem),
-            id = string_to_id(get_attribute(id, XmlElem)),
-            ns = get_attribute(ns, XmlElem),
-            dictionary = DictName,
-            typeRef = parse_typeRef(Childs),
-            instructions = Instructions} | Templates]};
+   Template = #template{
+                  name = get_attribute(name, XmlElem),
+                  templateNs = get_attribute(templateNs, XmlElem),
+                  id = string_to_id(get_attribute(id, XmlElem)),
+                  ns = get_attribute(ns, XmlElem),
+                  dictionary = DictName,
+                  typeRef = parse_typeRef(Childs),
+                  instructions = Instructions},
+   Templates2 = gb_trees:insert(Template#template.id, Template, Templates),
+   parse_template(Rest, Dicts2, DefDict, Templates2);
 
-parse_template([#xmlText{} | Rest], Dicts, DefDict) ->
-   parse_template(Rest, Dicts, DefDict).
+parse_template([#xmlText{} | Rest], Dicts, DefDict, Templates) ->
+   parse_template(Rest, Dicts, DefDict, Templates).
 
 parse_typeRef([]) ->
    undef;
