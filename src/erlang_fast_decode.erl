@@ -81,6 +81,8 @@ decode_template(Data, Context = #fast_context{template = Template = #template{in
 
 decode_instruction(Data, Instr, Context) when is_record(Instr, string) ->
    erlang_fast_decode_string:decode_instruction(Data, Instr, Context);
+decode_instruction(Data, Instr, Context) when is_record(Instr, uInt32) ->
+   erlang_fast_decode_uint:decode_instruction(Data, Instr, Context);
 decode_instruction(Data, Instr, Context)  ->
    {Instr, Context, Data}.
 
