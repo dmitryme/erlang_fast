@@ -81,8 +81,9 @@ decode_template(Data, Context = #fast_context{template = Template = #template{in
 
 decode_instruction(Data, Instr, Context) when is_record(Instr, string) ->
    erlang_fast_decode_string:decode_instruction(Data, Instr, Context);
-decode_instruction(Data, Instr, Context) when is_record(Instr, uInt32) ->
-   erlang_fast_decode_uint:decode_instruction(Data, Instr, Context);
+decode_instruction(Data, Instr, Context)
+  when is_record(Instr, uInt32) or is_record(Instr, int32) or is_record(Instr, uInt64) or is_record(Instr, int64) ->
+  erlang_fast_decode_number:decode_instruction(Data, Instr, Context);
 decode_instruction(Data, Instr, Context)  ->
    {Instr, Context, Data}.
 
@@ -100,7 +101,11 @@ create_fake_context() ->
 
 decode_segment_test() ->
    Context = create_fake_context(),
-   Data = <<16#c0, 16#d3, 16#01, 16#39, 16#14, 16#c2, 16#23, 16#5a, 16#2f, 16#5f, 16#3d, 16#31, 16#42, 16#b3>>,
+   Data = <<16#c0, 16#d3, 16#01, 16#39, 16#14, 16#c2, 16#23, 16#5a, 16#2f, 16#5f, 16#3d, 16#31, 16#42, 16#b3,
+            16#09, 16#4a, 16#6c, 16#e9, 16#83, 16#ae, 16#82, 16#1c, 16#4e, 16#0e, 16#80, 16#01, 16#50, 16#da,
+            16#02, 16#34, 16#19, 16#80, 16#06, 16#47, 16#a1, 16#01, 16#bd, 16#9e, 16#81, 16#82, 16#79, 16#41,
+            16#91, 16#b9, 16#84, 16#b0, 16#81, 16#b1, 16#06, 16#3f, 16#a1, 16#7e, 16#d2, 16#f0, 16#80, 16#01,
+            16#39, 16#14, 16#c3, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31, 16#42, 16#b4, 16#09, 16#4a, 16#6c>>,
    {PTime, {TT, {Msg, #fast_context{pmap = _Pmap}, _D}}} = timer:tc(erlang_fast_decode, decode_segment, [Data, Context]),
    ?debugFmt("~p ~p ~p~n", [PTime, TT, Msg]).
 

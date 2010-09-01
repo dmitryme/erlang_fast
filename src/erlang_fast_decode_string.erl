@@ -83,13 +83,13 @@ decode_instruction(Data, {string, FieldName, _, _, optional, ascii, _, #copy{dic
   Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>, dicts = Dicts}) ->
   case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
      empty ->
-        {FieldName, empty, Context};
+        {{FieldName, empty}, Context};
      undef when InitialValue == undef -> % it becomes empty
         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
-        {FieldName, empty, Context#fast_context{dicts = Dicts1}, Data};
+        {{FieldName, empty}, Context#fast_context{dicts = Dicts1}, Data};
      undef ->
         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
-        {FieldName, InitialValue, Context#fast_context{dicts = Dicts1}, Data};
+        {{FieldName, InitialValue}, Context#fast_context{dicts = Dicts1}, Data};
      Value ->
         {{FieldName, Value}, Context#fast_context{pmap = PMapRest}, Data}
   end;

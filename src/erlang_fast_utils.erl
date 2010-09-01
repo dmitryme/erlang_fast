@@ -5,6 +5,7 @@
       find_template/2
       ,is_nullable/1
       ,apply_delta/3
+      ,increment_value/3
    ]).
 
 -include("include/erlang_fast_common.hrl").
@@ -30,6 +31,17 @@ apply_delta(PrevVal, Len, StrDelta) when is_list(PrevVal) andalso Len > 0 ->
 
 apply_delta(PrevVal, Len, StrDelta) when is_list(PrevVal) andalso Len =< 0 ->
   string:join([StrDelta, string:right(PrevVal, length(PrevVal) + Len)], []).
+
+increment_value(int32, Value, Inc) when Value + Inc >= 2147483647 ->
+   -2147483648 + Inc;
+increment_value(int64, Value, Inc) when Value + Inc >= 9223372036854775807 ->
+   -9223372036854775808 + Inc;
+increment_value(uInt32, Value, Inc) when Value + Inc >= 4294967295 ->
+   Inc;
+increment_value(uInt64, Value, Inc) when Value + Inc >= 18446744073709551615 ->
+   Inc;
+increment_value(uInt64, Value, Inc) ->
+   Value + Inc.
 
 %% ====================================================================================================================
 %% unit testing
