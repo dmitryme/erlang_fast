@@ -267,8 +267,28 @@ string_to_id(Str) ->
 string_to_type(_Type, undef) ->
    undef;
 string_to_type(Type, Str)
-when (Type =:= int32) or (Type =:= 'Int64') or (Type =:= uInt32) or (Type =:= uInt64) or (Type =:= length) or (Type =:= decimal)->
+when (Type =:= int32) or (Type =:= 'Int64') or (Type =:= uInt32) or (Type =:= uInt64) or (Type =:= length) ->
    erlang:list_to_integer(Str);
+string_to_type(decimal, Str = [$. | _]) ->
+   string_to_type(decimal, [$0 | Str]);
+string_to_type(decimal, Str) when erlang:tl(Str) == "." ->
+   string_to_type(decimal, Str ++ [$0]);
+string_to_type(decimal, Str) ->
+   Res = case string:chr(Str, $.) of
+      0 ->
+         string:to_integer(Str);
+      _ ->
+         string:to_float(Str)
+   end,
+   case Res of
+      {error, Reason} ->
+         throw({Reason, Str});
+      {Value, _} ->
+         Value
+   end;
+string_to_type(byteVector, Str) ->
+   Bytes = string:tokens(Str, " "),
+   lists:foldl(fun(Byte, Acc) -> Int = erlang:list_to_integer(Byte, 16), <<Acc/binary, Int/integer>> end, <<>>, Bytes);
 string_to_type(_Type, Str) ->
    Str.
 
@@ -281,5 +301,13 @@ string_to_type(_Type, Str) ->
 
 parse_test() ->
    {_Dicts, {templates, _, _, _, _Templates}} = parse("doc/templates.xml").
+
+string_to_type_test() ->
+   ?assertEqual(100123, string_to_type(int32, "100123")),
+   ?assertEqual(1.0, string_to_type(decimal, "1.")),
+   ?assertEqual(0.0, string_to_type(decimal, ".0")),
+   ?assertEqual(10, string_to_type(decimal, "10")),
+   ?assertEqual(0.1, string_to_type(decimal, ".1")),
+   ?assertEqual(<<160, 239, 18, 186>>, string_to_type(byteVector, "a0 ef 12 ba")).
 
 -endif.
