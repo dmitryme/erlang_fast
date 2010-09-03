@@ -11,31 +11,16 @@
 -import(erlang_fast_utils,
    [
       is_nullable/1
-      ,apply_delta/4
+      ,apply_delta/3
    ]).
 
 -import(erlang_fast_decode_types,
    [
       decode_string/2
       ,decode_string_delta/2
-      ,decode_vector/2
-      ,decode_vector_delta/2
    ]).
 
-decode_string(string, Data, Nullable) ->
-   decode_string(Data, Nullable);
-decode_string(Type, Data, Nullable) when (Type == unicode) or (Type == byteVector) ->
-   decode_vector(Data, Nullable).
-
-decode_string_delta(string, Data, Nullable) ->
-   decode_string_delta(Data, Nullable);
-decode_string_delta(Type, Data, Nullable) when (Type == unicode) or (Type == byteVector) ->
-   decode_vector_delta(Data, Nullable).
-
-initial_base_value(string) -> "";
-initial_base_value(Type) when (Type == unicode) or (Type == byteVector) -> <<>>.
-
-decode_instruction(Data, {_, FieldName, _, _, Presence, {constant, InitialValue}},
+decode_instruction(Data, {string, FieldName, _, _, Presence, ascii, _, {constant, InitialValue}},
    Context = #fast_context{pmap = <<PresenceBit:1, PMapRest/bitstring>>})
    when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
       case Presence of
@@ -45,11 +30,11 @@ decode_instruction(Data, {_, FieldName, _, _, Presence, {constant, InitialValue}
             {{FieldName, InitialValue}, Context#fast_context{pmap = PMapRest}, Data}
       end;
 
-decode_instruction(Data, {_, FieldName, _, _, optional, {constant, _}},
+decode_instruction(Data, {string, FieldName, _, _, optional, ascii, _, {constant, _}},
    Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>}) ->
    {{FieldName, absent}, Context#fast_context{pmap = PMapRest}, Data};
 
-decode_instruction(Data, {_, FieldName, _, _, optional, #default{value = InitialValue}},
+decode_instruction(Data, {string, FieldName, _, _, optional, ascii, _, #default{value = InitialValue}},
       Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>}) ->
    case InitialValue of
       undef ->
@@ -58,10 +43,10 @@ decode_instruction(Data, {_, FieldName, _, _, optional, #default{value = Initial
          {{FieldName, InitialValue}, Context#fast_context{pmap = PMapRest}, Data}
    end;
 
-decode_instruction(Data, {Type, FieldName, _, _, Presence, #default{value = _InitialValue}},
+decode_instruction(Data, {string, FieldName, _, _, Presence, ascii, _, #default{value = _InitialValue}},
      Context = #fast_context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>})
    when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
-      Res = decode_string(Type, Data, is_nullable(Presence)),
+      Res = decode_string(Data, is_nullable(Presence)),
       case Res of
          not_enough_data ->
             throw({not_enough_data, Context});
@@ -75,10 +60,10 @@ decode_instruction(Data, {Type, FieldName, _, _, Presence, #default{value = _Ini
             end
       end;
 
-decode_instruction(Data, {Type, FieldName, _, _, Presence, #copy{dictionary = Dict, key = Key}},
+decode_instruction(Data, {string, FieldName, _, _, Presence, ascii, _, #copy{dictionary = Dict, key = Key}},
       Context = #fast_context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>, dicts = Dicts})
    when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1)->
-      Res = decode_string(Type, Data, is_nullable(Presence)),
+      Res = decode_string(Data, is_nullable(Presence)),
       case Res of
          not_enough_data ->
             throw({not_enough_data, Context});
@@ -94,7 +79,7 @@ decode_instruction(Data, {Type, FieldName, _, _, Presence, #copy{dictionary = Di
             end
       end;
 
-decode_instruction(Data, {_Type, FieldName, _, _, optional, #copy{dictionary = Dict, key = Key, value = InitialValue}},
+decode_instruction(Data, {string, FieldName, _, _, optional, ascii, _, #copy{dictionary = Dict, key = Key, value = InitialValue}},
   Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>, dicts = Dicts}) ->
   case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
      empty ->
@@ -109,9 +94,9 @@ decode_instruction(Data, {_Type, FieldName, _, _, optional, #copy{dictionary = D
         {{FieldName, Value}, Context#fast_context{pmap = PMapRest}, Data}
   end;
 
-decode_instruction(Data, {Type, FieldName, _, _, Presence, #delta{dictionary = Dict, key = Key, value = InitialValue}},
+decode_instruction(Data, {string, FieldName, _, _, Presence, ascii, _, #delta{dictionary = Dict, key = Key, value = InitialValue}},
   Context = #fast_context{logger = L, dicts = Dicts}) ->
-  {StringDelta, Err, DataRest} = decode_string_delta(Type, Data, is_nullable(Presence)),
+  {StringDelta, Err, DataRest} = decode_string_delta(Data, is_nullable(Presence)),
   L(Err, StringDelta),
   case StringDelta of
      null ->
@@ -120,25 +105,25 @@ decode_instruction(Data, {Type, FieldName, _, _, Presence, #delta{dictionary = D
         case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
            empty ->
               throw({'ERR D6', "Previous value is empty for delta operator"});
-           undef when InitialValue == undef -> % initial base value is "" or <<>>
-              NewVal = apply_delta(Type, initial_base_value(Type), Len, String),
+           undef when InitialValue == undef -> % initial base value is ""
+              NewVal = apply_delta("", Len, String),
               Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
               {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1}, DataRest};
            undef ->
-              NewVal = apply_delta(Type, InitialValue, Len, String),
+              NewVal = apply_delta(InitialValue, Len, String),
               Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
               {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1}, DataRest};
            PrevValue ->
-              NewVal = apply_delta(Type, PrevValue, Len, String),
+              NewVal = apply_delta(PrevValue, Len, String),
               Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
               {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1}, DataRest}
         end
   end;
 
-decode_instruction(Data, {Type, FieldName, _, _, Presence, #tail{dictionary = Dict, key = Key, value = InitialValue}},
+decode_instruction(Data, {string, FieldName, _, _, Presence, ascii, _, #tail{dictionary = Dict, key = Key, value = InitialValue}},
    Context = #fast_context{logger = L, dicts = Dicts, pmap = <<PresenceBit:1, PMapRest/bitstring>>})
 when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
-   {StringTail, Err, DataRest} = decode_string(Type, Data, is_nullable(Presence)),
+   {StringTail, Err, DataRest} = decode_string(Data, is_nullable(Presence)),
    L(Err, StringTail),
    case StringTail of
       null when (Presence == optional) andalso (PresenceBit == 1) ->
@@ -160,8 +145,8 @@ when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) 
          end
    end;
 
-decode_instruction(Data, {Type, FieldName, _, _, Presence, undef}, Context = #fast_context{logger = L}) ->
-   {Value, Err, DataRest} = decode_string(Type, Data, is_nullable(Presence)),
+decode_instruction(Data, {string, FieldName, _, _, Presence, ascii, _, undef}, Context = #fast_context{logger = L}) ->
+   {Value, Err, DataRest} = decode_string(Data, is_nullable(Presence)),
    L(Err, Value),
    case Value of
       null ->
@@ -170,5 +155,5 @@ decode_instruction(Data, {Type, FieldName, _, _, Presence, undef}, Context = #fa
          {{FieldName, Value}, Context, DataRest}
    end;
 
-decode_instruction(_, _, _) ->
+decode_instruction(_, {_, _, _, _, _, _}, _) ->
    throw(invalid_string_type).

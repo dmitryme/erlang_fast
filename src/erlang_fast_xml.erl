@@ -65,14 +65,23 @@ parse_instruction([I = #xmlElement{name = templateRef} | Tail], Dicts, DefDict) 
 parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail], Dicts, DefDict) ->
    {Dicts1, Instructions} = parse_instruction(Tail, Dicts, DefDict),
    {Dicts2, Operator} = parse_op(T, Childs, Dicts1, DefDict),
-   {Dicts2, [#string{
-            name = get_attribute(name, I),
-            ns = get_attribute(ns, I),
-            id = string_to_id(get_attribute(id, I)),
-            presence = string_to_presence(get_attribute(presence, I, "mandatory")),
-            charset = get_attribute(charset, I, ascii),
-            length = get_attribute(length, I),
-            operator = Operator} | Instructions]};
+   Instr =  case get_attribute(charset, I, ascii) of
+               ascii ->
+                  #string{
+                     name = get_attribute(name, I),
+                     ns = get_attribute(ns, I),
+                     id = string_to_id(get_attribute(id, I)),
+                     presence = string_to_presence(get_attribute(presence, I, "mandatory")),
+                     operator = Operator};
+               unicode ->
+                  #unicode{
+                     name = get_attribute(name, I),
+                     ns = get_attribute(ns, I),
+                     id = string_to_id(get_attribute(id, I)),
+                     presence = string_to_presence(get_attribute(presence, I, "mandatory")),
+                     operator = Operator}
+            end,
+   {Dicts2, [Instr | Instructions]};
 
 parse_instruction([I = #xmlElement{name = int32 = T, content = Childs} | Tail], Dicts, DefDict) ->
    {Dicts1, Instructions} = parse_instruction(Tail, Dicts, DefDict),
@@ -177,10 +186,10 @@ parse_instruction([I | _Tail], _, _) ->
 
 parse_dec_op(Childs, Dicts, DefDict) ->
    Res = lists:foldr(fun(#xmlElement{name = exponent, content = C}, {D, DecFieldOp}) ->
-            {Dicts1, Operator} = parse_op(decimal, C, D, DefDict),
+            {Dicts1, Operator} = parse_op(int32, C, D, DefDict),
             {Dicts1, DecFieldOp#decFieldOp{exponent = Operator}};
          (#xmlElement{name = mantissa, content = C}, {D, DecFieldOp}) ->
-            {Dicts1, Operator} = parse_op(decimal, C, D, DefDict),
+            {Dicts1, Operator} = parse_op(int64, C, D, DefDict),
             {Dicts1, DecFieldOp#decFieldOp{mantissa = Operator}};
          (_, Acc) ->
             Acc end,
@@ -269,22 +278,16 @@ string_to_type(_Type, undef) ->
 string_to_type(Type, Str)
 when (Type =:= int32) or (Type =:= 'Int64') or (Type =:= uInt32) or (Type =:= uInt64) or (Type =:= length) ->
    erlang:list_to_integer(Str);
-string_to_type(decimal, Str = [$. | _]) ->
-   string_to_type(decimal, [$0 | Str]);
-string_to_type(decimal, Str) when erlang:tl(Str) == "." ->
-   string_to_type(decimal, Str ++ [$0]);
 string_to_type(decimal, Str) ->
-   Res = case string:chr(Str, $.) of
-      0 ->
-         string:to_integer(Str);
-      _ ->
-         string:to_float(Str)
-   end,
-   case Res of
-      {error, Reason} ->
-         throw({Reason, Str});
-      {Value, _} ->
-         Value
+   case re:split(Str, "[.]", [{return, list}]) of
+      [Num] ->
+         {list_to_integer(Num), 0};
+      [[], Remainder] ->
+         {list_to_integer(Remainder), -length(Remainder)};
+      [Num, []] ->
+         {erlang:list_to_integer(Num), 0};
+      [Num, Remainder] ->
+         {list_to_integer(Num) * round(math:pow(10, length(Remainder))) + list_to_integer(Remainder), -length(Remainder)}
    end;
 string_to_type(byteVector, Str) ->
    Bytes = string:tokens(Str, " "),
@@ -304,10 +307,12 @@ parse_test() ->
 
 string_to_type_test() ->
    ?assertEqual(100123, string_to_type(int32, "100123")),
-   ?assertEqual(1.0, string_to_type(decimal, "1.")),
-   ?assertEqual(0.0, string_to_type(decimal, ".0")),
-   ?assertEqual(10, string_to_type(decimal, "10")),
-   ?assertEqual(0.1, string_to_type(decimal, ".1")),
+   ?assertEqual({1, 0}, string_to_type(decimal, "1.")),
+   ?assertEqual({0, -1}, string_to_type(decimal, ".0")),
+   ?assertEqual({10, 0}, string_to_type(decimal, "10")),
+   ?assertEqual({1, -1}, string_to_type(decimal, ".1")),
+   ?assertEqual({1123, -4}, string_to_type(decimal, ".1123")),
+   ?assertEqual({12345, -4}, string_to_type(decimal, "1.2345")),
    ?assertEqual(<<160, 239, 18, 186>>, string_to_type(byteVector, "a0 ef 12 ba")).
 
 -endif.

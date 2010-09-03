@@ -8,6 +8,7 @@
       ,decode_string/2
       ,decode_string_delta/2
       ,decode_vector/2
+      ,decode_vector_delta/2
       ,decode_scaled/2
       ,decode_pmap/1
    ]).
@@ -95,13 +96,28 @@ decode_vector(Data, Nullable) ->
          end
    end.
 
+decode_vector_delta(Data, Nullable) ->
+   case decode_int(Data, Nullable) of
+      not_enough_data ->
+         not_enough_data;
+      {null, Err, Rest} ->
+         {null, Err, Rest};
+      {Len, Err, Rest} ->
+         case decode_vector(Rest, Nullable) of
+            not_enough_data ->
+               not_enough_data;
+            {Vector, Err1, Rest2} ->
+               {{Len, Vector}, Err ++ Err1, Rest2}
+         end
+   end.
+
 decode_scaled(Data, Nullable) ->
    Exponent = decode_int(Data, Nullable),
    case Exponent of
       not_enough_data ->
          not_enough_data;
       {null, _Err, _Rest} ->
-         Exponent;
+         null;
       {ExpValue, Err, Rest} ->
          Mantissa = decode_int(Rest, Nullable),
          case Mantissa of

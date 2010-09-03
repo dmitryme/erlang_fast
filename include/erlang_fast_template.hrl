@@ -7,8 +7,9 @@
 -record(int64, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).
 -record(uInt64, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).
 -record(decimal, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).
--record(string, {name, ns = undef, id = undef, presence = mandatory, charset, length, operator = undef}).
--record(byteVector, {name, ns = undef, id = undef, presence = mandatory, length, operator = undef}).
+-record(string, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).
+-record(unicode, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).
+-record(byteVector, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).
 -record(sequence, {name, ns = undef, id = undef, presence = mandatory, dictionary = undef, typeRef = undef, instructions}).
 -record(length, {name = undef, ns = undef, id = undef, operator = undef}).
 -record(group, {name, ns = undef, id = undef, presence = mandatory, dictionary = undef, typeRef = undef, instructions}).

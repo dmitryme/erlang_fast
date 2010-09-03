@@ -25,7 +25,7 @@ decode_number(Type, Data, Nullable) when (Type == uInt32) or (Type == uInt64) ->
 decode_number(Type, Data, Nullable) when (Type == int32) or (Type == int64) ->
    decode_int(Data, Nullable).
 
-decode_instruction(Data, {_, FieldName, _, _, Presence, {constant, InitialValue}},
+decode_instruction(Data, {_, FieldName, _, _, Presence, #constant{value = InitialValue}},
    Context = #fast_context{pmap = <<PresenceBit:1, PMapRest/bitstring>>})
    when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
       case Presence of
@@ -35,7 +35,7 @@ decode_instruction(Data, {_, FieldName, _, _, Presence, {constant, InitialValue}
             {{FieldName, InitialValue}, Context#fast_context{pmap = PMapRest}, Data}
       end;
 
-decode_instruction(Data, {_, FieldName, _, _, optional, {constant, _}},
+decode_instruction(Data, {_, FieldName, _, _, optional, #constant{}},
    Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>}) ->
    {{FieldName, absent}, Context#fast_context{pmap = PMapRest}, Data};
 
@@ -164,5 +164,5 @@ decode_instruction(Data, {Type, FieldName, _, _, Presence, undef}, Context = #fa
         {{FieldName, Value}, Context, DataRest}
   end;
 
-decode_instruction(_, {_, _, _, _, _, _}, _) ->
+decode_instruction(_, _, _) ->
    throw(invalid_number_type).
