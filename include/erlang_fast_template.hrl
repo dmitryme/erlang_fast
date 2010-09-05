@@ -10,9 +10,9 @@
 -record(string, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).
 -record(unicode, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).
 -record(byteVector, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).
--record(sequence, {name, ns = undef, id = undef, presence = mandatory, dictionary = undef, typeRef = undef, instructions}).
+-record(sequence, {name, ns = undef, id = undef, presence = mandatory, need_pmap = false, dictionary = undef, typeRef = undef, instructions}).
 -record(length, {name = undef, ns = undef, id = undef, operator = undef}).
--record(group, {name, ns = undef, id = undef, presence = mandatory, dictionary = undef, typeRef = undef, instructions}).
+-record(group, {name, ns = undef, id = undef, presence = mandatory, need_pmap = false, dictionary = undef, typeRef = undef, instructions}).
 -record(constant, {value = undef}).
 -record(default,  {value = undef}).
 -record(copy, {dictionary = undef, key = undef, ns = undef, value = undef}).
