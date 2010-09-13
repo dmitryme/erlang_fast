@@ -1,0 +1,3942 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xmlns="http://www.fixprotocol.org/ns/fast/td/1.1">
+   <template dictionary="81" id="81" name="MDIncRefresh_81">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction" presence="optional">
+            <copy value="0"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <default value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="J"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource" presence="optional">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID" presence="optional">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq" presence="optional">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <delta/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="109" id="109" name="MDIncRefresh_109">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <increment/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default/>
+         </string>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <default/>
+         </uInt32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="64" name="SettlDate" presence="optional">
+            <default/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="108" id="108" name="MDIncRefresh_108">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <increment value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default/>
+         </string>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <default/>
+         </uInt32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="64" name="SettlDate" presence="optional">
+            <default/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="97" id="97" name="MDIncRefresh_97">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="0"/>
+         </uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="B"/>
+         </string>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="64" name="SettlDate" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5790" name="FixingBracket" presence="optional">
+            <copy/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="77" id="77" name="MDIncRefresh_77">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="0"/>
+         </uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="B"/>
+         </string>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="64" name="SettlDate" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5790" name="FixingBracket" presence="optional">
+            <copy/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="103" id="103" name="MDIncRefresh_103">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <default value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="64" name="SettlDate" presence="optional">
+            <default/>
+         </uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <delta/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="69" id="69" name="MDIncRefresh_69">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <default value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <delta/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="83" id="83" name="MDIncRefresh_83">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <increment/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize">
+            <delta/>
+         </int32>
+         <uInt32 id="346" name="NumberOfOrders">
+            <delta/>
+         </uInt32>
+         <string id="336" name="TradingSessionID">
+            <default value="2"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="32" id="32" name="MDIncRefresh_32">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <increment/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize">
+            <delta/>
+         </int32>
+         <uInt32 id="346" name="NumberOfOrders">
+            <delta/>
+         </uInt32>
+         <string id="336" name="TradingSessionID">
+            <default value="2"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="84" id="84" name="MDIncRefresh_84">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <default value="0"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <default value="2"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <delta/>
+         </uInt32>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="68" id="68" name="MDIncRefresh_68">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <default value="0"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <default value="2"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <delta/>
+         </uInt32>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="104" id="104" name="MDIncRefresh_104">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <copy value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="64" name="SettlDate" presence="optional">
+            <default/>
+         </uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <copy value="K"/>
+         </string>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <default/>
+         </uInt32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="71" id="71" name="MDIncRefresh_71">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <copy value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <copy value="K"/>
+         </string>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <default/>
+         </uInt32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="59" id="59" name="MDIncRefresh_59">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <copy value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <copy value="K"/>
+         </string>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <default/>
+         </uInt32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="1200" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="86" id="86" name="MDIncRefresh_86">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <copy value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <copy value="K"/>
+         </string>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <copy/>
+         </uInt32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize">
+            <delta/>
+         </int32>
+         <string id="336" name="TradingSessionID">
+            <default value="2"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="35" id="35" name="MDIncRefresh_35">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <copy value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <delta/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <copy value="K"/>
+         </string>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <copy/>
+         </uInt32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize">
+            <delta/>
+         </int32>
+         <string id="336" name="TradingSessionID">
+            <default value="2"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="87" id="87" name="MDIncRefresh_87">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <copy value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize">
+            <delta/>
+         </int32>
+         <string id="276" name="QuoteCondition">
+            <copy value="K"/>
+         </string>
+         <string id="336" name="TradingSessionID">
+            <default value="2"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="36" id="36" name="MDIncRefresh_36">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <copy value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize">
+            <delta/>
+         </int32>
+         <string id="276" name="QuoteCondition">
+            <copy value="K"/>
+         </string>
+         <string id="336" name="TradingSessionID">
+            <default value="2"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="88" id="88" name="MDIncRefresh_88">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <default value="0"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <default value="2"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <delta/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="-1"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default value="-1"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <delta/>
+         </uInt32>
+         <string id="277" name="TradeCondition" presence="optional">
+            <copy value="1"/>
+         </string>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="72" id="72" name="MDIncRefresh_72">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <default value="0"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <default value="2"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <delta/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <delta/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="-1"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default value="-1"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <delta/>
+         </uInt32>
+         <string id="277" name="TradeCondition" presence="optional">
+            <copy value="1"/>
+         </string>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="105" id="105" name="MDIncRefresh_105">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <increment/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="64" name="SettlDate" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <default/>
+         </uInt32>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <default/>
+         </uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="67" id="67" name="MDIncRefresh_67">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <increment/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <default/>
+         </uInt32>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <default/>
+         </uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="90" id="90" name="MDIncRefresh_90">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <increment/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize">
+            <delta/>
+         </int32>
+         <string id="336" name="TradingSessionID">
+            <default value="2"/>
+         </string>
+         <uInt32 id="346" name="NumberOfOrders">
+            <delta/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="39" id="39" name="MDIncRefresh_39">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <increment/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize">
+            <delta/>
+         </int32>
+         <string id="336" name="TradingSessionID">
+            <default value="2"/>
+         </string>
+         <uInt32 id="346" name="NumberOfOrders">
+            <delta/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="91" id="91" name="MDIncRefresh_91">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <default value="0"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <default value="2"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <delta/>
+         </uInt32>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="70" id="70" name="MDIncRefresh_70">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <default value="0"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <default value="2"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <delta/>
+         </uInt32>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="93" id="93" name="MDIncRefresh_93">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <constant value="5"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <constant value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="1"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <delta/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize">
+            <delta/>
+         </int32>
+         <uInt32 id="273" name="MDEntryTime">
+            <delta/>
+         </uInt32>
+         <string id="336" name="TradingSessionID">
+            <default value="2"/>
+         </string>
+         <uInt32 id="346" name="NumberOfOrders">
+            <copy value="1"/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="41" id="41" name="MDIncRefresh_41">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <constant value="5"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <constant value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="1"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <delta/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <delta/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize">
+            <delta/>
+         </int32>
+         <uInt32 id="273" name="MDEntryTime">
+            <delta/>
+         </uInt32>
+         <string id="336" name="TradingSessionID">
+            <default value="2"/>
+         </string>
+         <uInt32 id="346" name="NumberOfOrders">
+            <copy value="1"/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="106" id="106" name="MDIncRefresh_106">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <default value="5"/>
+         </uInt32>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <copy value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="1"/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="64" name="SettlDate" presence="optional">
+            <default/>
+         </uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <default value="1"/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default/>
+         </string>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="73" id="73" name="MDIncRefresh_73">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <default value="5"/>
+         </uInt32>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <copy value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="1"/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <default value="1"/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default/>
+         </string>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="95" id="95" name="MDIncRefresh_95">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <constant value="5"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <constant value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="1"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <delta/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize">
+            <delta/>
+         </int32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <uInt32 id="346" name="NumberOfOrders">
+            <copy/>
+         </uInt32>
+         <uInt32 id="1070" name="MDQuoteType" presence="optional">
+            <default/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="43" id="43" name="MDIncRefresh_43">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <constant value="5"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <constant value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="1"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <delta/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <delta/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize">
+            <delta/>
+         </int32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <uInt32 id="346" name="NumberOfOrders">
+            <copy/>
+         </uInt32>
+         <uInt32 id="1070" name="MDQuoteType" presence="optional">
+            <default/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="96" id="96" name="MDIncRefresh_96">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <constant value="5"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <constant value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="1"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <uInt32 id="346" name="NumberOfOrders">
+            <copy/>
+         </uInt32>
+         <uInt32 id="1070" name="MDQuoteType" presence="optional">
+            <constant value="0"/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="44" id="44" name="MDIncRefresh_44">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <constant value="5"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <constant value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="1"/>
+         </string>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <uInt32 id="346" name="NumberOfOrders">
+            <copy/>
+         </uInt32>
+         <uInt32 id="1070" name="MDQuoteType" presence="optional">
+            <constant value="0"/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="107" id="107" name="MDIncRefresh_107">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="5"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <copy value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="1"/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="64" name="SettlDate" presence="optional">
+            <default/>
+         </uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <copy value="1"/>
+         </uInt32>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="1070" name="MDQuoteType" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="74" id="74" name="MDIncRefresh_74">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="5"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <copy value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="1"/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional">
+			</uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <copy value="1"/>
+         </uInt32>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="1070" name="MDQuoteType" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="5797" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="5799" name="MatchEventIndicator" presence="optional">
+            <default value="1"/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="79" id="79" name="MDSecurityDefinition_79">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="d"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="911" name="TotNumReports" presence="optional"/>
+      <sequence name="Events" presence="optional">
+         <length id="864" name="NoEvents"/>
+         <uInt32 id="865" name="EventType" presence="optional">
+            <delta/>
+         </uInt32>
+         <uInt64 id="866" name="EventDate" presence="optional">
+            <delta/>
+         </uInt64>
+         <uInt64 id="1145" name="EventTime" presence="optional">
+            <delta/>
+         </uInt64>
+      </sequence>
+      <decimal id="1150" name="TradingReferencePrice" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="731" name="SettlePriceType" presence="optional"/>
+      <decimal id="1149" name="HighLimitPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="1148" name="LowLimitPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="1151" name="SecurityGroup" presence="optional"/>
+      <string id="55" name="Symbol" presence="optional"/>
+      <string id="107" name="SecurityDesc" presence="optional"/>
+      <uInt32 id="48" name="SecurityID" presence="optional"/>
+      <uInt32 id="22" name="SecurityIDSource" presence="optional">
+         <constant value="8"/>
+      </uInt32>
+      <string id="461" name="CFICode" presence="optional"/>
+      <string id="462" name="UnderlyingProduct" presence="optional"/>
+      <string id="207" name="SecurityExchange" presence="optional"/>
+      <string id="9853" name="PricingModel" presence="optional"/>
+      <decimal id="9850" name="MinCabPrice" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <sequence name="SecurityAltIDs" presence="optional">
+         <length id="454" name="NoSecurityAltID"/>
+         <string id="455" name="SecurityAltID" presence="optional"/>
+         <uInt32 id="456" name="SecurityAltIDSource" presence="optional">
+            <constant value="8"/>
+         </uInt32>
+      </sequence>
+      <uInt32 id="827" name="ExpirationCycle" presence="optional"/>
+      <string id="1147" name="UnitOfMeasureQty" presence="optional"/>
+      <decimal id="202" name="StrikePrice" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="947" name="StrikeCurrency" presence="optional"/>
+      <uInt64 id="562" name="MinTradeVol" presence="optional"/>
+      <uInt64 id="1140" name="MaxTradeVol" presence="optional"/>
+      <string id="15" name="Currency" presence="optional"/>
+      <string id="120" name="SettlCurrency" presence="optional"/>
+      <sequence name="MDFeedTypes" presence="optional">
+         <length id="1141" name="NoMDFeedTypes"/>
+         <string id="1022" name="MDFeedType">
+            <default value="GBX"/>
+         </string>
+         <uInt32 id="264" name="MarketDepth"/>
+      </sequence>
+      <string id="1142" name="MatchAlgo" presence="optional"/>
+      <string id="762" name="SecuritySubType" presence="optional"/>
+      <sequence name="Underlyings" presence="optional">
+         <length id="711" name="NoUnderlyings"/>
+         <string id="311" name="UnderlyingSymbol">
+            <constant value="[N/A]"/>
+         </string>
+         <uInt32 id="309" name="UnderlyingSecurityID">
+            <delta/>
+         </uInt32>
+         <uInt32 id="305" name="UnderlyingSecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+      </sequence>
+      <string id="1143" name="MaxPriceVariation" presence="optional"/>
+      <string id="1144" name="ImpliedMarketIndicator" presence="optional"/>
+      <sequence name="InstrAttrib" presence="optional">
+         <length id="870" name="NoInstrAttrib"/>
+         <uInt64 id="871" name="InstrAttribType">
+            <delta/>
+         </uInt64>
+         <string id="872" name="InstrAttribValue" presence="optional">
+            <copy/>
+         </string>
+      </sequence>
+      <uInt64 id="200" name="MaturityMonthYear" presence="optional"/>
+      <decimal id="969" name="MinPriceIncrement" presence="optional">
+         <exponent>
+            <copy value="-2"/>
+         </exponent>
+         <mantissa>
+            <delta/>
+         </mantissa>
+      </decimal>
+      <decimal id="1146" name="MinPriceIncrementAmount" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <uInt64 id="779" name="LastUpdateTime" presence="optional"/>
+      <string id="980" name="SecurityUpdateAction" presence="optional"/>
+      <decimal id="9787" name="DisplayFactor" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <sequence name="Legs" presence="optional">
+         <length id="555" name="NoLegs"/>
+         <string id="600" name="LegSymbol">
+            <default value="[N/A]"/>
+         </string>
+         <uInt32 id="623" name="LegRatioQty">
+            <copy/>
+         </uInt32>
+         <uInt64 id="602" name="LegSecurityID">
+            <delta/>
+         </uInt64>
+         <string id="620" name="LegSecurityDesc" presence="optional"/>
+         <uInt32 id="603" name="LegSecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <string id="624" name="LegSide" presence="optional">
+            <default value="1"/>
+         </string>
+         <string id="5795" name="LegSecurityGroup" presence="optional">
+            <copy/>
+         </string>
+         <string id="608" name="LegCFICode" presence="optional">
+            <copy/>
+         </string>
+         <string id="764" name="LegSecuritySubType" presence="optional">
+            <copy/>
+         </string>
+         <string id="556" name="LegCurrency" presence="optional">
+            <copy/>
+         </string>
+         <uInt64 id="610" name="LegMaturityMonthYear" presence="optional">
+            <delta/>
+         </uInt64>
+         <decimal id="612" name="LegStrikePrice" presence="optional">
+            <exponent>
+               <copy value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <string id="616" name="LegSecurityExchange" presence="optional">
+            <copy/>
+         </string>
+         <string id="942" name="LegStrikeCurrency" presence="optional">
+            <copy/>
+         </string>
+         <decimal id="566" name="LegPrice" presence="optional">
+            <exponent>
+               <copy value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <decimal id="1017" name="LegOptionDelta" presence="optional">
+            <exponent>
+               <copy value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+      </sequence>
+      <string id="1180" name="ApplID" presence="optional"/>
+      <string id="9779" name="UserDefinedInstrument" presence="optional">
+         <constant value="Y"/>
+      </string>
+      <decimal id="5770" name="PriceRatio" presence="optional">
+         <exponent>
+            <default value="0"/>
+         </exponent>
+      </decimal>
+      <uInt32 id="1435" name="ContractMultiplierType" presence="optional">
+         <default value="1"/>
+      </uInt32>
+      <uInt32 id="1439" name="FlowScheduleType" presence="optional"/>
+      <uInt32 id="231" name="ContractMultiplier" presence="optional"/>
+      <string id="996" name="UnitofMeasure" presence="optional"/>
+      <uInt64 id="5818" name="DecayQuantity" presence="optional"/>
+      <uInt64 id="5819" name="DecayStartDate" presence="optional"/>
+      <uInt64 id="5849" name="OriginalContractSize" presence="optional"/>
+      <uInt32 id="5791" name="ClearedVolume" presence="optional"/>
+      <uInt32 id="5792" name="OpenInterestQty" presence="optional"/>
+      <uInt32 id="5796" name="TradingReferenceDate" presence="optional"/>
+      <sequence name="LotTypeRules" presence="optional">
+         <length id="1234" name="NumLotTypeRules"/>
+         <string id="1093" name="LotType" presence="optional"/>
+         <decimal id="1231" name="MinLotSize" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+         </decimal>
+      </sequence>
+   </template>
+   <template dictionary="78" id="78" name="MDSecurityDefinition_78">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="d"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="911" name="TotNumReports" presence="optional"/>
+      <sequence name="Events" presence="optional">
+         <length id="864" name="NoEvents"/>
+         <uInt32 id="865" name="EventType" presence="optional">
+            <delta/>
+         </uInt32>
+         <uInt64 id="866" name="EventDate" presence="optional">
+            <delta/>
+         </uInt64>
+         <uInt64 id="1145" name="EventTime" presence="optional">
+            <delta/>
+         </uInt64>
+      </sequence>
+      <decimal id="1150" name="TradingReferencePrice" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="1149" name="HighLimitPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="1148" name="LowLimitPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="1151" name="SecurityGroup" presence="optional"/>
+      <string id="55" name="Symbol" presence="optional"/>
+      <string id="107" name="SecurityDesc" presence="optional"/>
+      <uInt32 id="48" name="SecurityID" presence="optional"/>
+      <uInt32 id="22" name="SecurityIDSource" presence="optional">
+         <constant value="8"/>
+      </uInt32>
+      <string id="461" name="CFICode" presence="optional"/>
+      <string id="462" name="UnderlyingProduct" presence="optional"/>
+      <string id="207" name="SecurityExchange" presence="optional"/>
+      <string id="9853" name="PricingModel" presence="optional"/>
+      <decimal id="9850" name="MinCabPrice" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <uInt32 id="827" name="ExpirationCycle" presence="optional"/>
+      <string id="1147" name="UnitOfMeasureQty" presence="optional"/>
+      <decimal id="202" name="StrikePrice" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="947" name="StrikeCurrency" presence="optional"/>
+      <uInt64 id="562" name="MinTradeVol" presence="optional"/>
+      <uInt64 id="1140" name="MaxTradeVol" presence="optional"/>
+      <string id="15" name="Currency" presence="optional"/>
+      <string id="120" name="SettlCurrency" presence="optional"/>
+      <sequence name="MDFeedTypes" presence="optional">
+         <length id="1141" name="NoMDFeedTypes"/>
+         <string id="1022" name="MDFeedType">
+            <default value="GBX"/>
+         </string>
+         <uInt32 id="264" name="MarketDepth"/>
+      </sequence>
+      <string id="1142" name="MatchAlgo" presence="optional"/>
+      <string id="762" name="SecuritySubType" presence="optional"/>
+      <sequence name="Underlyings" presence="optional">
+         <length id="711" name="NoUnderlyings"/>
+         <string id="311" name="UnderlyingSymbol">
+            <constant value="[N/A]"/>
+         </string>
+         <uInt32 id="309" name="UnderlyingSecurityID">
+            <delta/>
+         </uInt32>
+         <uInt32 id="305" name="UnderlyingSecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+      </sequence>
+      <string id="1143" name="MaxPriceVariation" presence="optional"/>
+      <string id="1144" name="ImpliedMarketIndicator" presence="optional"/>
+      <sequence name="InstrAttrib" presence="optional">
+         <length id="870" name="NoInstrAttrib"/>
+         <uInt64 id="871" name="InstrAttribType">
+            <delta/>
+         </uInt64>
+         <string id="872" name="InstrAttribValue" presence="optional">
+            <copy/>
+         </string>
+      </sequence>
+      <uInt64 id="200" name="MaturityMonthYear" presence="optional"/>
+      <decimal id="969" name="MinPriceIncrement" presence="optional">
+         <exponent>
+            <copy value="-2"/>
+         </exponent>
+         <mantissa>
+            <delta/>
+         </mantissa>
+      </decimal>
+      <decimal id="1146" name="MinPriceIncrementAmount" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="9787" name="DisplayFactor" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <sequence name="Legs" presence="optional">
+         <length id="555" name="NoLegs"/>
+         <string id="600" name="LegSymbol">
+            <default value="[N/A]"/>
+         </string>
+         <uInt32 id="623" name="LegRatioQty">
+            <copy/>
+         </uInt32>
+         <uInt64 id="602" name="LegSecurityID">
+            <delta/>
+         </uInt64>
+         <uInt32 id="603" name="LegSecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <string id="624" name="LegSide" presence="optional">
+            <default value="1"/>
+         </string>
+         <string id="608" name="LegCFICode" presence="optional">
+            <copy/>
+         </string>
+         <string id="764" name="LegSecuritySubType" presence="optional">
+            <copy/>
+         </string>
+         <string id="556" name="LegCurrency" presence="optional">
+            <copy/>
+         </string>
+         <uInt64 id="610" name="LegMaturityMonthYear" presence="optional">
+            <delta/>
+         </uInt64>
+         <decimal id="612" name="LegStrikePrice" presence="optional">
+            <exponent>
+               <copy value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <string id="616" name="LegSecurityExchange" presence="optional">
+            <copy/>
+         </string>
+         <string id="942" name="LegStrikeCurrency" presence="optional">
+            <copy/>
+         </string>
+         <decimal id="566" name="LegPrice" presence="optional">
+            <exponent>
+               <copy value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <decimal id="1017" name="LegOptionDelta" presence="optional">
+            <exponent>
+               <copy value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+      </sequence>
+      <string id="1180" name="ApplFeedId" presence="optional"/>
+      <string id="9779" name="UserDefinedInstrument" presence="optional">
+         <constant value="Y"/>
+      </string>
+      <decimal id="5770" name="PriceRatio" presence="optional">
+         <exponent>
+            <default value="0"/>
+         </exponent>
+      </decimal>
+      <uInt32 id="1435" name="ContractMultiplierType" presence="optional">
+         <default value="1"/>
+      </uInt32>
+      <uInt32 id="1439" name="FlowScheduleType" presence="optional"/>
+      <decimal id="1231" name="MinLotSize" presence="optional">
+         <exponent>
+            <default value="0"/>
+         </exponent>
+      </decimal>
+      <uInt32 id="231" name="ContractMultiplier" presence="optional"/>
+      <string id="996" name="UnitofMeasure" presence="optional"/>
+      <uInt64 id="5818" name="DecayQuantity" presence="optional"/>
+      <uInt64 id="5819" name="DecayStartDate" presence="optional"/>
+      <uInt64 id="5849" name="OriginalContractSize" presence="optional"/>
+      <uInt32 id="5791" name="ClearedVolume" presence="optional"/>
+      <uInt32 id="5792" name="OpenInterestQty" presence="optional"/>
+      <uInt32 id="5796" name="TradingReferenceDate" presence="optional"/>
+   </template>
+   <template dictionary="52" id="52" name="MDSecurityDefinition_52">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="d"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="911" name="TotNumReports" presence="optional"/>
+      <sequence name="Events" presence="optional">
+         <length id="864" name="NoEvents"/>
+         <uInt32 id="865" name="EventType" presence="optional">
+            <delta/>
+         </uInt32>
+         <uInt64 id="866" name="EventDate" presence="optional">
+            <delta/>
+         </uInt64>
+         <uInt64 id="1145" name="EventTime" presence="optional">
+            <delta/>
+         </uInt64>
+      </sequence>
+      <decimal id="1150" name="TradingReferencePrice" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="1149" name="HighLimitPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="1148" name="LowLimitPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="1151" name="SecurityGroup" presence="optional"/>
+      <string id="55" name="Symbol" presence="optional"/>
+      <string id="107" name="SecurityDesc" presence="optional"/>
+      <uInt32 id="48" name="SecurityID" presence="optional"/>
+      <uInt32 id="22" name="SecurityIDSource" presence="optional">
+         <constant value="8"/>
+      </uInt32>
+      <string id="461" name="CFICode" presence="optional"/>
+      <string id="462" name="UnderlyingProduct" presence="optional"/>
+      <string id="207" name="SecurityExchange" presence="optional"/>
+      <string id="9853" name="PricingModel" presence="optional"/>
+      <decimal id="9850" name="MinCabPrice" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <uInt32 id="827" name="ExpirationCycle" presence="optional"/>
+      <string id="1147" name="UnitOfMeasureQty" presence="optional"/>
+      <decimal id="202" name="StrikePrice" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="947" name="StrikeCurrency" presence="optional"/>
+      <uInt64 id="562" name="MinTradeVol" presence="optional"/>
+      <uInt64 id="1140" name="MaxTradeVol" presence="optional"/>
+      <string id="15" name="Currency" presence="optional"/>
+      <string id="120" name="SettlCurrency" presence="optional"/>
+      <sequence name="MDFeedTypes" presence="optional">
+         <length id="1141" name="NoMDFeedTypes"/>
+         <string id="1022" name="MDFeedType">
+            <constant value="GBX"/>
+         </string>
+         <uInt32 id="264" name="MarketDepth"/>
+      </sequence>
+      <string id="1142" name="MatchAlgo" presence="optional"/>
+      <string id="762" name="SecuritySubType" presence="optional"/>
+      <sequence name="Underlyings" presence="optional">
+         <length id="711" name="NoUnderlyings"/>
+         <string id="311" name="UnderlyingSymbol">
+            <constant value="[N/A]"/>
+         </string>
+         <uInt32 id="309" name="UnderlyingSecurityID">
+            <delta/>
+         </uInt32>
+         <uInt32 id="305" name="UnderlyingSecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+      </sequence>
+      <string id="1143" name="MaxPriceVariation" presence="optional"/>
+      <string id="1144" name="ImpliedMarketIndicator" presence="optional"/>
+      <sequence name="InstrAttrib" presence="optional">
+         <length id="870" name="NoInstrAttrib"/>
+         <uInt64 id="871" name="InstrAttribType">
+            <delta/>
+         </uInt64>
+         <string id="872" name="InstrAttribValue" presence="optional">
+            <copy/>
+         </string>
+      </sequence>
+      <uInt64 id="200" name="MaturityDate" presence="optional"/>
+      <decimal id="969" name="MinPriceIncrement" presence="optional">
+         <exponent>
+            <copy value="-2"/>
+         </exponent>
+         <mantissa>
+            <delta/>
+         </mantissa>
+      </decimal>
+      <decimal id="1146" name="MinPriceIncrementAmount" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="9787" name="DisplayFactor" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <sequence name="Legs" presence="optional">
+         <length id="555" name="NoLegs"/>
+         <string id="600" name="LegSymbol">
+            <default value="[N/A]"/>
+         </string>
+         <uInt32 id="623" name="LegRatioQty">
+            <copy/>
+         </uInt32>
+         <uInt64 id="602" name="LegSecurityID">
+            <delta/>
+         </uInt64>
+         <uInt32 id="603" name="LegSecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <string id="624" name="LegSide" presence="optional">
+            <default value="1"/>
+         </string>
+         <string id="608" name="LegCFICode" presence="optional">
+            <copy/>
+         </string>
+         <string id="764" name="LegSecuritySubType" presence="optional">
+            <copy/>
+         </string>
+         <string id="556" name="LegCurrency" presence="optional">
+            <copy/>
+         </string>
+         <uInt64 id="610" name="LegMaturityMonthYear" presence="optional">
+            <delta/>
+         </uInt64>
+         <decimal id="612" name="LegStrikePrice" presence="optional">
+            <exponent>
+               <copy value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <string id="942" name="LegStrikeCurrency" presence="optional">
+            <copy/>
+         </string>
+         <decimal id="566" name="LegPrice" presence="optional">
+            <exponent>
+               <copy value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <decimal id="1017" name="LegOptionDelta" presence="optional">
+            <exponent>
+               <copy value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+      </sequence>
+      <string id="1180" name="ApplFeedId" presence="optional"/>
+      <string id="9779" name="UserDefinedInstrument" presence="optional">
+         <constant value="Y"/>
+      </string>
+   </template>
+   <template dictionary="98" id="98" name="MDQuoteRequest_98">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="R"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <string id="131" name="QuoteReqID" presence="optional"/>
+      <sequence name="RelatedSym">
+         <length id="146" name="NoRelatedSym"/>
+         <string id="55" name="Symbol">
+            <constant value="[N/A]"/>
+         </string>
+         <uInt64 id="38" name="OrderQty" presence="optional"/>
+         <uInt32 id="54" name="Side" presence="optional">
+            <default value="1"/>
+         </uInt32>
+         <uInt64 id="60" name="TransactTime"/>
+         <uInt32 id="537" name="QuoteType">
+            <default value="1"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID"/>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="54" id="54" name="MDQuoteRequest_54">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="R"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <string id="131" name="QuoteReqID" presence="optional"/>
+      <sequence name="RelatedSym">
+         <length id="146" name="NoRelatedSym"/>
+         <string id="55" name="Symbol">
+            <constant value="[N/A]"/>
+         </string>
+         <uInt64 id="38" name="OrderQty" presence="optional"/>
+         <uInt32 id="54" name="Side" presence="optional">
+            <default value="1"/>
+         </uInt32>
+         <uInt64 id="60" name="TransactTime"/>
+         <uInt32 id="537" name="QuoteType">
+            <default value="1"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID"/>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="102" id="102" name="MDSecurityStatus_102">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="f"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="48" name="SecurityID" presence="optional"/>
+      <uInt32 id="22" name="SecurityIDSource" presence="optional">
+         <constant value="8"/>
+      </uInt32>
+      <uInt32 id="75" name="TradeDate" presence="optional"/>
+      <decimal id="332" name="HighPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="333" name="LowPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="55" name="Symbol" presence="optional"/>
+      <uInt32 id="326" name="SecurityTradingStatus" presence="optional"/>
+      <uInt32 id="327" name="HaltReason" presence="optional"/>
+      <uInt32 id="1174" name="SecurityTradingEvent" presence="optional"/>
+   </template>
+   <template dictionary="99" id="99" name="MDSecurityStatus_99">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="f"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="48" name="SecurityID" presence="optional"/>
+      <uInt32 id="22" name="SecurityIDSource" presence="optional">
+         <constant value="8"/>
+      </uInt32>
+      <uInt32 id="75" name="TradeDate"/>
+      <decimal id="332" name="HighPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="333" name="LowPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="55" name="Symbol" presence="optional"/>
+      <uInt32 id="326" name="SecurityTradingStatus" presence="optional"/>
+      <uInt32 id="327" name="HaltReason" presence="optional"/>
+      <uInt32 id="1174" name="SecurityTradingEvent" presence="optional"/>
+   </template>
+   <template dictionary="76" id="76" name="MDSecurityStatus_76">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="f"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="48" name="SecurityID" presence="optional"/>
+      <uInt32 id="22" name="SecurityIDSource" presence="optional">
+         <constant value="8"/>
+      </uInt32>
+      <uInt32 id="75" name="TradeDate"/>
+      <decimal id="332" name="HighPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="333" name="LowPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="55" name="Symbol" presence="optional"/>
+      <uInt32 id="326" name="SecurityTradingStatus" presence="optional"/>
+      <uInt32 id="327" name="HaltReason" presence="optional"/>
+      <uInt32 id="1174" name="SecurityTradingEvent" presence="optional"/>
+   </template>
+   <template dictionary="48" id="48" name="MDSecurityStatus_48">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="f"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="48" name="SecurityID" presence="optional"/>
+      <uInt32 id="22" name="SecurityIDSource" presence="optional">
+         <constant value="8"/>
+      </uInt32>
+      <decimal id="332" name="HighPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="333" name="LowPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="55" name="Symbol" presence="optional"/>
+      <uInt32 id="326" name="SecurityTradingStatus" presence="optional"/>
+   </template>
+   <template dictionary="80" id="80" name="MDSnapshotFullRefresh_80">
+      <string id="35" name="MessageType">
+         <constant value="W"/>
+      </string>
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt64 id="52" name="SendingTime"/>
+      <uInt32 id="369" name="LastMsgSeqNumProcessed"/>
+      <uInt32 id="911" name="TotNumReports"/>
+      <uInt32 id="83" name="RptSeq"/>
+      <uInt32 id="1021" name="MDBookType"/>
+      <uInt32 id="48" name="SecurityID"/>
+      <uInt32 id="22" name="SecurityIDSource">
+         <constant value="8"/>
+      </uInt32>
+      <uInt32 id="1682" name="MDSecurityTradingStatus" presence="optional"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <string id="269" name="MDEntryType">
+            <default value="2"/>
+         </string>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default value="K"/>
+         </string>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <copy/>
+         </uInt32>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <delta/>
+         </uInt32>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+      </sequence>
+   </template>
+   <template dictionary="53" id="53" name="MDSnapshotFullRefresh_53">
+      <string id="35" name="MessageType">
+         <constant value="W"/>
+      </string>
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt64 id="52" name="SendingTime"/>
+      <uInt32 id="369" name="LastMsgSeqNumProcessed"/>
+      <uInt32 id="911" name="TotNumReports"/>
+      <uInt32 id="83" name="RptSeq"/>
+      <uInt32 id="1021" name="MDBookType"/>
+      <uInt32 id="48" name="SecurityID">
+         <delta/>
+      </uInt32>
+      <uInt32 id="22" name="SecurityIDSource">
+         <constant value="8"/>
+      </uInt32>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <string id="269" name="MDEntryType">
+            <default value="2"/>
+         </string>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default value="K"/>
+         </string>
+         <string id="277" name="TradeCondition" presence="optional">
+            <constant value="U"/>
+         </string>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <copy/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <delta/>
+         </uInt32>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+      </sequence>
+   </template>
+   <template dictionary="100" id="100" name="MDNewsMessage_100">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="B"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="147" name="Headline"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <sequence name="LinesOfText">
+         <length id="33" name="NoLinesOfText"/>
+         <string id="58" name="text">
+            <copy/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="49" id="49" name="MDNewsMessage_49">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="B"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="147" name="Headline"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <sequence name="LinesOfText">
+         <length id="33" name="NoLinesOfText"/>
+         <string id="58" name="text">
+            <copy/>
+         </string>
+      </sequence>
+   </template>
+   <template dictionary="101" id="101" name="MDHeartbeat_101">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="0"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+   </template>
+   <template dictionary="50" id="50" name="MDHeartbeat_50">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="0"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+   </template>
+   <template dictionary="3" id="3" name="MDLogon_3">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="A"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="1180" name="ApplID">
+         <constant value="REPLAY"/>
+      </string>
+      <uInt32 id="98" name="EncryptMethod">
+         <constant value="0"/>
+      </uInt32>
+      <uInt32 id="108" name="HeartbeatInt"/>
+      <string id="1137" name="DefaultApplVerID">
+         <constant value="9"/>
+      </string>
+   </template>
+   <template dictionary="1" id="1" name="MDLogon_1">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="A"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="1180" name="ApplFeedId">
+         <constant value="REPLAY"/>
+      </string>
+      <uInt32 id="98" name="EncryptMethod">
+         <constant value="0"/>
+      </uInt32>
+      <uInt32 id="108" name="HeartbeatInt"/>
+      <string id="1137" name="DefaultApplVerID">
+         <constant value="8"/>
+      </string>
+   </template>
+   <template dictionary="4" id="4" name="MDLogout_4">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="5"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="1180" name="ApplID">
+         <constant value="REPLAY"/>
+      </string>
+      <string id="58" name="Text" presence="optional"/>
+   </template>
+   <template dictionary="2" id="2" name="MDLogout_2">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="5"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="1180" name="ApplFeedId">
+         <constant value="REPLAY"/>
+      </string>
+      <string id="58" name="Text" presence="optional"/>
+   </template>
+   <template dictionary="4000111333" id="4000111333" name="MDIncRefresh_4000111333">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <default value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="286" name="OpenCloseSettleFlag" presence="optional"/>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <uInt32 id="346" name="NumberOfOrders" presence="optional">
+            <delta/>
+         </uInt32>
+         <string id="336" name="TradingSessionID" presence="optional">
+            <default value="2"/>
+         </string>
+         <decimal id="451" name="NetChgPrevDay" presence="optional">
+            <exponent>
+               <default/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <default/>
+         </uInt32>
+         <string id="277" name="TradeCondition" presence="optional">
+            <default/>
+         </string>
+         <string id="274" name="TickDirection" presence="optional">
+            <default/>
+         </string>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default/>
+         </string>
+         <uInt32 id="1200" name="AggressorSide" presence="optional">
+            <default/>
+         </uInt32>
+      </sequence>
+   </template>
+   <template dictionary="4000555777" id="4000555777" name="MDSecurityDefinition_4000555777">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="d"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="911" name="MDTotalNum" presence="optional"/>
+      <sequence name="Events" presence="optional">
+         <length id="864" name="NoEvents"/>
+         <uInt32 id="865" name="EventType" presence="optional">
+            <delta/>
+         </uInt32>
+         <uInt64 id="866" name="EventDate" presence="optional">
+            <delta/>
+         </uInt64>
+         <uInt64 id="1145" name="EventTime" presence="optional">
+            <delta/>
+         </uInt64>
+      </sequence>
+      <decimal id="1150" name="TradingReferencePrice" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="1149" name="HighLimitPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="1148" name="LowLimitPx" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="1151" name="SecurityGroup" presence="optional"/>
+      <string id="55" name="Symbol" presence="optional"/>
+      <string id="107" name="SecurityDesc" presence="optional"/>
+      <uInt32 id="48" name="SecurityID" presence="optional"/>
+      <uInt32 id="22" name="SecurityIDSource" presence="optional">
+         <constant value="8"/>
+      </uInt32>
+      <string id="461" name="CFICode" presence="optional"/>
+      <string id="462" name="UnderlyingProduct" presence="optional"/>
+      <string id="207" name="SecurityExchange" presence="optional"/>
+      <string id="9853" name="PricingModel" presence="optional"/>
+      <decimal id="9850" name="MinCabPrice" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <uInt32 id="827" name="ExpirationCycle" presence="optional"/>
+      <string id="1147" name="UnitOfMeasureQty" presence="optional"/>
+      <decimal id="202" name="StrikePrice" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="947" name="StrikeCurrency" presence="optional"/>
+      <uInt64 id="562" name="MinTradeVol" presence="optional"/>
+      <uInt64 id="1140" name="MaxTradeVol" presence="optional"/>
+      <string id="15" name="Currency" presence="optional"/>
+      <string id="120" name="SettlCurrency" presence="optional"/>
+      <sequence name="MDFeedTypes" presence="optional">
+         <length id="1141" name="NoMDFeedTypes"/>
+         <string id="1022" name="MDFeedType">
+            <constant value="GBX"/>
+         </string>
+         <uInt32 id="264" name="MarketDepth"/>
+      </sequence>
+      <string id="1142" name="MatchAlgo" presence="optional"/>
+      <string id="762" name="SecuritySubType" presence="optional"/>
+      <sequence name="Underlyings" presence="optional">
+         <length id="711" name="NoUnderlyings"/>
+         <string id="311" name="UnderlyingSymbol">
+            <constant value="[N/A]"/>
+         </string>
+         <uInt32 id="309" name="UnderlyingSecurityID">
+            <delta/>
+         </uInt32>
+         <uInt32 id="305" name="UnderlyingSecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+      </sequence>
+      <string id="1143" name="MaxPriceVariation" presence="optional"/>
+      <string id="1144" name="ImpliedMarketIndicator" presence="optional"/>
+      <sequence name="InstrAttrib" presence="optional">
+         <length id="870" name="NoInstrAttrib"/>
+         <uInt64 id="871" name="InstrAttribType">
+            <delta/>
+         </uInt64>
+         <string id="872" name="InstrAttribValue" presence="optional">
+            <copy/>
+         </string>
+      </sequence>
+      <uInt64 id="200" name="MaturityDate" presence="optional"/>
+      <decimal id="969" name="MinPriceIncrement" presence="optional">
+         <exponent>
+            <copy value="-2"/>
+         </exponent>
+         <mantissa>
+            <delta/>
+         </mantissa>
+      </decimal>
+      <decimal id="1146" name="MinPriceIncrementAmount" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <decimal id="9787" name="DisplayFactor" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <sequence name="Legs" presence="optional">
+         <length id="555" name="NoLegs"/>
+         <string id="600" name="LegSymbol">
+            <default value="[N/A]"/>
+         </string>
+         <uInt32 id="623" name="LegRatioQty">
+            <copy/>
+         </uInt32>
+         <uInt64 id="602" name="LegSecurityID">
+            <delta/>
+         </uInt64>
+         <uInt32 id="603" name="LegSecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <string id="624" name="LegSide" presence="optional">
+            <default value="1"/>
+         </string>
+         <string id="608" name="LegCFICode" presence="optional">
+            <copy/>
+         </string>
+         <string id="764" name="LegSecuritySubType" presence="optional">
+            <copy/>
+         </string>
+         <string id="556" name="LegCurrency" presence="optional">
+            <copy/>
+         </string>
+         <uInt64 id="610" name="LegMaturityMonthYear" presence="optional">
+            <delta/>
+         </uInt64>
+         <decimal id="612" name="LegStrikePrice" presence="optional">
+            <exponent>
+               <copy value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <string id="942" name="LegStrikeCurrency" presence="optional">
+            <copy/>
+         </string>
+         <decimal id="566" name="LegPrice" presence="optional">
+            <exponent>
+               <copy value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <decimal id="1017" name="LegOptionDelta" presence="optional">
+            <exponent>
+               <copy value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+      </sequence>
+   </template>
+</templates>
+
