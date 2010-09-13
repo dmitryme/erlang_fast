@@ -6,33 +6,36 @@
 -include("erlang_fast_context.hrl").
 -include("erlang_fast_common.hrl").
 
+decode(Data, #sequence{name = FieldName, instructions = []}, Context) ->
+   {{FieldName, absent}, Context, Data};
+
 decode(Data, #sequence{name = FieldName, presence = Presence, need_pmap = NeedPMap, instructions = Instructions},
-      Context = #fast_context{pmap = <<_:1, PMapRest/bitstring>>, template = #template{instructions = TempInstr}}) ->
-   LenField = case is_record(hd(TempInstr), length) of
+   Context = #fast_context{pmap = <<_:1, PMapRest/bitstring>>}) ->
+   LenField = case is_record(hd(Instructions), length) of
       true ->
-         LenInstr = hd(TempInstr),
+         LenInstr = hd(Instructions),
          #uInt32{name = LenInstr#length.name, presence = Presence, operator = LenInstr#length.operator};
       false ->
          #uInt32{name = "length", presence = Presence}
    end,
    {{_, LenValue}, Context1, Data1} = erlang_fast_number:decode(Data, LenField, Context),
    case LenValue of
-     absent ->
-         Instrs = case is_record(hd(TempInstr), length) of
-                     true ->
-                        tl(TempInstr);
-                     false ->
-                        TempInstr
-                     end,
-        {{FieldName, absent},
-           Context1#fast_context{pmap = PMapRest, template = Context1#fast_context.template#template{instructions = Instrs}}, Data1};
-     LenValue ->
-        decode(LenValue, Data1, NeedPMap,
-           Context1#fast_context{pmap = PMapRest, template = Context1#fast_context.template#template{instructions = Instructions}})
-  end;
+      absent ->
+         Instrs = case is_record(hd(Instructions), length) of
+            true ->
+               tl(Instructions);
+            false ->
+               Instructions
+         end,
+         {{FieldName, absent},
+            Context1#fast_context{pmap = PMapRest, template = Context1#fast_context.template#template{instructions = Instrs}}, Data1};
+      LenValue ->
+         decode(LenValue, Data1, NeedPMap,
+            Context1#fast_context{pmap = PMapRest, template = Context1#fast_context.template#template{instructions = Instructions}})
+   end;
 
 decode(Data, #sequence{}, Context) ->
-  {sequence, Context, Data}.
+   {sequence, Context, Data}.
 
 decode(0, Data, _NeedPMap, Context) ->
    {[], Context, Data};
