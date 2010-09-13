@@ -129,20 +129,20 @@ when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) 
    L(Err, StringTail),
    case StringTail of
       null when (Presence == optional) andalso (PresenceBit == 1) ->
-         Dicts1 = erlang_fast_dict:put_value(Dict, Key, empty, Dicts),
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
          {{FieldName, absent}, Context#fast_context{dicts = Dicts1, pmap = PMapRest}, DataRest};
       StringTail ->
          case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
             PrevValue when ((PrevValue == undef) or (PrevValue == empty)) andalso (InitialValue == undef) -> % default base value is ""
-               Dicts1 = erlang_fast_dict:put_value(Dict, Key, StringTail, Dicts),
+               Dicts1 = erlang_fast_dicts:put_value(Dict, Key, StringTail, Dicts),
                {{FieldName, StringTail}, Context#fast_context{dicts = Dicts1, pmap = PMapRest}, DataRest};
             PrevValue when ((PrevValue == undef) or (PrevValue == empty)) -> % base valie is a initial value
                NewVal = string:join([InitialValue, StringTail], []),
-               Dicts1 = erlang_fast_dict:put_value(Dict, Key, NewVal, Dicts),
+               Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
                {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1, pmap = PMapRest}, DataRest};
             PrevValue ->
                NewVal = string:join([PrevValue, StringTail], []),
-               Dicts1 = erlang_fast_dict:put_value(Dict, Key, NewVal, Dicts),
+               Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
                {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1, pmap = PMapRest}, DataRest}
          end
    end;

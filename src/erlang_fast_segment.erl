@@ -34,7 +34,7 @@ decode(Data, Context) ->
    %end.
 
 decode_template_id(Data, Context = #fast_context{dicts = Dicts, pmap = <<0:1, PMapRest/bitstring>>, logger = L}) -> %
-   Tid = erlang_fast_dict:get_value(global, ?common_template_id_key, Dicts),
+   Tid = erlang_fast_dicts:get_value(global, ?common_template_id_key, Dicts),
    case Tid of
       undef ->
          L('ERR D5', "Unable to get template ID from dictionary."),

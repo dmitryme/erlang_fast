@@ -11,9 +11,9 @@
 
 parse(XmlFile) ->
    {RootElem, []} = xmerl_scan:file(XmlFile),
-   Dicts = erlang_fast_dict:init(),
+   Dicts = erlang_fast_dicts:init(),
    DictName = string_to_dic(get_attribute(dictionary, RootElem, global)),
-   Dicts1 = erlang_fast_dict:new_dict(DictName, Dicts),
+   Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
    {Dicts2, TList} = parse_template(RootElem, Dicts1, DictName, gb_trees:empty()),
    {Dicts2, #templates{
          ns = get_attribute(ns, RootElem),
@@ -29,7 +29,7 @@ parse_template(#xmlElement{name = templates, content = Childs}, Dicts, DefDict, 
 
 parse_template([XmlElem = #xmlElement{content = Childs} | Rest], Dicts, DefDict, Templates) ->
    DictName = string_to_dic(get_attribute(dictionary, XmlElem, DefDict)),
-   Dicts1 = erlang_fast_dict:new_dict(DictName, Dicts),
+   Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
    {Dicts2, Instructions, _} = parse_instruction(Childs, Dicts1, DictName),
    Template = #template{
                   name = get_attribute(name, XmlElem),
@@ -222,7 +222,7 @@ parse_op(Type, Childs, Dicts, DefDict) ->
          {Dicts, #default{value = string_to_type(Type, get_attribute(value, XmlElem))}};
       XmlElem = #xmlElement{name = copy} ->
          DictName = string_to_dic(get_attribute(dictionary, XmlElem, DefDict)),
-         Dicts1 = erlang_fast_dict:new_dict(DictName, Dicts),
+         Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
          {Dicts1, #copy{
                dictionary = DictName,
                key = get_attribute(key, XmlElem),
@@ -230,7 +230,7 @@ parse_op(Type, Childs, Dicts, DefDict) ->
                value = string_to_type(Type, get_attribute(value, XmlElem))}};
       XmlElem = #xmlElement{name = increment} ->
          DictName = string_to_dic(get_attribute(dictionary, XmlElem, DefDict)),
-         Dicts1 = erlang_fast_dict:new_dict(DictName, Dicts),
+         Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
          {Dicts1, #increment{
                dictionary = DictName,
                key = get_attribute(key, XmlElem),
@@ -238,7 +238,7 @@ parse_op(Type, Childs, Dicts, DefDict) ->
                value = string_to_type(Type, get_attribute(value, XmlElem))}};
       XmlElem = #xmlElement{name = delta} ->
          DictName = string_to_dic(get_attribute(dictionary, XmlElem, DefDict)),
-         Dicts1 = erlang_fast_dict:new_dict(DictName, Dicts),
+         Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
          {Dicts1, #delta{
                dictionary = DictName,
                key = get_attribute(key, XmlElem),
@@ -246,7 +246,7 @@ parse_op(Type, Childs, Dicts, DefDict) ->
                value = string_to_type(Type, get_attribute(value, XmlElem))}};
        XmlElem = #xmlElement{name = tail} ->
          DictName = string_to_dic(get_attribute(dictionary, XmlElem, DefDict)),
-         Dicts1 = erlang_fast_dict:new_dict(DictName, Dicts),
+         Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
          {Dicts1, #tail{
                dictionary = DictName,
                key = get_attribute(key, XmlElem),
