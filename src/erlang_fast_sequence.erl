@@ -35,7 +35,7 @@ decode(Data, #sequence{name = FieldName, presence = Presence, need_pmap = NeedPM
          {Sequence, #context{dicts = Dicts}, Data2} = decode(LenValue, Data1, NeedPMap,
             Context1#context{pmap = PMapRest, template = Context1#context.template#template{instructions =
                   Instrs}}),
-         {Sequence, Context1#context{pmap = PMapRest, template = T, dicts = Dicts}, Data2}
+         {{FieldName, Sequence}, Context1#context{pmap = PMapRest, template = T, dicts = Dicts}, Data2}
    end;
 
 decode(Data, #sequence{}, Context) ->
@@ -47,7 +47,7 @@ decode(0, Data, _NeedPMap, Context) ->
 decode(Length, Data, NeedPMap, Context = #context{template = Template}) ->
    case NeedPMap of
       true ->
-         {Context1 = #context{pmap = <<_TBit:1, PMapRest/bitstring>>}, Data1} = erlang_fast_segment:decode_pmap(Data, Context),
+         {Context1, Data1} = erlang_fast_segment:decode_pmap(Data, Context),
          %?debugFmt("PMap = ~p", [erlang_fast_utils:print_binary(PMapRest)]),
          {Msg, Context2, Data2} = erlang_fast_segment:decode_fields(Data1, Context1),
          {Msgs, Context3, Data3} = decode(Length - 1, Data2, NeedPMap, Context2#context{template = Template}),
