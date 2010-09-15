@@ -34,8 +34,8 @@ decode(Data, {_, FieldName, _, _, optional, #constant{}},
    Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>}) ->
    {{FieldName, absent}, Context#fast_context{pmap = PMapRest}, Data};
 
-decode(Data, {_, FieldName, _, _, optional, #default{value = InitialValue}},
-      Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>}) ->
+decode(Data, {_, FieldName, _, _, _, #default{value = InitialValue}},
+   Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>}) ->
    case InitialValue of
       undef ->
          {{FieldName, absent}, Context#fast_context{pmap = PMapRest}, Data};
@@ -44,74 +44,69 @@ decode(Data, {_, FieldName, _, _, optional, #default{value = InitialValue}},
    end;
 
 decode(Data, {Type, FieldName, _, _, Presence, #default{value = _InitialValue}},
-   Context = #fast_context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>})
-   when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
-      Res = decode_number(Type, Data, is_nullable(Presence)),
-      case Res of
-         not_enough_data ->
-            throw({not_enough_data, Context});
-         {Value, Err, DataRest} ->
-            L(Err, Value),
-            case Presence of
-               mandatory ->
-                  {{FieldName, Value}, Context, DataRest};
-               optional ->
-                  {{FieldName, Value}, Context#fast_context{pmap = PMapRest}, DataRest}
-            end
-      end;
+   Context = #fast_context{logger = L, pmap = <<1:1, PMapRest/bitstring>>}) ->
+   Res = decode_number(Type, Data, is_nullable(Presence)),
+   case Res of
+      not_enough_data ->
+         throw({error, [not_enough_data, Context]});
+      {null, Data1} ->
+         {{FieldName, absent}, Context#fast_context{pmap = PMapRest}, Data1};
+      {Value, Err, Data1} ->
+         L(Err, Value),
+         {{FieldName, Value}, Context#fast_context{pmap = PMapRest}, Data1}
+   end;
 
 decode(Data, {Type, FieldName, _, _, Presence, #copy{dictionary = Dict, key = Key}},
-     Context = #fast_context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>, dicts = Dicts})
-  when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1)->
-     Res = decode_number(Type, Data, is_nullable(Presence)),
-     case Res of
-        not_enough_data ->
-           throw({not_enough_data, Context});
-        {Value, Err, DataRest} ->
-           L(Err, Value),
-           case Presence of
-              mandatory ->
-                 Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-                 {{FieldName, Value}, Context#fast_context{dicts = Dicts1}, DataRest};
-              optional ->
-                 Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-                 {{FieldName, Value}, Context#fast_context{dicts = Dicts1, pmap = PMapRest}, DataRest}
-           end
-     end;
+   Context = #fast_context{logger = L, pmap = <<1:1, PMapRest/bitstring>>, dicts = Dicts}) ->
+   Res = decode_number(Type, Data, is_nullable(Presence)),
+   case Res of
+      not_enough_data ->
+         throw({error, [not_enough_data, Context]});
+      {null, Data1} ->
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
+         {{FieldName, absent}, Context#fast_context{pmap = PMapRest, dicts = Dicts1}, Data1};
+      {Value, Err, Data1} ->
+         L(Err, Value),
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
+         {{FieldName, Value}, Context#fast_context{pmap = PMapRest, dicts = Dicts1}, Data1}
+   end;
 
-decode(Data, {_, FieldName, _, _, optional, #copy{dictionary = Dict, key = Key, value = InitialValue}},
-  Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>, dicts = Dicts}) ->
-  case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
-     empty ->
-        {{FieldName, empty}, Context};
-     undef when InitialValue == undef -> % it becomes empty
-        Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
-        {{FieldName, empty}, Context#fast_context{dicts = Dicts1}, Data};
-     undef ->
-        Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
-        {{FieldName, InitialValue}, Context#fast_context{dicts = Dicts1}, Data};
-     Value ->
-        {{FieldName, Value}, Context#fast_context{pmap = PMapRest}, Data}
-  end;
+decode(Data, {_, FieldName, _, _, Presence, #copy{dictionary = Dict, key = Key, value = InitialValue}},
+   Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>, dicts = Dicts}) ->
+   case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
+      empty ->
+         {{FieldName, empty}, Context};
+      undef when (Presence == mandatory) and (InitialValue == undef) -> % ERR D5
+         throw({error, ['ERR D5', FieldName, "no initial value"]});
+      undef when (Presence == optional) and (InitialValue == undef) -> % it becomes empty
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
+         {{FieldName, empty}, Context#fast_context{pmap = PMapRest, dicts = Dicts1}, Data};
+      undef ->
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
+         {{FieldName, InitialValue}, Context#fast_context{pmap = PMapRest, dicts = Dicts1}, Data};
+      Value ->
+         {{FieldName, Value}, Context#fast_context{pmap = PMapRest}, Data}
+   end;
 
 decode(Data, {Type, FieldName, _, _, Presence, #increment{dictionary = Dict, key = Key}},
-   Context = #fast_context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>, dicts = Dicts})
-when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1)->
+   Context = #fast_context{logger = L, pmap = <<1:1, PMapRest/bitstring>>, dicts = Dicts}) ->
    case decode_number(Type, Data, is_nullable(Presence)) of
       not_enough_data ->
-         throw({not_enough_data, Context});
+         throw({error, [not_enough_data, Context]});
       {Value, Err, DataRest} ->
          L(Err, Value),
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
          {{FieldName, Value}, Context#fast_context{dicts = Dicts1, pmap = PMapRest}, DataRest}
    end;
 
-decode(Data, {Type, FieldName, _, _, optional, #increment{dictionary = Dict, key = Key, value = InitialValue}},
+decode(Data, {Type, FieldName, _, _, Presence, #increment{dictionary = Dict, key = Key, value = InitialValue}},
  Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>, dicts = Dicts}) ->
  case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
     empty ->
        {{FieldName, absent}, Context};
-    undef when InitialValue == undef -> % absent
+    undef when (InitialValue == undef) and (Presence == mandatory) -> % ERR D5
+       throw({error, ['ERR D5', FieldName, "no initial value"]});
+    undef when (InitialValue == undef) and (Presence == optional) -> % absent
        Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
        {{FieldName, absent}, Context#fast_context{dicts = Dicts1}, Data};
     undef ->
@@ -125,27 +120,27 @@ decode(Data, {Type, FieldName, _, _, optional, #increment{dictionary = Dict, key
 
 decode(Data, {_, FieldName, _, _, Presence, #delta{dictionary = Dict, key = Key, value = InitialValue}},
    Context = #fast_context{logger = L, dicts = Dicts}) ->
-   {StringDelta, Err, DataRest} = decode_int(Data, is_nullable(Presence)),
-   L(Err, StringDelta),
-   case StringDelta of
+   {NumDelta, Err, Data1} = decode_int(Data, is_nullable(Presence)),
+   L(Err, NumDelta),
+   case NumDelta of
       null ->
-         {{FieldName, absent}, Context, DataRest};
-      Delta ->
+         {{FieldName, absent}, Context, Data1};
+      NumDelta ->
          case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
             empty ->
-               throw({'ERR D6', "Previous value is empty for delta operator"});
+               throw({error, ['ERR D6', "Previous value is empty for delta operator"]});
             undef when InitialValue == undef -> % initial base value is 0
-               NewVal = 0 + Delta,
+               NewVal = 0 + NumDelta,
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1}, DataRest};
+               {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1}, Data1};
             undef ->
-               NewVal = InitialValue + Delta,
+               NewVal = InitialValue + NumDelta,
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1}, DataRest};
+               {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1}, Data1};
             PrevValue ->
-               NewVal = PrevValue + Delta,
+               NewVal = PrevValue + NumDelta,
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1}, DataRest}
+               {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1}, Data1}
          end
    end;
 
@@ -160,7 +155,7 @@ decode(Data, {Type, FieldName, _, _, Presence, undef}, Context = #fast_context{l
   end;
 
 decode(_, _, _) ->
-   throw(invalid_number_type).
+   throw({error, [invalid_number_type]}).
 
 %% ==========================================================================================
 %% helpers

@@ -2,12 +2,15 @@
 
 -author("Dmitry Melnikov <dmitryme@gmail.com>").
 
--compile([export_all]).
-
 -include_lib("xmerl/include/xmerl.hrl").
 -include("erlang_fast_template.hrl").
 
 -import(erlang_fast_xml_utils, [get_attribute/2, get_attribute/3]).
+
+-export(
+   [
+      parse/1
+   ]).
 
 parse(XmlFile) ->
    {RootElem, []} = xmerl_scan:file(XmlFile),
@@ -63,20 +66,21 @@ parse_instruction([I = #xmlElement{name = templateRef} | Tail], Dicts, DefDict) 
             ns = get_attribute(ns, I)} | Instructions], NeedPMap or false};
 
 parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail], Dicts, DefDict) ->
+   OpName = get_attribute(name, I),
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_op(T, Childs, Dicts1, DefDict),
+   {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
    Presence = get_attribute(presence, I, "mandatory"),
    Instr =  case get_attribute(charset, I, ascii) of
                ascii ->
                   #string{
-                     name = get_attribute(name, I),
+                     name = OpName,
                      ns = get_attribute(ns, I),
                      id = string_to_id(get_attribute(id, I)),
                      presence = string_to_presence(Presence),
                      operator = Operator};
                unicode ->
                   #unicode{
-                     name = get_attribute(name, I),
+                     name = OpName,
                      ns = get_attribute(ns, I),
                      id = string_to_id(get_attribute(id, I)),
                      presence = string_to_presence(Presence),
@@ -85,75 +89,82 @@ parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail],
    {Dicts2, [Instr | Instructions], NeedPMap or need_pmap(Presence, Operator)};
 
 parse_instruction([I = #xmlElement{name = int32 = T, content = Childs} | Tail], Dicts, DefDict) ->
+   OpName = get_attribute(name, I),
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_op(T, Childs, Dicts1, DefDict),
+   {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
    Presence = get_attribute(presence, I, "mandatory"),
    {Dicts2, [#int32{
-            name = get_attribute(name, I),
+            name = OpName,
             ns = get_attribute(ns, I),
             id = string_to_id(get_attribute(id, I)),
             presence = string_to_presence(Presence),
             operator = Operator} | Instructions], NeedPMap or need_pmap(Presence, Operator)};
 
 parse_instruction([I = #xmlElement{name = 'Int64' = T, content = Childs} | Tail], Dicts, DefDict) ->
+   OpName = get_attribute(name, I),
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_op(T, Childs, Dicts1, DefDict),
+   {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
    Presence = get_attribute(presence, I, "mandatory"),
    {Dicts2, [#int64{
-            name = get_attribute(name, I),
+            name = OpName,
             ns = get_attribute(ns, I),
             id = string_to_id(get_attribute(id, I)),
             presence = string_to_presence(Presence),
             operator = Operator} | Instructions], NeedPMap or need_pmap(Presence, Operator)};
 
 parse_instruction([I = #xmlElement{name = uInt32 = T, content = Childs} | Tail], Dicts, DefDict) ->
+   OpName = get_attribute(name, I),
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_op(T, Childs, Dicts1, DefDict),
+   {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
    Presence = get_attribute(presence, I, "mandatory"),
    {Dicts2, [#uInt32{
-            name = get_attribute(name, I),
+            name = OpName,
             ns = get_attribute(ns, I),
             id = string_to_id(get_attribute(id, I)),
             presence = string_to_presence(Presence),
             operator = Operator} | Instructions], NeedPMap or need_pmap(Presence, Operator)};
 
 parse_instruction([I = #xmlElement{name = uInt64 = T, content = Childs} | Tail], Dicts, DefDict) ->
+   OpName = get_attribute(name, I),
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_op(T, Childs, Dicts1, DefDict),
+   {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
    Presence = get_attribute(presence, I, "mandatory"),
    {Dicts2, [#uInt64{
-            name = get_attribute(name, I),
+            name = OpName,
             ns = get_attribute(ns, I),
             id = string_to_id(get_attribute(id, I)),
             presence = string_to_presence(Presence),
             operator = Operator} | Instructions], NeedPMap or need_pmap(Presence, Operator)};
 
 parse_instruction([I = #xmlElement{name = length = T, content = Childs} | Tail], Dicts, DefDict) ->
+   OpName = get_attribute(name, I),
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_op(T, Childs, Dicts1, DefDict),
+   {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
    {Dicts2, [#length{
-            name = get_attribute(name, I),
+            name = OpName,
             ns = get_attribute(ns, I),
             id = string_to_id(get_attribute(id, I)),
             operator = Operator} | Instructions], NeedPMap or false};
 
 parse_instruction([I = #xmlElement{name = decimal, content = Childs} | Tail], Dicts, DefDict) ->
+   OpName = get_attribute(name, I),
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_dec_op(Childs, Dicts1, DefDict),
+   {Dicts2, Operator} = parse_dec_op(OpName, Childs, Dicts1, DefDict),
    Presence = get_attribute(presence, I, "mandatory"),
    {Dicts2, [#decimal{
-            name = get_attribute(name, I),
+            name = OpName,
             ns = get_attribute(ns, I),
             id = string_to_id(get_attribute(id, I)),
             presence = string_to_presence(Presence),
             operator = Operator} | Instructions], NeedPMap or need_pmap(Presence, Operator)};
 
 parse_instruction([I = #xmlElement{name = byteVector = T, content = Childs} | Tail], Dicts, DefDict) ->
+   OpName = get_attribute(name, I),
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_op(T, Childs, Dicts1, DefDict),
+   {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
    Presence = get_attribute(presence, I, "mandatory"),
    {Dicts2, [#byteVector{
-            name = get_attribute(name, I),
+            name = OpName,
             ns = get_attribute(ns, I),
             id = string_to_id(get_attribute(id, I)),
             presence = string_to_presence(Presence),
@@ -195,24 +206,24 @@ parse_instruction([#xmlText{} | Tail], Dicts, DefDict) ->
 parse_instruction([I | _Tail], _, _) ->
    erlang:error({unknown_tag, I}).
 
-parse_dec_op(Childs, Dicts, DefDict) ->
+parse_dec_op(OpName, Childs, Dicts, DefDict) ->
    Res = lists:foldr(fun(#xmlElement{name = exponent, content = C}, {D, DecFieldOp}) ->
-            {Dicts1, Operator} = parse_op(int32, C, D, DefDict),
+            {Dicts1, Operator} = parse_op(OpName ++ "_exponent", int32, C, D, DefDict),
             {Dicts1, DecFieldOp#decFieldOp{exponent = Operator}};
          (#xmlElement{name = mantissa, content = C}, {D, DecFieldOp}) ->
-            {Dicts1, Operator} = parse_op(int64, C, D, DefDict),
+            {Dicts1, Operator} = parse_op(OpName ++ "_mantissa", int64, C, D, DefDict),
             {Dicts1, DecFieldOp#decFieldOp{mantissa = Operator}};
          (_, Acc) ->
             Acc end,
       {Dicts, #decFieldOp{exponent = undef, mantissa = undef}}, Childs),
    case Res of
       {Dicts, #decFieldOp{exponent = undef, mantissa = undef}} ->
-         parse_op(decimal, Childs, Dicts, DefDict);
+         parse_op(OpName, decimal, Childs, Dicts, DefDict);
       _ ->
          Res
    end.
 
-parse_op(Type, Childs, Dicts, DefDict) ->
+parse_op(OpName, Type, Childs, Dicts, DefDict) ->
    case lists:keyfind(xmlElement, 1, Childs) of
       false ->
          {Dicts, undef};
@@ -225,7 +236,7 @@ parse_op(Type, Childs, Dicts, DefDict) ->
          Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
          {Dicts1, #copy{
                dictionary = DictName,
-               key = get_attribute(key, XmlElem),
+               key = get_attribute(key, XmlElem, OpName),
                ns = get_attribute(ns, XmlElem),
                value = string_to_type(Type, get_attribute(value, XmlElem))}};
       XmlElem = #xmlElement{name = increment} ->
@@ -233,7 +244,7 @@ parse_op(Type, Childs, Dicts, DefDict) ->
          Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
          {Dicts1, #increment{
                dictionary = DictName,
-               key = get_attribute(key, XmlElem),
+               key = get_attribute(key, XmlElem, OpName),
                ns = get_attribute(ns, XmlElem),
                value = string_to_type(Type, get_attribute(value, XmlElem))}};
       XmlElem = #xmlElement{name = delta} ->
@@ -241,7 +252,7 @@ parse_op(Type, Childs, Dicts, DefDict) ->
          Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
          {Dicts1, #delta{
                dictionary = DictName,
-               key = get_attribute(key, XmlElem),
+               key = get_attribute(key, XmlElem, OpName),
                ns = get_attribute(ns, XmlElem),
                value = string_to_type(Type, get_attribute(value, XmlElem))}};
        XmlElem = #xmlElement{name = tail} ->
@@ -249,7 +260,7 @@ parse_op(Type, Childs, Dicts, DefDict) ->
          Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
          {Dicts1, #tail{
                dictionary = DictName,
-               key = get_attribute(key, XmlElem),
+               key = get_attribute(key, XmlElem, OpName),
                ns = get_attribute(ns, XmlElem),
                value = string_to_type(Type, get_attribute(value, XmlElem))}}
       end.
@@ -321,7 +332,9 @@ string_to_type(decimal, Str) ->
 string_to_type(byteVector, Str) ->
    Bytes = string:tokens(Str, " "),
    lists:foldl(fun(Byte, Acc) -> Int = erlang:list_to_integer(Byte, 16), <<Acc/binary, Int/integer>> end, <<>>, Bytes);
-string_to_type(_Type, Str) ->
+string_to_type(string, Str) ->
+   list_to_binary(Str);
+string_to_type(_, Str) ->
    Str.
 
 %% ====================================================================================================================

@@ -42,15 +42,15 @@ decode_uint(Data, Nullable) ->
    end.
 
 decode_string(<<1:1, 0:7/integer, Rest/binary>>, false) ->
-   {<<"">>, Rest};
+   {<<"">>, [], Rest};
 decode_string(<<0:8/integer, 1:1, 0:7/integer, Rest/binary>>, false) ->
-   {<<0>>, Rest};
+   {<<0>>, [], Rest};
 decode_string(<<1:1, 0:7/integer, Rest/binary>>, true) ->
    {null, Rest};
 decode_string(<<0:8/integer, 1:1, 0:7/integer, Rest/binary>>, true) ->
-   {<<"">>, Rest};
+   {<<"">>, [], Rest};
 decode_string(<<0:8/integer, 0:8/integer, 1:1, 0:7/integer, Rest/binary>>, true) ->
-   {<<0>>, Rest};
+   {<<0>>, [], Rest};
 decode_string(Data, _Nullable) ->
    Result = decode_string_aux(Data, <<>>),
    case Result of
@@ -60,8 +60,8 @@ decode_string(Data, _Nullable) ->
          {<<Next, Remainder>>, ['ERR R9'], Rest};
       {<<0, 0, Remainder/binary>>, Rest} ->
          {<<Remainder>>, ['ERR R9'], Rest};
-      _ ->
-         Result
+      {Str, Rest} ->
+         {Str, [], Rest}
    end.
 
 decode_string_delta(Data, Nullable) ->
@@ -253,11 +253,11 @@ decode_uint_test() ->
   ?assertEqual(not_enough_data, decode_uint(<<>>, true)).
 
 decode_string_test() ->
-  ?assertEqual({<<"ABC">>, <<>>}, decode_string(<<16#41, 16#42, 16#c3>>, true)),
+   ?assertEqual({<<"ABC">>, [], <<>>}, decode_string(<<16#41, 16#42, 16#c3>>, true)),
   ?assertEqual({null, <<>>}, decode_string(<<16#80>>, true)),
-  ?assertEqual({<<>>, <<>>}, decode_string(<<16#00, 16#80>>, true)),
-  ?assertEqual({<<"ABC">>, <<>>}, decode_string(<<16#41, 16#42, 16#c3>>, false)),
-  ?assertEqual({<<>>, <<>>}, decode_string(<<16#80>>, false)),
+  ?assertEqual({<<>>, [], <<>>}, decode_string(<<16#00, 16#80>>, true)),
+  ?assertEqual({<<"ABC">>, [], <<>>}, decode_string(<<16#41, 16#42, 16#c3>>, false)),
+  ?assertEqual({<<>>, [], <<>>}, decode_string(<<16#80>>, false)),
   ?assertEqual(not_enough_data, decode_string(<<>>, false)),
   ?assertEqual(not_enough_data, decode_string(<<16#41, 16#42, 16#43>>, false)).
 

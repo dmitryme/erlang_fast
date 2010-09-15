@@ -20,8 +20,6 @@
       ,decode_uint/2
    ]).
 
--compile([export_all]).
-
 decode(Data, Context) ->
    F = fun() ->
       {Context1, Data1} = decode_pmap(Data, Context),
@@ -88,17 +86,29 @@ decode_fields(Data, Context = #fast_context{template = Template = #template{inst
          {[DecodedField | DecodedFields], Context2, Data2}
    end.
 
+decode_field(Data, Instr, Context = #fast_context{pmap = <<>>}) ->
+   decode_field(Data, Instr, Context#fast_context{pmap = <<0:1>>});
 decode_field(Data, Instr, Context) when is_record(Instr, string) ->
-   ?debugFmt("Start to decode string ~p~n", [Instr]),
-   erlang_fast_string:decode(Data, Instr, Context);
+   %?debugFmt("Start to decode: pmap = ~p, ~p~n", [erlang_fast_utils:print_binary(Context#fast_context.pmap), Instr]),
+   Res = {Value, _Ctx, _Data1} = erlang_fast_string:decode(Data, Instr, Context),
+   %?debugFmt("~p", [Value]),
+   Res;
 decode_field(Data, Instr, Context)
    when is_record(Instr, uInt32) or is_record(Instr, int32) or is_record(Instr, uInt64) or is_record(Instr, int64) ->
-   ?debugFmt("Start to decode number ~p~n", [Instr]),
-   Res = {{FieldName, Value}, Ctx, Data1} = erlang_fast_number:decode(Data, Instr, Context),
-   ?debugFmt("~p = ~p~n", [FieldName, Value]),
+   %?debugFmt("Start to decode: pmap = ~p, ~p~n", [erlang_fast_utils:print_binary(Context#fast_context.pmap), Instr]),
+   Res = {Value, _Ctx, _Data1} = erlang_fast_number:decode(Data, Instr, Context),
+   %?debugFmt("~p", [Value]),
+   Res;
+decode_field(Data, Instr, Context)
+   when is_record(Instr, decimal) ->
+   %?debugFmt("Start to decode: pmap = ~p, ~p~n", [erlang_fast_utils:print_binary(Context#fast_context.pmap), Instr]),
+   Res = {Value, _Ctx, _Data1} = erlang_fast_decimal:decode(Data, Instr, Context),
+   %?debugFmt("~p", [Value]),
    Res;
 decode_field(Data, Instr, Context) when is_record(Instr, sequence)  ->
    erlang_fast_sequence:decode(Data, Instr, Context);
+decode_field(Data, Instr, Context) when is_record(Instr, group)  ->
+   erlang_fast_group:decode(Data, Instr, Context);
 decode_field(Data, Instr, Context)  ->
    {Instr, Context, Data}.
 
@@ -116,12 +126,30 @@ create_fake_context() ->
 
 decode_test() ->
    Context = create_fake_context(),
-   Data = <<16#c0, 16#d3, 16#01, 16#39, 16#14, 16#c2, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31, 16#42, 16#b3,
-            16#09, 16#4a, 16#6c, 16#e9, 16#83, 16#ae, 16#82, 16#1c, 16#4e, 16#0e, 16#80, 16#01, 16#50, 16#da,
-            16#02, 16#34, 16#19, 16#80, 16#06, 16#47, 16#a1, 16#01, 16#bd, 16#9e, 16#81, 16#82, 16#79, 16#41,
-            16#91, 16#b9, 16#84, 16#b0, 16#81, 16#b1, 16#06, 16#3f, 16#a1, 16#7e, 16#d2, 16#f0, 16#80, 16#01,
-            16#39, 16#14, 16#c3, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31, 16#42, 16#b4, 16#09, 16#4a, 16#6c>>,
-   {Msg, #fast_context{pmap = _Pmap}, _D} = decode(Data, Context),
-   ?debugFmt("~p~n", [Msg]).
+   Data = <<
+   16#c0, 16#d3, 16#01, 16#39, 16#14, 16#c2, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31, 16#42, 16#b3, 16#09, 16#4a,
+   16#6c, 16#e9, 16#83, 16#ae, 16#82, 16#1c, 16#4e, 16#0e, 16#80, 16#01, 16#50, 16#da, 16#02, 16#34, 16#19, 16#80,
+   16#06, 16#47, 16#a1, 16#01, 16#bd, 16#9e, 16#81, 16#82, 16#79, 16#41, 16#91, 16#b9, 16#84, 16#b0, 16#81, 16#b1,
+   16#06, 16#3f, 16#a1, 16#7e, 16#d2, 16#f0, 16#80, 16#01, 16#39, 16#14, 16#c3, 16#23, 16#5a, 16#2f, 16#5f, 16#2d,
+   16#31, 16#42, 16#b4, 16#09, 16#4a, 16#6c, 16#e9, 16#81, 16#b1, 16#81, 16#b0, 16#81, 16#7a, 16#0c, 16#a6, 16#97,
+   16#fa, 16#c0, 16#d4, 16#01, 16#39, 16#14, 16#c4, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31, 16#42, 16#c3, 16#09,
+   16#4a, 16#6c, 16#e9, 16#81, 16#1e, 16#b0, 16#01, 16#50, 16#da, 16#02, 16#34, 16#19, 16#84, 16#81, 16#00, 16#53,
+   16#f9, 16#86, 16#83, 16#fe, 16#03, 16#2e, 16#90, 16#1c, 16#4e, 16#0e, 16#80, 16#83, 16#c0, 16#ed, 16#01, 16#39,
+   16#14, 16#c5, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31, 16#42, 16#c3, 16#09, 16#4a, 16#6c, 16#e9, 16#82, 16#2d,
+   16#e0, 16#82, 16#01, 16#50, 16#da, 16#02, 16#34, 16#19, 16#85, 16#81, 16#00, 16#53, 16#f9, 16#8d, 16#1c, 16#4e,
+   16#0e, 16#80, 16#00, 16#db, 16#80, 16#11, 16#c0, 16#b1, 16#82, 16#7f, 16#34, 16#ba, 16#9e, 16#00, 16#c6, 16#80,
+   16#c0, 16#d3, 16#01, 16#39, 16#14, 16#c6, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31, 16#42, 16#c8, 16#09, 16#4a,
+   16#6c, 16#e9, 16#82, 16#93, 16#b1, 16#02, 16#34, 16#19, 16#87, 16#82, 16#7f, 16#34, 16#ba, 16#be, 16#90, 16#80,
+   16#06, 16#3f, 16#d2, 16#86, 16#88, 16#80, 16#01, 16#39, 16#14, 16#c7, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31,
+   16#42, 16#c8, 16#09, 16#4a, 16#6c, 16#e9, 16#82, 16#a0, 16#83, 16#80, 16#fe, 16#ff, 16#81, 16#81, 16#7a, 16#0b,
+   16#fe, 16#f2, 16#fd, 16#80, 16#01, 16#39, 16#14, 16#c8, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31, 16#42, 16#c9,
+   16#09, 16#4a, 16#6c, 16#e9, 16#81, 16#a1, 16#82, 16#82, 16#7f, 16#34, 16#b0, 16#96, 16#fd, 16#c0, 16#d4, 16#01,
+   16#39, 16#14, 16#c9, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31, 16#44, 16#ad, 16#09, 16#4a, 16#6c, 16#e9, 16#81,
+   16#0e, 16#90, 16#02, 16#34, 16#19, 16#8c, 16#81, 16#80, 16#fc, 16#83, 16#80, 16#82, 16#83, 16#c0, 16#ed, 16#01,
+   16#39, 16#14, 16#ca, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31, 16#44, 16#ad, 16#09, 16#4a, 16#6c, 16#e9, 16#81>>,
+   {T, {Msg1, Context1, Data1}} = timer:tc(?MODULE, decode, [Data, Context]),
+   ?debugFmt("~p ~p~n", [T, Msg1]),
+   {T1, {Msg2, _Context2, _Data2}} = timer:tc(?MODULE, decode, [Data1, Context1]),
+   ?debugFmt("~p ~p~n", [T1, Msg2]).
 
 -endif.

@@ -6,6 +6,7 @@
       ,is_nullable/1
       ,apply_delta/4
       ,increment_value/3
+      ,print_binary/1
    ]).
 
 -include("include/erlang_fast_common.hrl").
@@ -52,8 +53,15 @@ increment_value(uInt32, Value, Inc) when Value + Inc >= 4294967295 ->
    Inc;
 increment_value(uInt64, Value, Inc) when Value + Inc >= 18446744073709551615 ->
    Inc;
-increment_value(uInt64, Value, Inc) ->
+increment_value(Type, Value, Inc) when (Type == int32) or (Type == int64) or (Type == uInt32) or (Type == uInt64)->
    Value + Inc.
+
+print_binary(<<>>) ->
+   [];
+print_binary(<<0:1, Rest/bitstring>>) ->
+   [$0 | print_binary(Rest)];
+print_binary(<<1:1, Rest/bitstring>>) ->
+   [$1 | print_binary(Rest)].
 
 %% ====================================================================================================================
 %% unit testing
@@ -82,5 +90,8 @@ apply_delta_test() ->
    ?assertEqual(<<5,6,4>>, apply_delta(unicode, <<1,2,3,4>>, -3, <<5,6>>)),
    ?assertEqual(<<1,2,3,5,6>>, apply_delta(byteVector, <<1,2,3,4>>, 1, <<5,6>>)),
    ?assertEqual(<<5,6,4>>, apply_delta(byteVector, <<1,2,3,4>>, -3, <<5,6>>)).
+
+print_binary_test() ->
+   ?assertEqual("10101110", print_binary(<<16#ae>>)).
 
 -endif.

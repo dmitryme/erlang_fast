@@ -1,5 +1,7 @@
 -module(erlang_fast_dicts).
 
+-include_lib("eunit/include/eunit.hrl").
+
 -export([
       init/0
       ,new_dict/2
@@ -26,8 +28,10 @@ get_value(DictName, Key, Dicts) ->
       {value, Dict} ->
          case dict:find(Key, Dict) of
             {ok, Value} ->
+               %?debugFmt("get_value(~p,~p):~p", [DictName, Key, Value]),
                Value;
             error ->
+               %?debugFmt("get_value(~p,~p):~p", [DictName, Key, undef]),
                undef
          end
    end.
@@ -37,6 +41,7 @@ put_value(DictName, Key, Value, Dicts) ->
       none ->
          throw({dictionary_not_found, DictName});
       {value, Dict} ->
+         %?debugFmt("put_value(~p,~p,~p)", [DictName, Key, Value]),
          Dict1 = dict:store(Key, Value, Dict),
          gb_trees:update(DictName, Dict1, Dicts)
    end.

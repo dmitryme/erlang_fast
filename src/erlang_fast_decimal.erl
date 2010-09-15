@@ -119,7 +119,7 @@ decode(Data, {_, FieldName, _, _, Presence, #delta{dictionary = Dict, key = Key,
         end
   end;
 
-decode(Data, {decimal, FieldName, _, _, Presence, {ExpOp, MantOp}}, Context) ->
+decode(Data, {decimal, FieldName, _, _, Presence, #decFieldOp{exponent = ExpOp, mantissa = MantOp}}, Context) ->
    case erlang_fast_number:decode(Data, #int32{name = FieldName, presence = Presence, operator =
             ExpOp}, Context) of
       R = {{FieldName, absent}, _, _} ->
