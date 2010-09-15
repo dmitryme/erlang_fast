@@ -10,7 +10,7 @@
 
 create_context(TemplatesFileName, Logger) ->
    {Dicts, Templates} = erlang_fast_xml:parse(TemplatesFileName),
-   #fast_context{dicts = Dicts, templates = Templates, logger = Logger}.
+   #context{dicts = Dicts, templates = Templates, logger = Logger}.
 
 decode(_Data, _Context) ->
    ok.

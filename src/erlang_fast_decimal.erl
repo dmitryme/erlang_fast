@@ -20,30 +20,30 @@
    ]).
 
 decode(Data, {decimal, FieldName, _, _, Presence, #constant{value = InitialValue}},
-  Context = #fast_context{pmap = <<PresenceBit:1, PMapRest/bitstring>>})
+  Context = #context{pmap = <<PresenceBit:1, PMapRest/bitstring>>})
   when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
      case Presence of
         mandatory ->
            {{FieldName, InitialValue}, Context, Data};
         optional ->
-           {{FieldName, InitialValue}, Context#fast_context{pmap = PMapRest}, Data}
+           {{FieldName, InitialValue}, Context#context{pmap = PMapRest}, Data}
      end;
 
 decode(Data, {decimal, FieldName, _, _, optional, #constant{}},
-   Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>}) ->
-   {{FieldName, absent}, Context#fast_context{pmap = PMapRest}, Data};
+   Context = #context{pmap = <<0:1, PMapRest/bitstring>>}) ->
+   {{FieldName, absent}, Context#context{pmap = PMapRest}, Data};
 
 decode(Data, {decimal, FieldName, _, _, optional, #default{value = InitialValue}},
-    Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>}) ->
+    Context = #context{pmap = <<0:1, PMapRest/bitstring>>}) ->
  case InitialValue of
     undef ->
-       {{FieldName, absent}, Context#fast_context{pmap = PMapRest}, Data};
+       {{FieldName, absent}, Context#context{pmap = PMapRest}, Data};
     InitialValue ->
-       {{FieldName, InitialValue}, Context#fast_context{pmap = PMapRest}, Data}
+       {{FieldName, InitialValue}, Context#context{pmap = PMapRest}, Data}
  end;
 
 decode(Data, {decimal, FieldName, _, _, Presence, #default{value = _InitialValue}},
-  Context = #fast_context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>})
+  Context = #context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>})
   when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
      Res = decode_scaled(Data, is_nullable(Presence)),
      case Res of
@@ -55,12 +55,12 @@ decode(Data, {decimal, FieldName, _, _, Presence, #default{value = _InitialValue
               mandatory ->
                  {{FieldName, Value}, Context, DataRest};
               optional ->
-                 {{FieldName, Value}, Context#fast_context{pmap = PMapRest}, DataRest}
+                 {{FieldName, Value}, Context#context{pmap = PMapRest}, DataRest}
            end
      end;
 
 decode(Data, {decimal, FieldName, _, _, Presence, #copy{dictionary = Dict, key = Key}},
-    Context = #fast_context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>, dicts = Dicts})
+    Context = #context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>, dicts = Dicts})
  when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1)->
     Res = decode_scaled(Data, is_nullable(Presence)),
     case Res of
@@ -71,30 +71,30 @@ decode(Data, {decimal, FieldName, _, _, Presence, #copy{dictionary = Dict, key =
           case Presence of
              mandatory ->
                 Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-                {{FieldName, Value}, Context#fast_context{dicts = Dicts1}, DataRest};
+                {{FieldName, Value}, Context#context{dicts = Dicts1}, DataRest};
              optional ->
                 Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-                {{FieldName, Value}, Context#fast_context{dicts = Dicts1, pmap = PMapRest}, DataRest}
+                {{FieldName, Value}, Context#context{dicts = Dicts1, pmap = PMapRest}, DataRest}
           end
     end;
 
 decode(Data, {decimal, FieldName, _, _, optional, #copy{dictionary = Dict, key = Key, value = InitialValue}},
- Context = #fast_context{pmap = <<0:1, PMapRest/bitstring>>, dicts = Dicts}) ->
+ Context = #context{pmap = <<0:1, PMapRest/bitstring>>, dicts = Dicts}) ->
  case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
     empty ->
        {{FieldName, empty}, Context};
     undef when InitialValue == undef -> % it becomes empty
        Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
-       {{FieldName, empty}, Context#fast_context{dicts = Dicts1}, Data};
+       {{FieldName, empty}, Context#context{dicts = Dicts1}, Data};
     undef ->
        Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
-       {{FieldName, InitialValue}, Context#fast_context{dicts = Dicts1}, Data};
+       {{FieldName, InitialValue}, Context#context{dicts = Dicts1}, Data};
     Value ->
-       {{FieldName, Value}, Context#fast_context{pmap = PMapRest}, Data}
+       {{FieldName, Value}, Context#context{pmap = PMapRest}, Data}
  end;
 
 decode(Data, {_, FieldName, _, _, Presence, #delta{dictionary = Dict, key = Key, value = InitialValue}},
-  Context = #fast_context{logger = L, dicts = Dicts}) ->
+  Context = #context{logger = L, dicts = Dicts}) ->
   {DecimalDelta, Err, DataRest} = decode_scaled(Data, is_nullable(Presence)),
   L(Err, DecimalDelta),
   case DecimalDelta of
@@ -107,15 +107,15 @@ decode(Data, {_, FieldName, _, _, Presence, #delta{dictionary = Dict, key = Key,
            undef when InitialValue == undef -> % initial base value is 0
               NewVal = {0 + MantissaDelta, 0 + ExponentDelta},
               Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-              {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1}, DataRest};
+              {{FieldName, NewVal}, Context#context{dicts = Dicts1}, DataRest};
            undef ->
               NewVal = {element(1, InitialValue) + MantissaDelta, element(2, InitialValue) + ExponentDelta},
               Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-              {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1}, DataRest};
+              {{FieldName, NewVal}, Context#context{dicts = Dicts1}, DataRest};
            {PrevMantissa, PrevExponent} ->
               NewVal = {PrevMantissa + MantissaDelta, PrevExponent + ExponentDelta},
               Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-              {{FieldName, NewVal}, Context#fast_context{dicts = Dicts1}, DataRest}
+              {{FieldName, NewVal}, Context#context{dicts = Dicts1}, DataRest}
         end
   end;
 
@@ -131,7 +131,7 @@ decode(Data, {decimal, FieldName, _, _, Presence, #decFieldOp{exponent = ExpOp, 
          {{FieldName, {Mantissa, Exponent}}, Context2, Data2}
    end;
 
-decode(Data, {decimal, FieldName, _, _, Presence, undef}, Context = #fast_context{logger = L}) ->
+decode(Data, {decimal, FieldName, _, _, Presence, undef}, Context = #context{logger = L}) ->
    {Value, Err, DataRest} = decode_scaled(Data, is_nullable(Presence)),
    L(Err, Value),
    case Value of

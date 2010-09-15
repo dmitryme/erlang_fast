@@ -33,7 +33,7 @@ decode(Data, Context) ->
    %     Err
    %end.
 
-decode_template_id(Data, Context = #fast_context{dicts = Dicts, pmap = <<0:1, PMapRest/bitstring>>, logger = L}) -> %
+decode_template_id(Data, Context = #context{dicts = Dicts, pmap = <<0:1, PMapRest/bitstring>>, logger = L}) -> %
    Tid = erlang_fast_dicts:get_value(global, ?common_template_id_key, Dicts),
    case Tid of
       undef ->
@@ -44,11 +44,11 @@ decode_template_id(Data, Context = #fast_context{dicts = Dicts, pmap = <<0:1, PM
          throw({'ERR D6', unable_to_know_template_id});
       Tid ->
          Template = erlang_fast_utils:find_template(Tid, Context),
-         {Context#fast_context{pmap = PMapRest, template = Template}, Data}
+         {Context#context{pmap = PMapRest, template = Template}, Data}
    end;
 
 decode_template_id(Data,
-   Context = #fast_context{dicts = Dicts, pmap = <<1:1, PMapRest/bitstring>>, logger = L}) -> % tid is present into stream
+   Context = #context{dicts = Dicts, pmap = <<1:1, PMapRest/bitstring>>, logger = L}) -> % tid is present into stream
    Res = erlang_fast_decode_types:decode_uint(Data, false),
    case Res of
       not_enough_data ->
@@ -57,27 +57,27 @@ decode_template_id(Data,
          L(Err, Tid),
          Template = erlang_fast_utils:find_template(Tid, Context),
          Dicts1 = erlang_fast_dicts:put_value(global, ?common_template_id_key, Tid, Dicts),
-         {Context#fast_context{pmap = PMapRest, template = Template, dicts = Dicts1}, Data1}
+         {Context#context{pmap = PMapRest, template = Template, dicts = Dicts1}, Data1}
    end.
 
-decode_pmap(Data, Context = #fast_context{logger = L}) ->
+decode_pmap(Data, Context = #context{logger = L}) ->
    Res = erlang_fast_decode_types:decode_pmap(Data),
    case Res of
       not_enough_data ->
          throw({not_enough_data, Context});
       {Value, Err, Data1} ->
          L(Err, Value),
-         {Context#fast_context{pmap = Value}, Data1}
+         {Context#context{pmap = Value}, Data1}
    end.
 
-decode_fields(Data, Context = #fast_context{template = #template{instructions = []}}) ->
+decode_fields(Data, Context = #context{template = #template{instructions = []}}) ->
   {[], Context, Data};
 
-decode_fields(Data, Context = #fast_context{template = Template = #template{instructions = [Instr | Tail]}}) ->
+decode_fields(Data, Context = #context{template = Template = #template{instructions = [Instr | Tail]}}) ->
    {DecodedField, Context1, Data1} = decode_field(
       Data,
       Instr,
-      Context#fast_context{template = Template#template{instructions = Tail}}),
+      Context#context{template = Template#template{instructions = Tail}}),
    {DecodedFields, Context2, Data2} = decode_fields(Data1, Context1),
    case DecodedField of
       {_FieldName, absent} ->
@@ -86,22 +86,22 @@ decode_fields(Data, Context = #fast_context{template = Template = #template{inst
          {[DecodedField | DecodedFields], Context2, Data2}
    end.
 
-decode_field(Data, Instr, Context = #fast_context{pmap = <<>>}) ->
-   decode_field(Data, Instr, Context#fast_context{pmap = <<0:1>>});
+decode_field(Data, Instr, Context = #context{pmap = <<>>}) ->
+   decode_field(Data, Instr, Context#context{pmap = <<0:1>>});
 decode_field(Data, Instr, Context) when is_record(Instr, string) ->
-   %?debugFmt("Start to decode: pmap = ~p, ~p~n", [erlang_fast_utils:print_binary(Context#fast_context.pmap), Instr]),
+   %?debugFmt("Start to decode: pmap = ~p, ~p~n", [erlang_fast_utils:print_binary(Context#context.pmap), Instr]),
    Res = {Value, _Ctx, _Data1} = erlang_fast_string:decode(Data, Instr, Context),
    %?debugFmt("~p", [Value]),
    Res;
 decode_field(Data, Instr, Context)
    when is_record(Instr, uInt32) or is_record(Instr, int32) or is_record(Instr, uInt64) or is_record(Instr, int64) ->
-   %?debugFmt("Start to decode: pmap = ~p, ~p~n", [erlang_fast_utils:print_binary(Context#fast_context.pmap), Instr]),
+   %?debugFmt("Start to decode: pmap = ~p, ~p~n", [erlang_fast_utils:print_binary(Context#context.pmap), Instr]),
    Res = {Value, _Ctx, _Data1} = erlang_fast_number:decode(Data, Instr, Context),
    %?debugFmt("~p", [Value]),
    Res;
 decode_field(Data, Instr, Context)
    when is_record(Instr, decimal) ->
-   %?debugFmt("Start to decode: pmap = ~p, ~p~n", [erlang_fast_utils:print_binary(Context#fast_context.pmap), Instr]),
+   %?debugFmt("Start to decode: pmap = ~p, ~p~n", [erlang_fast_utils:print_binary(Context#context.pmap), Instr]),
    Res = {Value, _Ctx, _Data1} = erlang_fast_decimal:decode(Data, Instr, Context),
    %?debugFmt("~p", [Value]),
    Res;

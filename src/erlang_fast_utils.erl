@@ -13,7 +13,7 @@
 -include("include/erlang_fast_context.hrl").
 -include("include/erlang_fast_template.hrl").
 
-find_template(Tid, Context = #fast_context{templates = Templates}) ->
+find_template(Tid, Context = #context{templates = Templates}) ->
    case gb_trees:lookup(Tid, Templates#templates.tlist) of
       none ->
          throw({'ERR D9', Tid, Context});

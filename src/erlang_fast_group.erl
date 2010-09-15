@@ -10,5 +10,5 @@
    ]).
 
 
-decode(Data, #group{}, Context) ->
-   {group, Context, Data}.
+decode(Data, #group{}, Context = #context{pmap = <<0:1, PMapRest/bitstring>>}) ->
+   {group, Context#context{pmap = PMapRest}, Data}.
