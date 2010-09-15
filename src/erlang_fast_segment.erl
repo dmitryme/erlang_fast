@@ -12,6 +12,8 @@
 -include("erlang_fast_context.hrl").
 -include("erlang_fast_common.hrl").
 
+-include_lib("eunit/include/eunit.hrl").
+
 -import(erlang_fast_decode_types,
    [
       decode_pmap/1
@@ -53,11 +55,11 @@ decode_template_id(Data,
    case Res of
       not_enough_data ->
          throw({not_enough_data, Context});
-      {Tid, Err, Rest} ->
+      {Tid, Err, Data1} ->
          L(Err, Tid),
          Template = erlang_fast_utils:find_template(Tid, Context),
          Dicts1 = erlang_fast_dicts:put_value(global, ?common_template_id_key, Tid, Dicts),
-         {Context#fast_context{pmap = PMapRest, template = Template, dicts = Dicts1}, Rest}
+         {Context#fast_context{pmap = PMapRest, template = Template, dicts = Dicts1}, Data1}
    end.
 
 decode_pmap(Data, Context = #fast_context{logger = L}) ->
@@ -65,32 +67,36 @@ decode_pmap(Data, Context = #fast_context{logger = L}) ->
    case Res of
       not_enough_data ->
          throw({not_enough_data, Context});
-      {Value, Err, Rest} ->
+      {Value, Err, Data1} ->
          L(Err, Value),
-         {Context#fast_context{pmap = Value}, Rest}
+         {Context#fast_context{pmap = Value}, Data1}
    end.
 
 decode_fields(Data, Context = #fast_context{template = #template{instructions = []}}) ->
   {[], Context, Data};
 
 decode_fields(Data, Context = #fast_context{template = Template = #template{instructions = [Instr | Tail]}}) ->
-   {DecodedField, Context1, Rest1} = decode_field(
+   {DecodedField, Context1, Data1} = decode_field(
       Data,
       Instr,
       Context#fast_context{template = Template#template{instructions = Tail}}),
-   {DecodedFields, Context2, Rest2} = decode_fields(Rest1, Context1),
+   {DecodedFields, Context2, Data2} = decode_fields(Data1, Context1),
    case DecodedField of
       {_FieldName, absent} ->
-         {DecodedFields, Context2, Rest2};
+         {DecodedFields, Context2, Data2};
       DecodedField ->
-         {[DecodedField | DecodedFields], Context2, Rest2}
+         {[DecodedField | DecodedFields], Context2, Data2}
    end.
 
 decode_field(Data, Instr, Context) when is_record(Instr, string) ->
+   ?debugFmt("Start to decode string ~p~n", [Instr]),
    erlang_fast_string:decode(Data, Instr, Context);
 decode_field(Data, Instr, Context)
-  when is_record(Instr, uInt32) or is_record(Instr, int32) or is_record(Instr, uInt64) or is_record(Instr, int64) ->
-  erlang_fast_number:decode(Data, Instr, Context);
+   when is_record(Instr, uInt32) or is_record(Instr, int32) or is_record(Instr, uInt64) or is_record(Instr, int64) ->
+   ?debugFmt("Start to decode number ~p~n", [Instr]),
+   Res = {{FieldName, Value}, Ctx, Data1} = erlang_fast_number:decode(Data, Instr, Context),
+   ?debugFmt("~p = ~p~n", [FieldName, Value]),
+   Res;
 decode_field(Data, Instr, Context) when is_record(Instr, sequence)  ->
    erlang_fast_sequence:decode(Data, Instr, Context);
 decode_field(Data, Instr, Context)  ->
