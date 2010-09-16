@@ -1,6 +1,6 @@
 -module(erlang_fast_templates).
 
--include("include/erlang_fast_template.hrl").
+-include("erlang_fast_template.hrl").
 
 -export([
       init/0
@@ -54,7 +54,7 @@ create_fake_context() ->
 
 find_template_test() ->
    Context = create_fake_context(),
-   ?assertMatch({template, "MDIncRefresh_83", _, 83, _, "83", _, _}, get_by_id(83,
+   ?assertMatch({template, "MDIncRefresh_83", _, 83, _, "83", _}, get_by_id(83,
          Context#context.templates#templates.tlist)).
 
 -endif.

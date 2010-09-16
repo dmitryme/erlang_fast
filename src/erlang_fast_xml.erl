@@ -4,6 +4,7 @@
 
 -include_lib("xmerl/include/xmerl.hrl").
 -include("erlang_fast_template.hrl").
+-include("erlang_fast_common.hrl").
 
 -import(erlang_fast_xml_utils, [get_attribute/2, get_attribute/3]).
 
@@ -17,8 +18,9 @@ parse(XmlFile) ->
    Dicts = erlang_fast_dicts:init(),
    DictName = string_to_dic(get_attribute(dictionary, RootElem, global)),
    Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
-   {Dicts2, TList} = parse_template(RootElem, Dicts1, DictName, erlang_fast_templates:init()),
-   {Dicts2, #templates{
+   Dicts2 = erlang_fast_dicts:new_dict(?type_dictionary("any"), Dicts1),
+   {Dicts3, TList} = parse_template(RootElem, Dicts2, DictName, erlang_fast_templates:init()),
+   {Dicts3, #templates{
          ns = get_attribute(ns, RootElem),
          templateNs = get_attribute(templateNs, RootElem),
          dictionary = DictName,
@@ -31,32 +33,34 @@ parse_template(#xmlElement{name = templates, content = Childs}, Dicts, DefDict, 
    parse_template(Childs, Dicts, DefDict, Templates);
 
 parse_template([XmlElem = #xmlElement{content = Childs} | Rest], Dicts, DefDict, Templates) ->
+   TemplateName = get_attribute(name, XmlElem),
    DictName = string_to_dic(get_attribute(dictionary, XmlElem, DefDict)),
    Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
-   {Dicts2, Instructions, _} = parse_instruction(Childs, Dicts1, DictName),
+   Dicts2 = erlang_fast_dicts:new_dict(?template_dictionary(TemplateName), Dicts1),
+   {Dicts3, Instructions, _} = parse_instruction(Childs, Dicts2, DictName),
    Template = #template{
                   name = get_attribute(name, XmlElem),
                   templateNs = get_attribute(templateNs, XmlElem),
                   id = string_to_id(get_attribute(id, XmlElem)),
                   ns = get_attribute(ns, XmlElem),
                   dictionary = DictName,
-                  typeRef = parse_typeRef(Childs),
                   instructions = Instructions},
    Templates1 = erlang_fast_templates:add_template(Template, Templates),
-   parse_template(Rest, Dicts2, DefDict, Templates1);
+   parse_template(Rest, Dicts3, DefDict, Templates1);
 
 parse_template([#xmlText{} | Rest], Dicts, DefDict, Templates) ->
    parse_template(Rest, Dicts, DefDict, Templates).
 
-parse_typeRef([]) ->
-   undef;
-parse_typeRef([I = #xmlElement{name = typeRef} | _Tail]) ->
-   get_attribute(name, I);
-parse_typeRef([_|Tail]) ->
-   parse_typeRef(Tail).
-
 parse_instruction([], Dicts, _DefDict) ->
    {Dicts, [], false};
+
+parse_instruction([I = #xmlElement{name = typeRef} | Tail], Dicts, DefDict) ->
+   TypeName = get_attribute(name, I),
+   Dicts1 = erlang_fast_dicts:new_dict(?type_dictionary(TypeName), Dicts),
+   {Dicts2, Instructions, NeedPMap} = parse_instruction(Tail, Dicts1, DefDict),
+   {Dicts2, [#typeRef{
+            name = get_attribute(name, I),
+            ns = get_attribute(ns, I)} | Instructions], NeedPMap or false};
 
 parse_instruction([I = #xmlElement{name = templateRef} | Tail], Dicts, DefDict) ->
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
@@ -182,7 +186,6 @@ parse_instruction([I = #xmlElement{name = sequence, content = Childs} | Tail], D
             presence = string_to_presence(Presence),
             dictionary = DictName,
             need_pmap = NeedPMap,
-            typeRef = parse_typeRef(Childs),
             instructions = SeqInstructions} | Instructions], need_pmap(Presence)};
 
 parse_instruction([I = #xmlElement{name = group, content = Childs} | Tail], Dicts, DefDict) ->
@@ -197,7 +200,6 @@ parse_instruction([I = #xmlElement{name = group, content = Childs} | Tail], Dict
             presence = string_to_presence(Presence),
             dictionary = DictName,
             need_pmap = NeedPMap,
-            typeRef = parse_typeRef(Childs),
             instructions = GroupInstructions} | Instructions], need_pmap(Presence)};
 
 parse_instruction([#xmlText{} | Tail], Dicts, DefDict) ->
@@ -265,6 +267,9 @@ parse_op(OpName, Type, Childs, Dicts, DefDict) ->
                value = string_to_type(Type, get_attribute(value, XmlElem))}}
       end.
 
+%% ====================================================================================================================
+%% helpers
+%% ====================================================================================================================
 need_pmap("mandatory") -> false;
 need_pmap("optional") -> true.
 

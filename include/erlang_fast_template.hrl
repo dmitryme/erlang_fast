@@ -1,5 +1,5 @@
 -record(templates, {ns = undef, templateNs = undef, dictionary = undef, tlist}).
--record(template, {name, templateNs = undef, id= undef, ns = undef, dictionary = undef, typeRef = undef, instructions}).
+-record(template, {name, templateNs = undef, id= undef, ns = undef, dictionary = undef, instructions}).
 -record(typeRef, {name, ns = undef}).
 -record(templateRef, {name, templateNs = undef, ns = undef}).
 -record(int32, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).
@@ -10,9 +10,9 @@
 -record(string, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).
 -record(unicode, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).
 -record(byteVector, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).
--record(sequence, {name, ns = undef, id = undef, presence = mandatory, need_pmap = false, dictionary = undef, typeRef = undef, instructions}).
+-record(sequence, {name, ns = undef, id = undef, presence = mandatory, need_pmap = false, dictionary = undef, instructions}).
 -record(length, {name = undef, ns = undef, id = undef, operator = undef}).
--record(group, {name, ns = undef, id = undef, presence = mandatory, need_pmap = false, dictionary = undef, typeRef = undef, instructions}).
+-record(group, {name, ns = undef, id = undef, presence = mandatory, need_pmap = false, dictionary = undef, instructions}).
 -record(constant, {value = undef}).
 -record(default,  {value = undef}).
 -record(copy, {dictionary = undef, key = undef, ns = undef, value = undef}).
