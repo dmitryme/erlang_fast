@@ -43,7 +43,7 @@ decode_template_id(Data, Context = #context{dicts = Dicts, pmap = <<0:1, PMapRes
          L('ERR D6', "Template ID is empty in global dictionary."),
          throw({'ERR D6', unable_to_know_template_id});
       Tid ->
-         Template = erlang_fast_utils:find_template(Tid, Context),
+         Template = erlang_fast_templates:get_by_id(Tid, Context#context.templates#templates.tlist),
          {Context#context{pmap = PMapRest, template = Template}, Data}
    end;
 
@@ -55,7 +55,7 @@ decode_template_id(Data,
          throw({not_enough_data, Context});
       {Tid, Err, Data1} ->
          L(Err, Tid),
-         Template = erlang_fast_utils:find_template(Tid, Context),
+         Template = erlang_fast_templates:get_by_id(Tid, Context#context.templates#templates.tlist),
          Dicts1 = erlang_fast_dicts:put_value(global, ?common_template_id_key, Tid, Dicts),
          {Context#context{pmap = PMapRest, template = Template, dicts = Dicts1}, Data1}
    end.
@@ -80,8 +80,12 @@ decode_fields(Data, Context = #context{template = Template = #template{instructi
       Context#context{template = Template#template{instructions = Tail}}),
    {DecodedFields, Context2, Data2} = decode_fields(Data1, Context1),
    case DecodedField of
+      skip ->
+         {DecodedFields, Context2, Data2};
       {_FieldName, absent} ->
          {DecodedFields, Context2, Data2};
+      DecodedField when is_list(DecodedField) ->
+         {DecodedField ++ DecodedFields, Context2, Data2};
       DecodedField ->
          {[DecodedField | DecodedFields], Context2, Data2}
    end.
@@ -105,10 +109,22 @@ decode_field(Data, Instr, Context)
    Res = {Value, _Ctx, _Data1} = erlang_fast_decimal:decode(Data, Instr, Context),
    %?debugFmt("~p", [Value]),
    Res;
-decode_field(Data, Instr, Context) when is_record(Instr, sequence)  ->
+decode_field(Data, Instr = #sequence{}, Context) ->
    erlang_fast_sequence:decode(Data, Instr, Context);
-decode_field(Data, Instr, Context) when is_record(Instr, group)  ->
+
+decode_field(Data, Instr = #group{}, Context) ->
    erlang_fast_group:decode(Data, Instr, Context);
+
+% dynamic templateRef
+decode_field(Data, #templateRef{name = undef}, Context) ->
+   {Msg, #context{dicts = D}, Data1} = decode(Data, Context),
+   {Msg, Context#context{dicts = D}, Data1};
+
+%static templateRef
+decode_field(Data, Instr = #templateRef{name = Name}, Context = #context{template = #template{instructions = Instrs}}) ->
+   TemplateRef = erlang_fast_templates:get_by_name(Name, Context#context.templates#templates.tlist),
+   {skip, Data, Context#context.template#template{instructions = TemplateRef#template.instructions ++ Instrs}};
+
 decode_field(Data, Instr, Context)  ->
    {Instr, Context, Data}.
 

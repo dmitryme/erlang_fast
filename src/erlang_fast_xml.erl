@@ -17,7 +17,7 @@ parse(XmlFile) ->
    Dicts = erlang_fast_dicts:init(),
    DictName = string_to_dic(get_attribute(dictionary, RootElem, global)),
    Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
-   {Dicts2, TList} = parse_template(RootElem, Dicts1, DictName, gb_trees:empty()),
+   {Dicts2, TList} = parse_template(RootElem, Dicts1, DictName, erlang_fast_templates:init()),
    {Dicts2, #templates{
          ns = get_attribute(ns, RootElem),
          templateNs = get_attribute(templateNs, RootElem),
@@ -42,8 +42,8 @@ parse_template([XmlElem = #xmlElement{content = Childs} | Rest], Dicts, DefDict,
                   dictionary = DictName,
                   typeRef = parse_typeRef(Childs),
                   instructions = Instructions},
-   Templates2 = gb_trees:insert(Template#template.id, Template, Templates),
-   parse_template(Rest, Dicts2, DefDict, Templates2);
+   Templates1 = erlang_fast_templates:add_template(Template, Templates),
+   parse_template(Rest, Dicts2, DefDict, Templates1);
 
 parse_template([#xmlText{} | Rest], Dicts, DefDict, Templates) ->
    parse_template(Rest, Dicts, DefDict, Templates).
@@ -300,13 +300,6 @@ string_to_presence("mandatory") ->
    mandatory;
 string_to_presence(Str) ->
    erlang:error({unkown_presence_attribute, Str}).
-
-string_to_charset("ascii") ->
-   ascii;
-string_to_charset("unicode") ->
-   unicode;
-string_to_charset(Str) ->
-   erlang:error({unknown_charset_attribute, Str}).
 
 string_to_id(undef) ->
    undef;

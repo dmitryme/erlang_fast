@@ -2,8 +2,7 @@
 
 -export(
    [
-      find_template/2
-      ,is_nullable/1
+      is_nullable/1
       ,apply_delta/4
       ,increment_value/3
       ,print_binary/1
@@ -12,14 +11,6 @@
 -include("include/erlang_fast_common.hrl").
 -include("include/erlang_fast_context.hrl").
 -include("include/erlang_fast_template.hrl").
-
-find_template(Tid, Context = #context{templates = Templates}) ->
-   case gb_trees:lookup(Tid, Templates#templates.tlist) of
-      none ->
-         throw({'ERR D9', Tid, Context});
-      {value, Template} ->
-         Template
-   end.
 
 is_nullable(optional) -> true;
 is_nullable(mandatory) -> false.
@@ -68,16 +59,6 @@ print_binary(<<1:1, Rest/bitstring>>) ->
 %% ====================================================================================================================
 -ifdef(EUNIT).
 -include_lib("eunit/include/eunit.hrl").
-
-create_fake_context() ->
-   F = fun([], _) -> ok;
-          (Err, Val) -> io:format("~p: ~p~n", [Err, Val])
-       end,
-   erlang_fast:create_context("doc/templates.xml", F).
-
-find_template_test() ->
-   Context = create_fake_context(),
-   ?assertMatch({template, "MDIncRefresh_83", _, 83, _, "83", _, _}, find_template(83, Context)).
 
 apply_delta_test() ->
    ?assertEqual("abcdeab", apply_delta(string, "abcdef", 1, "ab")),

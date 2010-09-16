@@ -12,7 +12,7 @@ decode(Data, #sequence{name = FieldName, instructions = []}, Context) ->
    {{FieldName, absent}, Context, Data};
 
 decode(Data, #sequence{name = FieldName, presence = Presence, need_pmap = NeedPMap, instructions = Instructions},
-   Context = #context{pmap = <<_:1, PMapRest/bitstring>>, template = T}) ->
+   Context = #context{pmap = <<_:1, PMapRest/bitstring>>}) ->
    LenField = case is_record(hd(Instructions), length) of
       true ->
          LenInstr = hd(Instructions),
@@ -35,7 +35,7 @@ decode(Data, #sequence{name = FieldName, presence = Presence, need_pmap = NeedPM
          {Sequence, #context{dicts = Dicts}, Data2} = decode(LenValue, Data1, NeedPMap,
             Context1#context{pmap = PMapRest, template = Context1#context.template#template{instructions =
                   Instrs}}),
-         {{FieldName, Sequence}, Context1#context{pmap = PMapRest, template = T, dicts = Dicts}, Data2}
+         {{FieldName, Sequence}, Context#context{pmap = PMapRest, dicts = Dicts}, Data2}
    end;
 
 decode(Data, #sequence{}, Context) ->
