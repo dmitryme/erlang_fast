@@ -8,6 +8,8 @@
 -include("erlang_fast_context.hrl").
 -include("erlang_fast_common.hrl").
 
+-include_lib("eunit/include/eunit.hrl").
+
 -import(erlang_fast_utils,
    [
       is_nullable/1
@@ -120,8 +122,8 @@ decode(Data, {_, FieldName, _, _, Presence, #delta{dictionary = Dict, key = Key,
   end;
 
 decode(Data, {decimal, FieldName, _, _, Presence, #decFieldOp{exponent = ExpOp, mantissa = MantOp}}, Context) ->
-   case erlang_fast_number:decode(Data, #int32{name = FieldName, presence = Presence, operator =
-            ExpOp}, Context) of
+   {Res, _, _} = erlang_fast_number:decode(Data, #int32{name = FieldName, presence = Presence, operator = ExpOp}, Context),
+   case erlang_fast_number:decode(Data, #int32{name = FieldName, presence = Presence, operator = ExpOp}, Context) of
       R = {{FieldName, absent}, _, _} ->
          R;
       {{FieldName, Exponent}, Context1, Data1} ->

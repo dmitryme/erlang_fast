@@ -46,7 +46,7 @@ decode_string(<<1:1, 0:7/integer, Rest/binary>>, false) ->
 decode_string(<<0:8/integer, 1:1, 0:7/integer, Rest/binary>>, false) ->
    {<<0>>, [], Rest};
 decode_string(<<1:1, 0:7/integer, Rest/binary>>, true) ->
-   {null, Rest};
+   {null, [], Rest};
 decode_string(<<0:8/integer, 1:1, 0:7/integer, Rest/binary>>, true) ->
    {<<"">>, [], Rest};
 decode_string(<<0:8/integer, 0:8/integer, 1:1, 0:7/integer, Rest/binary>>, true) ->
@@ -116,8 +116,8 @@ decode_scaled(Data, Nullable) ->
    case Exponent of
       not_enough_data ->
          not_enough_data;
-      {null, _Err, _Rest} ->
-         null;
+      Res = {null, _Err, _Rest} ->
+         Res;
       {ExpValue, Err, Rest} ->
          Mantissa = decode_int(Rest, Nullable),
          case Mantissa of

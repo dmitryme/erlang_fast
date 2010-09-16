@@ -49,7 +49,7 @@ decode(Data, {Type, FieldName, _, _, Presence, #default{value = _InitialValue}},
    case Res of
       not_enough_data ->
          throw({error, [not_enough_data, Context]});
-      {null, Data1} ->
+      {null, _, Data1} ->
          {{FieldName, absent}, Context#context{pmap = PMapRest}, Data1};
       {Value, Err, Data1} ->
          L(Err, Value),
@@ -62,7 +62,7 @@ decode(Data, {Type, FieldName, _, _, Presence, #copy{dictionary = Dict, key = Ke
    case Res of
       not_enough_data ->
          throw({error, [not_enough_data, Context]});
-      {null, Data1} ->
+      {null, _, Data1} ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
          {{FieldName, absent}, Context#context{pmap = PMapRest, dicts = Dicts1}, Data1};
       {Value, Err, Data1} ->

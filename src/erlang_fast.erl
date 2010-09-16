@@ -13,4 +13,4 @@ create_context(TemplatesFileName, Logger) ->
    #context{dicts = Dicts, templates = Templates, logger = Logger}.
 
 decode(Data, Context) ->
-   erlang_decode_segment:decode(Data, Context).
+   erlang_fast_segment:decode(Data, Context).
