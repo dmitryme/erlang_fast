@@ -6,6 +6,7 @@
       ,apply_delta/4
       ,increment_value/3
       ,print_binary/1
+      ,select_dict/3
    ]).
 
 -include("include/erlang_fast_common.hrl").
@@ -14,6 +15,13 @@
 
 is_nullable(optional) -> true;
 is_nullable(mandatory) -> false.
+
+select_dict(type, _TemplateName, Application) ->
+   ?type_dictionary(Application);
+select_dict(template, TemplateName, _Application) ->
+   ?template_dictionary(TemplateName);
+select_dict(Dict, _, _) ->
+   Dict.
 
 apply_delta(string, PrevVal, Len, _) when is_list(PrevVal) andalso (length(PrevVal) < abs(Len)) ->
    throw({'ERR D7', PrevVal});
