@@ -6,8 +6,10 @@
 -include("erlang_fast_context.hrl").
 -include("erlang_fast_common.hrl").
 
+-include_lib("eunit/include/eunit.hrl").
+
 decode(Data, #sequence{name = FieldName, instructions = []}, Context) ->
-   {{FieldName, absent}, Context, Data};
+   {{FieldName, absent}, Data, Context};
 
 decode(Data, #sequence{name = FieldName, presence = Presence, need_pmap = NeedPMap, instructions = Instructions},
    Context = #context{pmap = <<_:1, PMapRest/bitstring>>}) ->
@@ -18,11 +20,10 @@ decode(Data, #sequence{name = FieldName, presence = Presence, need_pmap = NeedPM
       false ->
          #uInt32{name = "length", presence = Presence}
    end,
-   {{_, LenValue}, Context1, Data1} = erlang_fast_number:decode(Data, LenField, Context),
+   {{_, LenValue}, Data1, Context1} = erlang_fast_number:decode(Data, LenField, Context),
    case LenValue of
       absent ->
-         {{FieldName, absent},
-            Context1#context{pmap = PMapRest}, Data1};
+         {{FieldName, absent}, Data1, Context1#context{pmap = PMapRest}};
       LenValue ->
          Instrs = case is_record(hd(Instructions), length) of
             true ->
@@ -30,27 +31,28 @@ decode(Data, #sequence{name = FieldName, presence = Presence, need_pmap = NeedPM
             false ->
                Instructions
          end,
-         {Sequence, #context{dicts = Dicts}, Data2} = decode(LenValue, Data1, NeedPMap,
+         {Sequence, Data2, #context{dicts = Dicts}} = decode(LenValue, Data1, NeedPMap,
             Context1#context{pmap = PMapRest, template = Context1#context.template#template{instructions =
                   Instrs}}),
-         {{FieldName, Sequence}, Context#context{pmap = PMapRest, dicts = Dicts}, Data2}
+         {{FieldName, Sequence}, Data2, Context#context{pmap = PMapRest, dicts = Dicts}}
    end;
 
-decode(Data, #sequence{}, Context) ->
-   {sequence, Context, Data}.
+decode(_Data, Instr, _Context) ->
+   throw({error, [unknown_sequence_type, Instr]}).
+
 
 decode(0, Data, _NeedPMap, Context) ->
-   {[], Context, Data};
+   {[], Data, Context};
 
 decode(Length, Data, NeedPMap, Context = #context{template = Template}) ->
    case NeedPMap of
       true ->
-         {Context1, Data1} = erlang_fast_segment:decode_pmap(Data, Context),
-         {Msg, Context2, Data2} = erlang_fast_segment:decode_fields(Data1, Context1),
-         {Msgs, Context3, Data3} = decode(Length - 1, Data2, NeedPMap, Context2#context{template = Template}),
-         {[Msg | Msgs], Context3, Data3};
+         {Data1, Context1} = erlang_fast_segment:decode_pmap(Data, Context),
+         {Msg, Data2, Context2} = erlang_fast_segment:decode_fields(Data1, Context1),
+         {Msgs, Data3, Context3} = decode(Length - 1, Data2, NeedPMap, Context2#context{template = Template}),
+         {[Msg | Msgs], Data3, Context3};
       false ->
-         {Msg, Context1, Data1} = erlang_fast_segment:decode_fields(Data, Context),
-         {Msgs, Context2, Data2} = decode(Length - 1, Data1, NeedPMap, Context1#context{template = Template}),
-         {[Msg | Msgs], Context2, Data2}
+         {Msg, Data1, Context1} = erlang_fast_segment:decode_fields(Data, Context),
+         {Msgs, Data2, Context2} = decode(Length - 1, Data1, NeedPMap, Context1#context{template = Template}),
+         {[Msg | Msgs], Data2, Context2}
    end.
