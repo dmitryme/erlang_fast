@@ -8,8 +8,6 @@
 -include("erlang_fast_context.hrl").
 -include("erlang_fast_common.hrl").
 
--include_lib("eunit/include/eunit.hrl").
-
 -import(erlang_fast_utils,
    [
       is_nullable/1
@@ -46,52 +44,44 @@ decode(Data, {decimal, FieldName, _, _, optional, #default{value = InitialValue}
  end;
 
 decode(Data, {decimal, FieldName, _, _, Presence, #default{value = _InitialValue}},
-  Context = #context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>})
-  when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
-     Res = decode_scaled(Data, is_nullable(Presence)),
-     case Res of
-        not_enough_data ->
-           throw({not_enough_data, Context});
-        {Value, Err, DataRest} ->
-           L(Err, Value),
-           case Presence of
-              mandatory ->
-                 {{FieldName, Value}, Context, DataRest};
-              optional ->
-                 {{FieldName, Value}, Context#context{pmap = PMapRest}, DataRest}
-           end
-     end;
+   Context = #context{logger = L, pmap = <<1:1, PMapRest/bitstring>>}) ->
+   case decode_scaled(Data, is_nullable(Presence)) of
+      not_enough_data ->
+         throw({error, [not_enough_data, Context]});
+      {null, _, Data1} ->
+         {{FieldName, absent}, Context#context{pmap = PMapRest}, Data1};
+      {Value, Err, Data1} ->
+         L(Err, Value),
+         {{FieldName, Value}, Context#context{pmap = PMapRest}, Data1}
+   end;
 
 decode(Data, {decimal, FieldName, _, _, Presence, #copy{dictionary = Dict, key = Key}},
-    Context = #context{logger = L, pmap = <<PresenceBit:1, PMapRest/bitstring>>, dicts = Dicts,
-       application = App, template = #template{name = TemplateName}})
- when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1)->
-    Res = decode_scaled(Data, is_nullable(Presence)),
-    case Res of
-       not_enough_data ->
-          throw({not_enough_data, Context});
-       {Value, Err, DataRest} ->
-          L(Err, Value),
-          case Presence of
-             mandatory ->
-                Dicts1 = erlang_fast_dicts:put_value(select_dict(Dict, TemplateName, App), Key, Value, Dicts),
-                {{FieldName, Value}, Context#context{dicts = Dicts1}, DataRest};
-             optional ->
-                Dicts1 = erlang_fast_dicts:put_value(select_dict(Dict, TemplateName, App), Key, Value, Dicts),
-                {{FieldName, Value}, Context#context{dicts = Dicts1, pmap = PMapRest}, DataRest}
-          end
-    end;
+   Context = #context{logger = L, pmap = <<1:1, PMapRest/bitstring>>, dicts = Dicts,
+      application = App, template = #template{name = TemplateName}}) ->
+   case decode_scaled(Data, is_nullable(Presence)) of
+      not_enough_data ->
+         throw({error, [not_enough_data, Context]});
+      {null, _, Data1} ->
+         Dicts1 = erlang_fast_dicts:put_value(select_dict(Dict, TemplateName, App), Key, empty, Dicts),
+         {{FieldName, absent}, Context#context{pmap = PMapRest, dicts = Dicts1}, Data1};
+      {Value, Err, Data1} ->
+         L(Err, Value),
+         Dicts1 = erlang_fast_dicts:put_value(select_dict(Dict, TemplateName, App), Key, Value, Dicts),
+         {{FieldName, Value}, Context#context{dicts = Dicts1, pmap = PMapRest}, Data1}
+   end;
 
-decode(Data, {decimal, FieldName, _, _, optional, #copy{dictionary = D, key = Key, value = InitialValue}},
+decode(Data, {decimal, FieldName, _, _, Presence, #copy{dictionary = D, key = Key, value = InitialValue}},
    Context = #context{pmap = <<0:1, PMapRest/bitstring>>, dicts = Dicts, application = App,
       template = #template{name = TemplateName}}) ->
    Dict = select_dict(D, TemplateName, App),
    case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
       empty ->
          {{FieldName, empty}, Context};
-      undef when InitialValue == undef -> % it becomes empty
+      undef when (Presence == mandatory) and (InitialValue == undef) -> % ERR D5
+         throw({error, ['ERR D5', FieldName, "no initial value"]});
+      undef when (Presence == optional) and (InitialValue == undef) -> % it becomes empty
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
-         {{FieldName, empty}, Context#context{dicts = Dicts1}, Data};
+         {{FieldName, empty}, Context#context{pmap = PMapRest, dicts = Dicts1}, Data};
       undef ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
          {{FieldName, InitialValue}, Context#context{dicts = Dicts1}, Data};
@@ -101,12 +91,13 @@ decode(Data, {decimal, FieldName, _, _, optional, #copy{dictionary = D, key = Ke
 
 decode(Data, {_, FieldName, _, _, Presence, #delta{dictionary = D, key = Key, value = InitialValue}},
    Context = #context{logger = L, dicts = Dicts, application = App, template = #template{name = TemplateName}}) ->
-   {DecimalDelta, Err, DataRest} = decode_scaled(Data, is_nullable(Presence)),
-   L(Err, DecimalDelta),
-   case DecimalDelta of
-      null ->
-         {{FieldName, absent}, Context, DataRest};
-      {MantissaDelta, ExponentDelta} ->
+   case decode_scaled(Data, is_nullable(Presence)) of
+      not_enough_data ->
+         throw({error, [not_enough_data, Context]});
+      {null, _, Data1} ->
+         {{FieldName, absent}, Context, Data1};
+      {DecimalDelta = {MantissaDelta, ExponentDelta}, Err, Data1} ->
+         L(Err, DecimalDelta),
          Dict = select_dict(D, TemplateName, App),
          case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
             empty ->
@@ -114,15 +105,15 @@ decode(Data, {_, FieldName, _, _, Presence, #delta{dictionary = D, key = Key, va
             undef when InitialValue == undef -> % initial base value is 0
                NewVal = {0 + MantissaDelta, 0 + ExponentDelta},
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{FieldName, NewVal}, Context#context{dicts = Dicts1}, DataRest};
+               {{FieldName, NewVal}, Context#context{dicts = Dicts1}, Data1};
             undef ->
                NewVal = {element(1, InitialValue) + MantissaDelta, element(2, InitialValue) + ExponentDelta},
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{FieldName, NewVal}, Context#context{dicts = Dicts1}, DataRest};
+               {{FieldName, NewVal}, Context#context{dicts = Dicts1}, Data1};
             {PrevMantissa, PrevExponent} ->
                NewVal = {PrevMantissa + MantissaDelta, PrevExponent + ExponentDelta},
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{FieldName, NewVal}, Context#context{dicts = Dicts1}, DataRest}
+               {{FieldName, NewVal}, Context#context{dicts = Dicts1}, Data1}
          end
    end;
 
@@ -138,13 +129,14 @@ decode(Data, {decimal, FieldName, _, _, Presence, #decFieldOp{exponent = ExpOp, 
    end;
 
 decode(Data, {decimal, FieldName, _, _, Presence, undef}, Context = #context{logger = L}) ->
-   {Value, Err, DataRest} = decode_scaled(Data, is_nullable(Presence)),
-   L(Err, Value),
-   case Value of
-      null ->
-         {{FieldName, absent}, Context, DataRest};
-      Value ->
-         {{FieldName, Value}, Context, DataRest}
+   case decode_scaled(Data, is_nullable(Presence)) of
+      not_enough_data ->
+         throw({error, [not_enough_data, Context]});
+      {null, _, Data1} ->
+         {{FieldName, absent}, Context, Data1};
+      {Value, Err, Data1} ->
+         L(Err, Value),
+         {{FieldName, Value}, Context, Data1}
    end;
 
 decode(_, {_, _, _, _, _, _}, _) ->

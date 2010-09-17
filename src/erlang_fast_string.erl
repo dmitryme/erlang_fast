@@ -48,8 +48,7 @@ decode(Data, {_, FieldName, _, _, _, #default{value = InitialValue}},
 
 decode(Data, {Type, FieldName, _, _, Presence, #default{value = _InitialValue}},
    Context = #context{logger = L, pmap = <<1:1, PMapRest/bitstring>>}) ->
-   Res = decode_string(Type, Data, is_nullable(Presence)),
-   case Res of
+   case decode_string(Type, Data, is_nullable(Presence)) of
       not_enough_data ->
          throw({error, [not_enough_data, Context]});
       {null, _, Data1} ->
@@ -95,12 +94,13 @@ decode(Data, {_Type, FieldName, _, _, Presence, #copy{dictionary = D, key = Key,
 
 decode(Data, {Type, FieldName, _, _, Presence, #delta{dictionary = D, key = Key, value = InitialValue}},
    Context = #context{logger = L, dicts = Dicts, application = App, template = #template{name = TemplateName}}) ->
-   {StringDelta, Err, DataRest} = decode_string_delta(Type, Data, is_nullable(Presence)),
-   L(Err, StringDelta),
-   case StringDelta of
-      null ->
-         {{FieldName, absent}, Context, DataRest};
-      {Len, String} ->
+   case decode_string_delta(Type, Data, is_nullable(Presence)) of
+      not_enough_data ->
+         throw({error, [not_enough_data, Context]});
+      {null, _, Data1} ->
+         {{FieldName, absent}, Context, Data1};
+      {StringDelta = {Len, String}, Err, Data1} ->
+         L(Err, StringDelta),
          Dict = select_dict(D, TemplateName, App),
          case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
             empty ->
@@ -108,15 +108,15 @@ decode(Data, {Type, FieldName, _, _, Presence, #delta{dictionary = D, key = Key,
             undef when InitialValue == undef -> % initial base value is "" or <<>>
                NewVal = apply_delta(Type, initial_base_value(Type), Len, String),
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{FieldName, NewVal}, Context#context{dicts = Dicts1}, DataRest};
+               {{FieldName, NewVal}, Context#context{dicts = Dicts1}, Data1};
             undef ->
                NewVal = apply_delta(Type, InitialValue, Len, String),
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{FieldName, NewVal}, Context#context{dicts = Dicts1}, DataRest};
+               {{FieldName, NewVal}, Context#context{dicts = Dicts1}, Data1};
             PrevValue ->
                NewVal = apply_delta(Type, PrevValue, Len, String),
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{FieldName, NewVal}, Context#context{dicts = Dicts1}, DataRest}
+               {{FieldName, NewVal}, Context#context{dicts = Dicts1}, Data1}
          end
    end;
 
@@ -124,14 +124,15 @@ decode(Data, {Type, FieldName, _, _, Presence, #tail{dictionary = D, key = Key, 
    Context = #context{logger = L, dicts = Dicts, pmap = <<PresenceBit:1, PMapRest/bitstring>>,
       application = App, template = #template{name = TemplateName}})
       when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
-   {StringTail, Err, Data1} = decode_string(Type, Data, is_nullable(Presence)),
-   L(Err, StringTail),
    Dict = select_dict(D, TemplateName, App),
-   case StringTail of
-      null when (Presence == optional) andalso (PresenceBit == 1) ->
+   case decode_string(Type, Data, is_nullable(Presence)) of
+      not_enough_data ->
+         throw({error, [not_enough_data, Context]});
+      {null, _, Data1} when (Presence == optional) andalso (PresenceBit == 1) ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
          {{FieldName, absent}, Context#context{dicts = Dicts1, pmap = PMapRest}, Data1};
-      StringTail ->
+      {StringTail, Err, Data1} ->
+         L(Err, StringTail),
          case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
             PrevValue when ((PrevValue == undef) or (PrevValue == empty)) andalso (InitialValue == undef) -> % default base value is ""
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, StringTail, Dicts),
@@ -148,13 +149,14 @@ decode(Data, {Type, FieldName, _, _, Presence, #tail{dictionary = D, key = Key, 
    end;
 
 decode(Data, {Type, FieldName, _, _, Presence, undef}, Context = #context{logger = L}) ->
-   {Value, Err, DataRest} = decode_string(Type, Data, is_nullable(Presence)),
-   L(Err, Value),
-   case Value of
-      null ->
-         {{FieldName, absent}, Context, DataRest};
-      Value ->
-         {{FieldName, Value}, Context, DataRest}
+   case decode_string(Type, Data, is_nullable(Presence)) of
+      not_enough_data ->
+         throw({error, [not_enough_data, Context]});
+      {null, _, Data1} ->
+         {{FieldName, absent}, Context, Data1};
+      {Value, Err, Data1} ->
+         L(Err, Value),
+         {{FieldName, Value}, Context, Data1}
    end;
 
 decode(_, _, _) ->

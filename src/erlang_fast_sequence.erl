@@ -6,8 +6,6 @@
 -include("erlang_fast_context.hrl").
 -include("erlang_fast_common.hrl").
 
--include_lib("eunit/include/eunit.hrl").
-
 decode(Data, #sequence{name = FieldName, instructions = []}, Context) ->
    {{FieldName, absent}, Context, Data};
 
@@ -48,7 +46,6 @@ decode(Length, Data, NeedPMap, Context = #context{template = Template}) ->
    case NeedPMap of
       true ->
          {Context1, Data1} = erlang_fast_segment:decode_pmap(Data, Context),
-         %?debugFmt("PMap = ~p", [erlang_fast_utils:print_binary(PMapRest)]),
          {Msg, Context2, Data2} = erlang_fast_segment:decode_fields(Data1, Context1),
          {Msgs, Context3, Data3} = decode(Length - 1, Data2, NeedPMap, Context2#context{template = Template}),
          {[Msg | Msgs], Context3, Data3};
