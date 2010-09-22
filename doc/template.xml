@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xmlns="http://www.fixprotocol.org/ns/fast/td/1.1">
+   <template dictionary="1" id="1" name="MDIncRefresh">
+      <string id="1128" name="ApplVerID">
+         <constant value="9"/>
+      </string>
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CME"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+      <string id="43" name="PosDupFlag" presence="optional">
+         <default/>
+      </string>
+      <uInt32 id="75" name="TradeDate"/>
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel">
+            <increment value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType">
+            <copy value="0"/>
+         </string>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <uInt32 id="22" name="SecurityIDSource">
+            <constant value="8"/>
+         </uInt32>
+         <uInt32 id="48" name="SecurityID">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize">
+            <delta/>
+         </int32>
+         <uInt32 id="346" name="NumberOfOrders">
+            <delta/>
+         </uInt32>
+         <string id="336" name="TradingSessionID">
+            <default value="2"/>
+         </string>
+      </sequence>
+   </template>
+</templates>
