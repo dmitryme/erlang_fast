@@ -11,7 +11,7 @@
 -import(erlang_fast_utils,
    [
       is_nullable/1
-      ,apply_delta/3
+      ,apply_delta/2
       ,select_dict/3
    ]).
 
@@ -20,28 +20,32 @@
       decode_scaled/2
    ]).
 
+%% =========================================================================================================
+%% decoding
+%% =========================================================================================================
+
 decode(Data, {decimal, FieldName, _, _, Presence, #constant{value = InitialValue}},
-  Context = #context{pmap = <<PresenceBit:1, PMapRest/bitstring>>})
-  when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
-     case Presence of
-        mandatory ->
-           {{FieldName, InitialValue}, Data, Context};
-        optional ->
-           {{FieldName, InitialValue}, Data, Context#context{pmap = PMapRest}}
-     end;
+   Context = #context{pmap = <<PresenceBit:1, PMapRest/bitstring>>})
+when (Presence == mandatory) or (Presence == optional andalso PresenceBit == 1) ->
+   case Presence of
+      mandatory ->
+         {{FieldName, InitialValue}, Data, Context};
+      optional ->
+         {{FieldName, InitialValue}, Data, Context#context{pmap = PMapRest}}
+   end;
 
 decode(Data, {decimal, FieldName, _, _, optional, #constant{}},
    Context = #context{pmap = <<0:1, PMapRest/bitstring>>}) ->
    {{FieldName, absent}, Data, Context#context{pmap = PMapRest}};
 
-decode(Data, {decimal, FieldName, _, _, optional, #default{value = InitialValue}},
-    Context = #context{pmap = <<0:1, PMapRest/bitstring>>}) ->
- case InitialValue of
-    undef ->
-       {{FieldName, absent}, Data, Context#context{pmap = PMapRest}};
-    InitialValue ->
-       {{FieldName, InitialValue}, Data, Context#context{pmap = PMapRest}}
- end;
+decode(Data, {decimal, FieldName, _, _, _, #default{value = InitialValue}},
+   Context = #context{pmap = <<0:1, PMapRest/bitstring>>}) ->
+   case InitialValue of
+      undef ->
+         {{FieldName, absent}, Data, Context#context{pmap = PMapRest}};
+      InitialValue ->
+         {{FieldName, InitialValue}, Data, Context#context{pmap = PMapRest}}
+   end;
 
 decode(Data, {decimal, FieldName, _, _, Presence, #default{value = _InitialValue}},
    Context = #context{logger = L, pmap = <<1:1, PMapRest/bitstring>>}) ->
@@ -71,13 +75,15 @@ decode(Data, {decimal, FieldName, _, _, Presence, #copy{dictionary = D, key = Ke
       template = #template{name = TemplateName}}) ->
    Dict = select_dict(D, TemplateName, App),
    case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
-      empty ->
-         {{FieldName, empty}, Data, Context};
+      empty when Presence == mandatory ->
+         throw({error, ['ERR D6', FieldName, "Previous value is empty for mandatory field"]});
+      empty when Presence == optional ->
+         {{FieldName, absent}, Data, Context#context{pmap = PMapRest}};
       undef when (Presence == mandatory) and (InitialValue == undef) -> % ERR D5
          throw({error, ['ERR D5', FieldName, "no initial value"]});
       undef when (Presence == optional) and (InitialValue == undef) -> % it becomes empty
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
-         {{FieldName, empty}, Data, Context#context{pmap = PMapRest, dicts = Dicts1}};
+         {{FieldName, absent}, Data, Context#context{pmap = PMapRest, dicts = Dicts1}};
       undef ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
          {{FieldName, InitialValue}, Data, Context#context{dicts = Dicts1}};
@@ -90,22 +96,18 @@ decode(Data, {_, FieldName, _, _, Presence, #delta{dictionary = D, key = Key, va
    case decode_scaled(Data, is_nullable(Presence)) of
       {null, _, Data1} ->
          {{FieldName, absent}, Data1, Context};
-      {DecimalDelta = {MantissaDelta, ExponentDelta}, Err, Data1} ->
+      {DecimalDelta, Err, Data1} ->
          L(Err, DecimalDelta),
          Dict = select_dict(D, TemplateName, App),
          case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
             empty ->
-               throw({'ERR D6', "Previous value is empty for delta operator"});
-            undef when InitialValue == undef -> % initial base value is 0
-               NewVal = {0 + MantissaDelta, 0 + ExponentDelta},
-               Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{FieldName, NewVal}, Data1, Context#context{dicts = Dicts1}};
+               throw({'ERR D6', FieldName, "Previous value is empty for delta operator"});
             undef ->
-               NewVal = {element(1, InitialValue) + MantissaDelta, element(2, InitialValue) + ExponentDelta},
+               NewVal = apply_delta(InitialValue, DecimalDelta),
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
                {{FieldName, NewVal}, Data1, Context#context{dicts = Dicts1}};
-            {PrevMantissa, PrevExponent} ->
-               NewVal = {PrevMantissa + MantissaDelta, PrevExponent + ExponentDelta},
+            PrevDecimal ->
+               NewVal = apply_delta(PrevDecimal, DecimalDelta),
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
                {{FieldName, NewVal}, Data1, Context#context{dicts = Dicts1}}
          end

@@ -1,5 +1,5 @@
 -record(templates, {ns = undef, templateNs = undef, dictionary = undef, tlist}).
--record(template, {name, templateNs = undef, id= undef, ns = undef, dictionary = undef, instructions}).
+-record(template, {name, templateNs = undef, id = undef, ns = undef, dictionary = undef, instructions}).
 -record(typeRef, {name, ns = undef}).
 -record(templateRef, {name, templateNs = undef, ns = undef}).
 -record(int32, {name, ns = undef, id = undef, presence = mandatory, operator = undef}).

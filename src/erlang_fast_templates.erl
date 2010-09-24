@@ -50,11 +50,11 @@ create_fake_context() ->
    F = fun([], _) -> ok;
           (Err, Val) -> io:format("~p: ~p~n", [Err, Val])
        end,
-   erlang_fast:create_context("doc/templates.xml", F).
+   erlang_fast:create_context("doc/template.xml", F).
 
 find_template_test() ->
    Context = create_fake_context(),
-   ?assertMatch({template, "MDIncRefresh_83", _, 83, _, "83", _}, get_by_id(83,
+   ?assertMatch({template, "MDIncRefresh", _, 1, _, "1", _}, get_by_id(1,
          Context#context.templates#templates.tlist)).
 
 -endif.

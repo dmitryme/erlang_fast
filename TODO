@@ -1,2 +1,3 @@
-* dictionatries "template", "type" not processed
-* application concept
+* merge all decode methods, there are too many common parts
+* appply_delta should be only for binaries
+* no strings only binary

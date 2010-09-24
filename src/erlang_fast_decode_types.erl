@@ -207,6 +207,7 @@ decode_int_test() ->
   ?assertEqual({null, [], <<>>}, decode_int(<<16#80>>, true)),
   ?assertEqual({11, [], <<>>}, decode_int(<<2#10001011>>, false)),
   ?assertEqual({-2, [], <<>>}, decode_int(<<16#fe>>, true)),
+  ?assertEqual({64, [], <<>>}, decode_int(<<16#00, 16#c0>>, false)),
   ?assertThrow(not_enough_data, decode_int(<<2#0001>>, true)),
   ?assertThrow(not_enough_data, decode_int(<<2#00011111>>, true)),
   ?assertThrow(not_enough_data, decode_int(<<>>, true)).

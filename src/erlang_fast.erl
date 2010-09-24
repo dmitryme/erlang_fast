@@ -7,7 +7,8 @@
       create_context/2
       ,reset/1
       ,decode/2
-]).
+      ,encode/2
+   ]).
 
 create_context(TemplatesFileName, Logger) ->
    {Dicts, Templates} = erlang_fast_xml:parse(TemplatesFileName),
@@ -19,3 +20,6 @@ reset(Context = #context{dicts = Dicts}) ->
 
 decode(Data, Context) ->
    erlang_fast_segment:decode(Data, Context).
+
+encode(Msg, Context) ->
+   erlang_fast_segment:encode(Msg, Context).

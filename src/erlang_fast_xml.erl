@@ -343,7 +343,7 @@ string_to_type(_, Str) ->
 -include_lib("eunit/include/eunit.hrl").
 
 parse_test() ->
-   {_Dicts, {templates, _, _, _, _Templates}} = parse("doc/templates.xml").
+   {_Dicts, {templates, _, _, _, _Templates}} = parse("doc/template.xml").
 
 string_to_type_test() ->
    ?assertEqual(100123, string_to_type(int32, "100123")),
@@ -353,6 +353,7 @@ string_to_type_test() ->
    ?assertEqual({1, -1}, string_to_type(decimal, ".1")),
    ?assertEqual({1123, -4}, string_to_type(decimal, ".1123")),
    ?assertEqual({12345, -4}, string_to_type(decimal, "1.2345")),
+   ?assertEqual(<<"1.2345">>, string_to_type(string, "1.2345")),
    ?assertEqual(<<160, 239, 18, 186>>, string_to_type(byteVector, "a0 ef 12 ba")).
 
 -endif.

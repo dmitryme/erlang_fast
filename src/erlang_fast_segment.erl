@@ -6,11 +6,14 @@
       ,decode_template_id/2
       ,decode_pmap/2
       ,decode_fields/2
+      ,encode/2
    ]).
 
 -include("erlang_fast_template.hrl").
 -include("erlang_fast_context.hrl").
 -include("erlang_fast_common.hrl").
+
+-include_lib("eunit/include/eunit.hrl").
 
 -import(erlang_fast_decode_types,
    [
@@ -18,18 +21,23 @@
       ,decode_uint/2
    ]).
 
+%% =========================================================================================================
+%% decoding
+%% =========================================================================================================
+
 decode(Data, Context) ->
-   F = fun() ->
-         {Data1, Context1} = decode_pmap(Data, Context),
-         {Data2, Context2} = decode_template_id(Data1, Context1),
-         decode_fields(Data2, Context2)
+   F =
+   fun() ->
+      {Data1, Context1} = decode_pmap(Data, Context),
+      {Data2, Context2} = decode_template_id(Data1, Context1),
+      {Msg, Data3, Context3 = #context{template = #template{id = TID}}} = decode_fields(Data2, Context2),
+      {{TID, Msg}, Data3, Context3}
    end,
-   F().
-   %try F()
-   %catch
-   %  _:Err ->
-   %     Err
-   %end.
+   try F()
+   catch
+     _:Err ->
+        Err
+   end.
 
 decode_template_id(Data, Context = #context{dicts = Dicts, pmap = <<0:1, PMapRest/bitstring>>, logger = L}) -> %
    case erlang_fast_dicts:get_value(global, ?common_template_id_key, Dicts) of
@@ -117,41 +125,39 @@ decode_field(Data, #typeRef{name = TypeName}, Context) ->
 decode_field(_Data, Instr, _Context)  ->
    throw({error, [unknown_instruction, Instr]}).
 
-%% ====================================================================================================================
-%% unit testing
-%% ====================================================================================================================
--ifdef(EUNIT).
--include_lib("eunit/include/eunit.hrl").
+%% =========================================================================================================
+%% encoding
+%% =========================================================================================================
 
-create_fake_context(TemplateFileName) ->
-   F = fun([], _) -> ok;
-      (Err, Val) -> io:format("~p: ~p~n", [Err, Val])
+encode({TID, MsgFields}, Context) ->
+   F =
+   fun() ->
+      Template = erlang_fast_templates:get_by_id(TID, Context#context.templates#templates.tlist),
+      {Data, _, Context1} = encode_fields(MsgFields, Context#context{template = Template}),
+      {Data, Context1}
    end,
-   erlang_fast:create_context(TemplateFileName, F).
-
-decode_test() ->
-   Context = create_fake_context("doc/templates.xml"),
-   Data = <<
-   16#c0, 16#d3, 16#01, 16#39, 16#14, 16#c2, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31, 16#42, 16#b3, 16#09, 16#4a,
-   16#6c, 16#e9, 16#83, 16#ae, 16#82, 16#1c, 16#4e, 16#0e, 16#80, 16#01, 16#50, 16#da, 16#02, 16#34, 16#19, 16#80,
-   16#06, 16#47, 16#a1, 16#01, 16#bd, 16#9e, 16#81, 16#82, 16#79, 16#41, 16#91, 16#b9, 16#84, 16#b0, 16#81, 16#b1,
-   16#06, 16#3f, 16#a1, 16#7e, 16#d2, 16#f0, 16#80, 16#01, 16#39, 16#14, 16#c3, 16#23, 16#5a, 16#2f, 16#5f, 16#2d,
-   16#31, 16#42, 16#b4, 16#09, 16#4a, 16#6c, 16#e9, 16#81, 16#b1, 16#81, 16#b0, 16#81, 16#7a, 16#0c, 16#a6, 16#97,
-   16#fa, 16#c0, 16#d4, 16#01, 16#39, 16#14, 16#c4, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31, 16#42, 16#c3, 16#09,
-   16#4a, 16#6c, 16#e9, 16#81, 16#1e, 16#b0, 16#01, 16#50, 16#da, 16#02, 16#34, 16#19, 16#84, 16#81, 16#00, 16#53,
-   16#f9, 16#86, 16#83, 16#fe, 16#03, 16#2e, 16#90, 16#1c, 16#4e, 16#0e, 16#80, 16#83, 16#c0, 16#ed, 16#01, 16#39,
-   16#14, 16#c5, 16#23, 16#5a, 16#2f, 16#5f, 16#2d, 16#31, 16#42, 16#c3, 16#09, 16#4a, 16#6c, 16#e9, 16#82, 16#2d>>,
-   Data1 = <<>>,
-   case decode(Data, Context) of
-      not_enough_data ->
-         ?debugFmt("not_enough_data", []),
-         case decode(<<Data/binary, Data1/binary>>, Context) of
-            not_enough_data ->
-               error;
-            {Msg, Data2, Context2} ->
-               ?debugFmt("~p~n", [Msg])
-         end;
-      {Msg, Data2, Context1} ->
-         ?debugFmt("~p~n", [Msg])
+   try F()
+   catch
+     _:Err ->
+        Err
    end.
--endif.
+
+encode_fields([], Context = #context{template = #template{instructions = []}}) ->
+   {<<>>, [], Context};
+encode_fields(MsgFields, Context = #context{template = #template{instructions = []}})
+   when is_list(MsgFields) andalso length(MsgFields) > 0 ->
+      {<<>>, MsgFields, Context};
+%encode_fields(MsgFields, #context{template = #template{instructions = []}})
+%   when is_list(MsgFields) andalso length(MsgFields) > 0 ->
+%     throw({error, [MsgFields, "not all message fields are encoded"]});
+encode_fields(MsgFields, Context = #context{template = T = #template{instructions = [Instr | Rest]}}) ->
+   {Head, MsgFields1, Context1} = encode_field(MsgFields, Instr, Context),
+   {Tail, MsgFields2, Context2} = encode_fields(MsgFields1, Context1#context{template = T#template{instructions = Rest}}),
+   {<<Head/bitstring, Tail/bitstring>>, MsgFields2, Context2}.
+
+encode_field(Instr, MsgFields, Context) when is_record(Instr, string) ->
+   erlang_fast_string:encode(MsgFields, Instr, Context);
+%encode_field(_, Instr, _) ->
+%   throw({error, [unknown_instruction, Instr]}).
+encode_field(MsgFields, _Instr, Context) ->
+   {<<>>, MsgFields, Context}.

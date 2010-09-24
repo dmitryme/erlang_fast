@@ -3,7 +3,9 @@
 -export(
    [
       is_nullable/1
-      ,apply_delta/4
+      ,apply_delta/3
+      ,apply_delta/2
+      ,get_delta/2
       ,increment_value/3
       ,print_binary/1
       ,select_dict/3
@@ -12,6 +14,8 @@
 -include("include/erlang_fast_common.hrl").
 -include("include/erlang_fast_context.hrl").
 -include("include/erlang_fast_template.hrl").
+
+-include_lib("eunit/include/eunit.hrl").
 
 is_nullable(optional) -> true;
 is_nullable(mandatory) -> false.
@@ -23,26 +27,48 @@ select_dict(template, TemplateName, _Application) ->
 select_dict(Dict, _, _) ->
    Dict.
 
-apply_delta(string, PrevVal, Len, _) when is_list(PrevVal) andalso (length(PrevVal) < abs(Len)) ->
-   throw({'ERR D7', PrevVal});
+apply_delta(undef, {MantissaDelta, ExponentDelta}) ->
+   apply_delta({0, 0}, {MantissaDelta, ExponentDelta});
 
-apply_delta(string, PrevVal, Len, StrDelta) when is_list(PrevVal) andalso Len > 0 ->
-   string:join([string:left(PrevVal, length(PrevVal) - Len), StrDelta], []);
+apply_delta({BaseMantissa, BaseExponent}, {MantissaDelta, ExponentDelta}) ->
+   {BaseMantissa + MantissaDelta , BaseExponent + ExponentDelta};
 
-apply_delta(string, PrevVal, Len, StrDelta) when is_list(PrevVal) andalso Len =< 0 ->
-   string:join([StrDelta, string:right(PrevVal, length(PrevVal) + Len)], []);
+apply_delta(undef, Delta) ->
+   apply_delta(0, Delta);
 
-apply_delta(Type, PrevVal, Len, _)
-when ((Type == unicode) or (Type == byteVector)) andalso is_binary(PrevVal) andalso (byte_size(PrevVal) < abs(Len)) ->
-   throw({'ERR D7', PrevVal});
+apply_delta(BaseValue, Delta) ->
+   BaseValue + Delta.
 
-apply_delta(_Type, PrevVal, Len, Delta) when is_binary(PrevVal) andalso Len > 0 ->
+apply_delta(undef, Len, Delta) ->
+   apply_delta(<<>>, Len, Delta);
+
+apply_delta(PrevVal, Len, Delta) when byte_size(PrevVal) < abs(Len) ->
+   throw({error, ['ERR D7', PrevVal, {Len, Delta}]});
+
+apply_delta(PrevVal, Len, Delta) when Len >= 0 ->
    Head = binary_part(PrevVal, 0, byte_size(PrevVal) - Len),
    <<Head/binary, Delta/binary>>;
 
-apply_delta(_Type, PrevVal, Len, Delta) when is_binary(PrevVal) andalso Len =< 0 ->
-   Tail = binary_part(PrevVal, abs(Len), byte_size(PrevVal) + Len),
+apply_delta(PrevVal, Len, Delta) when Len < 0 ->
+   % Len should be incremented by 1 according to 6.3.7.3
+   Tail = binary_part(PrevVal, abs(Len + 1), byte_size(PrevVal) + Len + 1),
    <<Delta/binary, Tail/binary>>.
+
+get_delta(Value, undef) ->
+   get_delta(Value, <<"">>);
+get_delta(NewValue, OldValue) ->
+   case binary:longest_common_suffix([NewValue, OldValue]) of
+      0 ->
+         case binary:longest_common_prefix([NewValue, OldValue]) of
+            0 ->
+               {byte_size(OldValue), NewValue};
+            PrefixLen ->
+               {byte_size(OldValue) - PrefixLen, binary:part(NewValue, PrefixLen, byte_size(NewValue) - PrefixLen)}
+         end;
+      SuffixLen ->
+         % if length is negative or 0, it should be decremented by 1 before encoding (see 6.3.7.3 for details)
+         {-(byte_size(OldValue) - SuffixLen) - 1, binary:part(NewValue, 0, byte_size(NewValue) - SuffixLen)}
+   end.
 
 increment_value(int32, Value, Inc) when Value + Inc >= 2147483647 ->
    -2147483648 + Inc;
@@ -69,18 +95,27 @@ print_binary(<<1:1, Rest/bitstring>>) ->
 -include_lib("eunit/include/eunit.hrl").
 
 apply_delta_test() ->
-   ?assertEqual("abcdeab", apply_delta(string, "abcdef", 1, "ab")),
-   ?assertEqual("abcdab", apply_delta(string, "abcdef", 2, "ab")),
-   ?assertEqual("xycdef", apply_delta(string, "abcdef", -2, "xy")),
-   ?assertEqual("xyabcdef", apply_delta(string, "abcdef", 0, "xy")),
-   ?assertThrow({'ERR D7', "abcdef"}, apply_delta(string, "abcdef", 7, "abc")),
-   ?assertEqual("abxy", apply_delta(string, "abcdef", 4, "xy")),
-   ?assertEqual(<<1,2,3,5,6>>, apply_delta(unicode, <<1,2,3,4>>, 1, <<5,6>>)),
-   ?assertEqual(<<5,6,4>>, apply_delta(unicode, <<1,2,3,4>>, -3, <<5,6>>)),
-   ?assertEqual(<<1,2,3,5,6>>, apply_delta(byteVector, <<1,2,3,4>>, 1, <<5,6>>)),
-   ?assertEqual(<<5,6,4>>, apply_delta(byteVector, <<1,2,3,4>>, -3, <<5,6>>)).
+   ?assertEqual(<<"abcdeab">>, apply_delta(<<"abcdef">>, 1, <<"ab">>)),
+   ?assertEqual(<<"abcdab">>, apply_delta(<<"abcdef">>, 2, <<"ab">>)),
+   ?assertEqual(<<"xybcdef">>, apply_delta(<<"abcdef">>, -2, <<"xy">>)),
+   ?assertEqual(<<"abcdefxy">>, apply_delta(<<"abcdef">>, 0, <<"xy">>)),
+   ?assertThrow({error, ['ERR D7', <<"abcdef">>, {7, <<"abc">>}]}, apply_delta(<<"abcdef">>, 7, <<"abc">>)),
+   ?assertEqual(<<"abxy">>, apply_delta(<<"abcdef">>, 4, <<"xy">>)),
+   ?assertEqual(<<1,2,3,5,6>>, apply_delta(<<1,2,3,4>>, 1, <<5,6>>)),
+   ?assertEqual(<<5,6,3,4>>, apply_delta(<<1,2,3,4>>, -3, <<5,6>>)),
+   ?assertEqual(<<1,2,3,5,6>>, apply_delta(<<1,2,3,4>>, 1, <<5,6>>)),
+   ?assertEqual(<<5,6,3,4>>, apply_delta(<<1,2,3,4>>, -3, <<5,6>>)).
 
 print_binary_test() ->
    ?assertEqual("10101110", print_binary(<<16#ae>>)).
+
+get_delta_test() ->
+   ?assertEqual({0, <<"123">>}, get_delta(<<"abc123">>, <<"abc">>)),
+   ?assertEqual({1, <<"123">>}, get_delta(<<"abc123">>, <<"abc2">>)),
+   ?assertEqual({-1, <<"123">>}, get_delta(<<"123abc">>, <<"abc">>)),
+   ?assertEqual({-2, <<"123">>}, get_delta(<<"123abc">>, <<"2abc">>)),
+   ?assertEqual({5, <<"abc">>}, get_delta(<<"abc">>, <<"12345">>)),
+   ?assertEqual({-2, <<5,6>>}, get_delta(<<5,6,3,4>>, <<1,3,4>>)),
+   ?assertEqual({2, <<>>}, get_delta(<<5,6>>, <<5,6,3,4>>)).
 
 -endif.
