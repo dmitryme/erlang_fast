@@ -18,7 +18,7 @@
 -import(erlang_fast_decode_types,
    [
       decode_pmap/1
-      ,decode_uint/2
+      ,decode_type/3
    ]).
 
 %% =========================================================================================================
@@ -33,11 +33,12 @@ decode(Data, Context) ->
       {Msg, Data3, Context3 = #context{template = #template{id = TID}}} = decode_fields(Data2, Context2),
       {{TID, Msg}, Data3, Context3}
    end,
-   try F()
-   catch
-     _:Err ->
-        Err
-   end.
+   F().
+   %try F()
+   %catch
+   %  _:Err ->
+   %     Err
+   %end.
 
 decode_template_id(Data, Context = #context{dicts = Dicts, pmap = <<0:1, PMapRest/bitstring>>, logger = L}) -> %
    case erlang_fast_dicts:get_value(global, ?common_template_id_key, Dicts) of
@@ -54,7 +55,7 @@ decode_template_id(Data, Context = #context{dicts = Dicts, pmap = <<0:1, PMapRes
 
 decode_template_id(Data,
    Context = #context{dicts = Dicts, pmap = <<1:1, PMapRest/bitstring>>, logger = L}) -> % tid is present into stream
-   case erlang_fast_decode_types:decode_uint(Data, false) of
+   case decode_type(uInt32, Data, false) of
       {Tid, Err, Data1} ->
          L(Err, Tid),
          Template = erlang_fast_templates:get_by_id(Tid, Context#context.templates#templates.tlist),
@@ -73,7 +74,7 @@ decode_fields(Data, Context = #context{template = #template{instructions = []}})
    {[], Data, Context};
 
 decode_fields(Data, Context = #context{template = Template = #template{instructions = [Instr | Tail]}}) ->
-   {DecodedField, Data1, Context1} = decode_field(
+   {DecodedField, Data1, Context1} = erlang_fast_field_decode:decode(
       Data,
       Instr,
       Context#context{template = Template#template{instructions = Tail}}),
@@ -88,42 +89,6 @@ decode_fields(Data, Context = #context{template = Template = #template{instructi
       DecodedField ->
          {[DecodedField | DecodedFields], Data2, Context2}
    end.
-
-decode_field(Data, Instr, Context = #context{pmap = <<>>}) ->
-   decode_field(Data, Instr, Context#context{pmap = <<0:1>>});
-
-decode_field(Data, Instr, Context) when is_record(Instr, string) ->
-   erlang_fast_string:decode(Data, Instr, Context);
-
-decode_field(Data, Instr, Context)
-when is_record(Instr, uInt32) or is_record(Instr, int32) or is_record(Instr, uInt64) or is_record(Instr, int64) ->
-   erlang_fast_number:decode(Data, Instr, Context);
-
-decode_field(Data, Instr, Context)
-when is_record(Instr, decimal) ->
-   erlang_fast_decimal:decode(Data, Instr, Context);
-
-decode_field(Data, Instr = #sequence{}, Context) ->
-   erlang_fast_sequence:decode(Data, Instr, Context);
-
-decode_field(Data, Instr = #group{}, Context) ->
-   erlang_fast_group:decode(Data, Instr, Context);
-
-% dynamic templateRef
-decode_field(Data, #templateRef{name = undef}, Context) ->
-   {Msg, Data1, #context{dicts = D}} = decode(Data, Context),
-   {Msg, Data1, Context#context{dicts = D}};
-
-%static templateRef
-decode_field(Data, #templateRef{name = Name}, Context = #context{template = T = #template{instructions = Instrs}}) ->
-   TemplateRef = erlang_fast_templates:get_by_name(Name, Context#context.templates#templates.tlist),
-   {skip, Data, Context#context{template = T#template{instructions = TemplateRef#template.instructions ++ Instrs}}};
-
-decode_field(Data, #typeRef{name = TypeName}, Context) ->
-   {skip, Data, Context#context{application = TypeName}};
-
-decode_field(_Data, Instr, _Context)  ->
-   throw({error, [unknown_instruction, Instr]}).
 
 %% =========================================================================================================
 %% encoding
@@ -155,7 +120,7 @@ encode_fields(MsgFields, Context = #context{template = T = #template{instruction
    {Tail, MsgFields2, Context2} = encode_fields(MsgFields1, Context1#context{template = T#template{instructions = Rest}}),
    {<<Head/bitstring, Tail/bitstring>>, MsgFields2, Context2}.
 
-encode_field(Instr, MsgFields, Context) when is_record(Instr, string) ->
+encode_field(Instr = #field{type = string}, MsgFields, Context) ->
    erlang_fast_string:encode(MsgFields, Instr, Context);
 %encode_field(_, Instr, _) ->
 %   throw({error, [unknown_instruction, Instr]}).

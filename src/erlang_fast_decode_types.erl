@@ -3,15 +3,50 @@
 -author("Dmitry Melnikov <dmitryme@gmail.com>").
 
 -export([
-      decode_int/2
-      ,decode_uint/2
-      ,decode_string/2
-      ,decode_string_delta/2
-      ,decode_vector/2
-      ,decode_vector_delta/2
-      ,decode_scaled/2
-      ,decode_pmap/1
+      decode_pmap/1
+      ,decode_type/3
+      ,decode_delta/3
    ]).
+
+%% ====================================================================================================================
+%% publics
+%% ====================================================================================================================
+
+decode_type(Type, Data, Nullable) when (Type == int32) or (Type == int64)->
+   decode_int(Data, Nullable);
+
+decode_type(Type, Data, Nullable) when (Type == uInt32) or (Type == uInt64)->
+   decode_uint(Data, Nullable);
+
+decode_type(string, Data, Nullable) ->
+   decode_string(Data, Nullable);
+
+decode_type(unicode, Data, Nullable) ->
+   decode_vector(Data, Nullable);
+
+decode_type(byteVector, Data, Nullable) ->
+   decode_vector(Data, Nullable);
+
+decode_type(decimal, Data, Nullable) ->
+   decode_scaled(Data, Nullable).
+
+decode_delta(Type, Data, Nullable)
+   when (Type == int32) or (Type == int64) or (Type == uInt32) or (Type == uInt64) ->
+      decode_int(Data, Nullable);
+
+decode_delta(Type, Data, Nullable) when (Type == string) ->
+   decode_string_delta(Data, Nullable);
+
+decode_delta(Type, Data, Nullable)
+   when (Type == unicode) or (Type == byteVector) ->
+      decode_vector_delta(Data, Nullable);
+
+decode_delta(Type, Data, Nullable) when (Type == decimal) ->
+   decode_scaled(Data, Nullable).
+
+%% ====================================================================================================================
+%% privates
+%% ====================================================================================================================
 
 decode_int(<<1:1, 0:7/integer, Rest/binary>>, true) ->
    {null, [], Rest};

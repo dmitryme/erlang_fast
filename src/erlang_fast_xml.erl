@@ -76,14 +76,16 @@ parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail],
    Presence = get_attribute(presence, I, "mandatory"),
    Instr =  case get_attribute(charset, I, ascii) of
                ascii ->
-                  #string{
+                  #field{
+                     type = string,
                      name = OpName,
                      ns = get_attribute(ns, I),
                      id = string_to_id(get_attribute(id, I)),
                      presence = string_to_presence(Presence),
                      operator = Operator};
                unicode ->
-                  #unicode{
+                  #field{
+                     type = unicode,
                      name = OpName,
                      ns = get_attribute(ns, I),
                      id = string_to_id(get_attribute(id, I)),
@@ -92,48 +94,19 @@ parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail],
             end,
    {Dicts2, [Instr | Instructions], NeedPMap or need_pmap(Presence, Operator)};
 
-parse_instruction([I = #xmlElement{name = int32 = T, content = Childs} | Tail], Dicts, DefDict) ->
+parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts, DefDict)
+when (Type == int32 ) or (Type == uInt32) or (Type == uInt64) or (Type == 'Int64') or
+     (Type == byteVector) or (Type == decimal)->
    OpName = get_attribute(name, I),
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
+   {Dicts2, Operator} =
+   if
+      (Type == decimal) -> parse_dec_op(OpName, Childs, Dicts1, DefDict);
+      true -> parse_op(OpName, Type, Childs, Dicts1, DefDict)
+   end,
    Presence = get_attribute(presence, I, "mandatory"),
-   {Dicts2, [#int32{
-            name = OpName,
-            ns = get_attribute(ns, I),
-            id = string_to_id(get_attribute(id, I)),
-            presence = string_to_presence(Presence),
-            operator = Operator} | Instructions], NeedPMap or need_pmap(Presence, Operator)};
-
-parse_instruction([I = #xmlElement{name = 'Int64' = T, content = Childs} | Tail], Dicts, DefDict) ->
-   OpName = get_attribute(name, I),
-   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
-   Presence = get_attribute(presence, I, "mandatory"),
-   {Dicts2, [#int64{
-            name = OpName,
-            ns = get_attribute(ns, I),
-            id = string_to_id(get_attribute(id, I)),
-            presence = string_to_presence(Presence),
-            operator = Operator} | Instructions], NeedPMap or need_pmap(Presence, Operator)};
-
-parse_instruction([I = #xmlElement{name = uInt32 = T, content = Childs} | Tail], Dicts, DefDict) ->
-   OpName = get_attribute(name, I),
-   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
-   Presence = get_attribute(presence, I, "mandatory"),
-   {Dicts2, [#uInt32{
-            name = OpName,
-            ns = get_attribute(ns, I),
-            id = string_to_id(get_attribute(id, I)),
-            presence = string_to_presence(Presence),
-            operator = Operator} | Instructions], NeedPMap or need_pmap(Presence, Operator)};
-
-parse_instruction([I = #xmlElement{name = uInt64 = T, content = Childs} | Tail], Dicts, DefDict) ->
-   OpName = get_attribute(name, I),
-   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
-   Presence = get_attribute(presence, I, "mandatory"),
-   {Dicts2, [#uInt64{
+   {Dicts2, [#field{
+            type = if Type == 'Int64' -> int64; true -> Type end,
             name = OpName,
             ns = get_attribute(ns, I),
             id = string_to_id(get_attribute(id, I)),
@@ -144,56 +117,21 @@ parse_instruction([I = #xmlElement{name = length = T, content = Childs} | Tail],
    OpName = get_attribute(name, I),
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
    {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
-   {Dicts2, [#length{
-            name = OpName,
-            ns = get_attribute(ns, I),
-            id = string_to_id(get_attribute(id, I)),
-            operator = Operator} | Instructions], NeedPMap or false};
+   {Dicts2, [#field{
+               type = T,
+               name = OpName,
+               ns = get_attribute(ns, I),
+               id = string_to_id(get_attribute(id, I)),
+               operator = Operator} | Instructions], NeedPMap or false};
 
-parse_instruction([I = #xmlElement{name = decimal, content = Childs} | Tail], Dicts, DefDict) ->
-   OpName = get_attribute(name, I),
-   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_dec_op(OpName, Childs, Dicts1, DefDict),
-   Presence = get_attribute(presence, I, "mandatory"),
-   {Dicts2, [#decimal{
-            name = OpName,
-            ns = get_attribute(ns, I),
-            id = string_to_id(get_attribute(id, I)),
-            presence = string_to_presence(Presence),
-            operator = Operator} | Instructions], NeedPMap or need_pmap(Presence, Operator)};
-
-parse_instruction([I = #xmlElement{name = byteVector = T, content = Childs} | Tail], Dicts, DefDict) ->
-   OpName = get_attribute(name, I),
-   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
-   {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
-   Presence = get_attribute(presence, I, "mandatory"),
-   {Dicts2, [#byteVector{
-            name = OpName,
-            ns = get_attribute(ns, I),
-            id = string_to_id(get_attribute(id, I)),
-            presence = string_to_presence(Presence),
-            operator = Operator} | Instructions], NeedPMap or need_pmap(Presence, Operator)};
-
-parse_instruction([I = #xmlElement{name = sequence, content = Childs} | Tail], Dicts, DefDict) ->
-   DictName = string_to_dic(get_attribute(dictionary, I, DefDict)),
-   {Dicts1, SeqInstructions, NeedPMap} = parse_instruction(Childs, Dicts, DictName),
-   {Dicts2, Instructions, _NeedPMap} = parse_instruction(Tail, Dicts1, DictName),
-   Presence = get_attribute(presence, I, "mandatory"),
-   {Dicts2, [#sequence{
-            name = get_attribute(name, I),
-            ns = get_attribute(ns, I),
-            id = string_to_id(get_attribute(id, I)),
-            presence = string_to_presence(Presence),
-            dictionary = DictName,
-            need_pmap = NeedPMap,
-            instructions = SeqInstructions} | Instructions], need_pmap(Presence)};
-
-parse_instruction([I = #xmlElement{name = group, content = Childs} | Tail], Dicts, DefDict) ->
+parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts, DefDict)
+when (Type == sequence) or (Type == group) ->
    DictName = string_to_dic(get_attribute(dictionary, I, DefDict)),
    {Dicts1, GroupInstructions, NeedPMap} = parse_instruction(Childs, Dicts, DictName),
    {Dicts2, Instructions, _NeedPMap} = parse_instruction(Tail, Dicts1, DictName),
    Presence = get_attribute(presence, I, "mandatory"),
-   {Dicts2, [#group{
+   {Dicts2, [#field_group{
+            type = Type,
             name = get_attribute(name, I),
             ns = get_attribute(ns, I),
             id = string_to_id(get_attribute(id, I)),
