@@ -38,23 +38,3 @@ get_by_id(TemplID, {_, TemplsByID}) ->
       {value, Templ} ->
          Templ
    end.
-
-%% ====================================================================================================================
-%% unit testing
-%% ====================================================================================================================
--ifdef(EUNIT).
--include("include/erlang_fast_context.hrl").
--include_lib("eunit/include/eunit.hrl").
-
-create_fake_context() ->
-   F = fun([], _) -> ok;
-          (Err, Val) -> io:format("~p: ~p~n", [Err, Val])
-       end,
-   erlang_fast:create_context("doc/template.xml", F).
-
-find_template_test() ->
-   Context = create_fake_context(),
-   ?assertMatch({template, "MDIncRefresh", _, 1, _, "1", _}, get_by_id(1,
-         Context#context.templates#templates.tlist)).
-
--endif.

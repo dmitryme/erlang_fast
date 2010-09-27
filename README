@@ -5,7 +5,7 @@ Example of usage:
 decode_one_message() ->
 
    % create context. Assume FAST templates are saved into templates.xml file
-   Context = erlang_fast:create_context("templates.xml", fun logger/2),
+   Context = erlang_fast:create_context({file, "templates.xml"}, fun logger/2),
 
    % read FAST encoded data from data.fast
    {ok, Data} = file:read_file("data.fast"),

@@ -33,12 +33,11 @@ decode(Data, Context) ->
       {Msg, Data3, Context3 = #context{template = #template{id = TID}}} = decode_fields(Data2, Context2),
       {{TID, Msg}, Data3, Context3}
    end,
-   F().
-   %try F()
-   %catch
-   %  _:Err ->
-   %     Err
-   %end.
+   try F()
+   catch
+     _:Err ->
+        Err
+   end.
 
 decode_template_id(Data, Context = #context{dicts = Dicts, pmap = <<0:1, PMapRest/bitstring>>, logger = L}) -> %
    case erlang_fast_dicts:get_value(global, ?common_template_id_key, Dicts) of
@@ -98,14 +97,15 @@ encode({TID, MsgFields}, Context) ->
    F =
    fun() ->
       Template = erlang_fast_templates:get_by_id(TID, Context#context.templates#templates.tlist),
-      {Data, _, Context1} = encode_fields(MsgFields, Context#context{template = Template}),
+      {Data, _, Context1} = encode_fields(MsgFields, Context#context{pmap = <<>>, template = Template}),
       {Data, Context1}
    end,
-   try F()
-   catch
-     _:Err ->
-        Err
-   end.
+   F().
+   %try F()
+   %catch
+   %  _:Err ->
+   %     Err
+   %end.
 
 encode_fields([], Context = #context{template = #template{instructions = []}}) ->
    {<<>>, [], Context};
@@ -116,13 +116,6 @@ encode_fields(MsgFields, Context = #context{template = #template{instructions = 
 %   when is_list(MsgFields) andalso length(MsgFields) > 0 ->
 %     throw({error, [MsgFields, "not all message fields are encoded"]});
 encode_fields(MsgFields, Context = #context{template = T = #template{instructions = [Instr | Rest]}}) ->
-   {Head, MsgFields1, Context1} = encode_field(MsgFields, Instr, Context),
+   {Head, MsgFields1, Context1} = erlang_fast_field_encode:encode(MsgFields, Instr, Context),
    {Tail, MsgFields2, Context2} = encode_fields(MsgFields1, Context1#context{template = T#template{instructions = Rest}}),
    {<<Head/bitstring, Tail/bitstring>>, MsgFields2, Context2}.
-
-encode_field(Instr = #field{type = string}, MsgFields, Context) ->
-   erlang_fast_string:encode(MsgFields, Instr, Context);
-%encode_field(_, Instr, _) ->
-%   throw({error, [unknown_instruction, Instr]}).
-encode_field(MsgFields, _Instr, Context) ->
-   {<<>>, MsgFields, Context}.

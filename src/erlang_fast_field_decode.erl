@@ -50,7 +50,7 @@ decode(Data, #typeRef{name = TypeName}, Context) ->
 %% constant
 %% =========================================================================================================
 
-decode(Data, {field, _, FieldName, _, _, Presence, #constant{value = InitialValue}},
+decode(Data, #field{name = FieldName, presence = Presence, operator = #constant{value = InitialValue}},
    Context = #context{pmap = <<PresenceBit:1, PMapRest/bitstring>>}) ->
    case Presence of
       mandatory ->
@@ -65,7 +65,7 @@ decode(Data, {field, _, FieldName, _, _, Presence, #constant{value = InitialValu
 %% default
 %% =========================================================================================================
 
-decode(Data, {field, _, FieldName, _, _, _, #default{value = InitialValue}},
+decode(Data, #field{name = FieldName, operator = #default{value = InitialValue}},
    Context = #context{pmap = <<0:1, PMapRest/bitstring>>}) ->
    case InitialValue of
       undef ->
@@ -74,7 +74,7 @@ decode(Data, {field, _, FieldName, _, _, _, #default{value = InitialValue}},
          {{FieldName, InitialValue}, Data, Context#context{pmap = PMapRest}}
    end;
 
-decode(Data, {field, Type, FieldName, _, _, Presence, #default{value = _InitialValue}},
+decode(Data, #field{type = Type, name = FieldName, presence = Presence, operator = #default{value = _InitialValue}},
    Context = #context{logger = L, pmap = <<1:1, PMapRest/bitstring>>}) ->
    case decode_type(Type, Data, is_nullable(Presence)) of
       {null, _, Data1} ->
@@ -88,7 +88,7 @@ decode(Data, {field, Type, FieldName, _, _, Presence, #default{value = _InitialV
 %% copy
 %% =========================================================================================================
 
-decode(Data, {field, Type, FieldName, _, _, Presence, #copy{dictionary = D, key = Key}},
+decode(Data, #field{type = Type, name = FieldName, presence = Presence, operator = #copy{dictionary = D, key = Key}},
    Context = #context{logger = L, pmap = <<1:1, PMapRest/bitstring>>, dicts = Dicts,
       application = App, template = #template{name = TemplateName}}) ->
    Dict = select_dict(D, TemplateName, App),
@@ -102,7 +102,7 @@ decode(Data, {field, Type, FieldName, _, _, Presence, #copy{dictionary = D, key 
          {{FieldName, Value}, Data1, Context#context{pmap = PMapRest, dicts = Dicts1}}
    end;
 
-decode(Data, {field, _, FieldName, _, _, Presence, #copy{dictionary = D, key = Key, value = InitialValue}},
+decode(Data, #field{name = FieldName, presence = Presence, operator = #copy{dictionary = D, key = Key, value = InitialValue}},
    Context = #context{pmap = <<0:1, PMapRest/bitstring>>, dicts = Dicts,
       application = App, template = #template{name = TemplateName}}) ->
    Dict = select_dict(D, TemplateName, App),
@@ -127,7 +127,7 @@ decode(Data, {field, _, FieldName, _, _, Presence, #copy{dictionary = D, key = K
 %% increment
 %% =========================================================================================================
 
-decode(Data, {field, Type, FieldName, _, _, Presence, #increment{dictionary = Dict, key = Key}},
+decode(Data, #field{type = Type, name = FieldName, presence = Presence, operator = #increment{dictionary = Dict, key = Key}},
    Context = #context{logger = L, pmap = <<1:1, PMapRest/bitstring>>, dicts = Dicts, application = App,
       template = #template{name = TemplateName}}) ->
    case decode_type(Type, Data, is_nullable(Presence)) of
@@ -137,9 +137,8 @@ decode(Data, {field, Type, FieldName, _, _, Presence, #increment{dictionary = Di
          {{FieldName, Value}, Data1, Context#context{dicts = Dicts1, pmap = PMapRest}}
    end;
 
-decode(Data, {field, Type, FieldName, _, _, Presence, #increment{dictionary = D, key = Key, value = InitialValue}},
-   Context = #context{pmap = <<0:1, PMapRest/bitstring>>, dicts = Dicts, application = App,
-      template = #template{name = TemplateName}}) ->
+decode(Data, #field{type = Type, name = FieldName, presence = Presence, operator = #increment{dictionary = D, key = Key, value = InitialValue}},
+      Context = #context{pmap = <<0:1, PMapRest/bitstring>>, dicts = Dicts, application = App, template = #template{name = TemplateName}}) ->
    Dict = select_dict(D, TemplateName, App),
    case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
       empty when (Presence == mandatory)->
@@ -164,7 +163,7 @@ decode(Data, {field, Type, FieldName, _, _, Presence, #increment{dictionary = D,
 %% delta
 %% =========================================================================================================
 
-decode(Data, {field, Type, FieldName, _, _, Presence, #delta{dictionary = D, key = Key, value = InitialValue}},
+decode(Data, #field{type = Type, name = FieldName, presence = Presence, operator = #delta{dictionary = D, key = Key, value = InitialValue}},
    Context = #context{logger = L, dicts = Dicts, application = App, template = #template{name = TemplateName}}) ->
    case decode_delta(Type, Data, is_nullable(Presence)) of
       {null, _, Data1} ->
@@ -190,7 +189,7 @@ decode(Data, {field, Type, FieldName, _, _, Presence, #delta{dictionary = D, key
 %% tail
 %% =========================================================================================================
 
-decode(Data, {field, Type, FieldName, _, _, Presence, #tail{dictionary = D, key = Key, value = InitialValue}},
+decode(Data, #field{type = Type, name = FieldName, presence = Presence, operator = #tail{dictionary = D, key = Key, value = InitialValue}},
    Context = #context{logger = L, dicts = Dicts, pmap = <<1:1, PMapRest/bitstring>>,
       application = App, template = #template{name = TemplateName}}) ->
    Dict = select_dict(D, TemplateName, App),
@@ -212,7 +211,7 @@ decode(Data, {field, Type, FieldName, _, _, Presence, #tail{dictionary = D, key 
          end
    end;
 
-decode(Data, {field, _, FieldName, _, _, Presence, #tail{dictionary = D, key = Key, value = InitialValue}},
+decode(Data, #field{name = FieldName, presence = Presence, operator = #tail{dictionary = D, key = Key, value = InitialValue}},
    Context = #context{dicts = Dicts, pmap = <<0:1, PMapRest/bitstring>>,
       application = App, template = #template{name = TemplateName}}) ->
    Dict = select_dict(D, TemplateName, App),
@@ -237,7 +236,7 @@ decode(Data, {field, _, FieldName, _, _, Presence, #tail{dictionary = D, key = K
 %% decFieldOp
 %% =========================================================================================================
 
-decode(Data, {field, _, FieldName, _, _, Presence, #decFieldOp{exponent = ExpOp, mantissa = MantOp}}, Context) ->
+decode(Data, #field{name = FieldName, presence = Presence, operator = #decFieldOp{exponent = ExpOp, mantissa = MantOp}}, Context) ->
    case decode(Data, #field{type = int32, name = FieldName, presence = Presence, operator = ExpOp}, Context) of
       R = {{FieldName, absent}, _, _} ->
          R;
@@ -251,7 +250,7 @@ decode(Data, {field, _, FieldName, _, _, Presence, #decFieldOp{exponent = ExpOp,
 %% no operator
 %% =========================================================================================================
 
-decode(Data, {field, Type, FieldName, _, _, Presence, undef}, Context = #context{logger = L}) ->
+decode(Data, #field{type = Type, name = FieldName, presence = Presence, operator = undef}, Context = #context{logger = L}) ->
    case decode_type(Type, Data, is_nullable(Presence)) of
       {null, _, Data1} ->
          {{FieldName, absent}, Data1, Context};

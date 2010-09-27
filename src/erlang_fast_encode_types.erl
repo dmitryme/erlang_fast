@@ -3,16 +3,37 @@
 -author("Dmitry Melnikov <dmitryme@gmail.com>").
 
 -export([
-      encode_uint/2
-      ,encode_int/2
-      ,encode_string/2
-      ,encode_vector/2
-      ,encode_pmap/1
+      encode_pmap/1
+      ,encode_type/3
+      ,encode_delta/3
       ]).
 
 -include_lib("eunit/include/eunit.hrl").
 
-%% encode unsigned int
+%% ====================================================================================================================
+%% publics
+%% ====================================================================================================================
+
+encode_type(Type, Value, Nullable) when (Type == int32) or (Type == int64) ->
+   encode_int(Value, Nullable);
+
+encode_type(Type, Value, Nullable) when (Type == uInt32) or (Type == uInt64) ->
+   encode_uint(Value, Nullable);
+
+encode_type(string, Value, Nullable) ->
+   encode_string(Value, Nullable);
+
+encode_type(Type, Value, Nullable) when (Type == unicode) or (Type == byteVector) ->
+   encode_vector(Value, Nullable).
+
+encode_delta(_, _, _) ->
+   <<>>.
+
+%% ====================================================================================================================
+%% privates
+%% ====================================================================================================================
+
+%% encode int
 
 encode_uint(null, _) ->
    <<2#10000000:8>>;
@@ -21,8 +42,7 @@ encode_uint(Value, false) ->
 encode_uint(Value, true) ->
    encode_number_aux(Value + 1, <<1:1>>).
 
-
-%% encode signed int
+%% encode int
 
 encode_int(null, _) ->
    <<2#10000000:8>>;
@@ -44,6 +64,7 @@ encode_int(Value, Nullable) ->
    end.
 
 %% encode ASCII string
+
 encode_string(null, _Nullable) ->
    <<16#80>>;
 encode_string(Str, Nullable) ->
@@ -60,13 +81,15 @@ encode_string(Str, Nullable) ->
          Res
    end.
 
-%% encode Byte vector
+%% encode byte vector
+
 encode_vector(null, true) ->
    encode_uint(null, true);
 encode_vector(Binary, Nullable) ->
    <<(encode_uint(byte_size(Binary), Nullable))/binary, Binary/binary>>.
 
 %% encode pmap
+
 encode_pmap(<<>>) ->
    <<>>;
 encode_pmap(Data) when bit_size(Data) =< 7 ->
@@ -90,7 +113,7 @@ encode_number_aux(-1, _) ->
 encode_number_aux(Value, StopBit) ->
    <<(encode_number_aux(Value bsr 7, <<0:1>>))/bitstring, StopBit/bitstring, Value:7>>.
 
-%% decode ASCII string
+%% encode ASCII string
 
 encode_string_aux([]) ->
    <<>>;

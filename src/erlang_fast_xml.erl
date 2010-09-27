@@ -13,8 +13,15 @@
       parse/1
    ]).
 
-parse(XmlFile) ->
+parse({file, XmlFile}) ->
    {RootElem, []} = xmerl_scan:file(XmlFile),
+   init(RootElem);
+
+parse(XmlText) ->
+   {RootElem, []} = xmerl_scan:string(XmlText),
+   init(RootElem).
+
+init(RootElem) ->
    Dicts = erlang_fast_dicts:init(),
    DictName = string_to_dic(get_attribute(dictionary, RootElem, global)),
    Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
@@ -279,9 +286,6 @@ string_to_type(_, Str) ->
 
 -ifdef(EUNIT).
 -include_lib("eunit/include/eunit.hrl").
-
-parse_test() ->
-   {_Dicts, {templates, _, _, _, _Templates}} = parse("doc/template.xml").
 
 string_to_type_test() ->
    ?assertEqual(100123, string_to_type(int32, "100123")),

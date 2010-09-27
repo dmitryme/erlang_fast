@@ -10,8 +10,14 @@
       ,encode/2
    ]).
 
-create_context(TemplatesFileName, Logger) ->
-   {Dicts, Templates} = erlang_fast_xml:parse(TemplatesFileName),
+% create_context(TemplatesDescr, Logger) -> Context
+%  TemplatesDescr = {file, TemplatesFilename}, TemplatesXmlText
+%  TemplatesFilename = String() - path to XML file with templates definitions
+%  TemplatesXmlText = String() - XML text with templates definitions
+%  Logger - is a callback logger function with arity 2, where first param can be
+%             list of Error numbers or [] - if no error, and second parameter is a list with error details
+create_context(TemplatesDescr, Logger) ->
+   {Dicts, Templates} = erlang_fast_xml:parse(TemplatesDescr),
    #context{dicts = Dicts, templates = Templates, logger = Logger}.
 
 reset(Context = #context{dicts = Dicts}) ->
