@@ -65,10 +65,12 @@ decode(Data, #field{name = FieldName, presence = Presence, operator = #constant{
 %% default
 %% =========================================================================================================
 
-decode(Data, #field{name = FieldName, operator = #default{value = InitialValue}},
+decode(Data, #field{name = FieldName, presence = Presence, operator = #default{value = InitialValue}},
    Context = #context{pmap = <<0:1, PMapRest/bitstring>>}) ->
    case InitialValue of
-      undef ->
+      undef when Presence == mandatory ->
+         throw({error, ['ERR D5', FieldName, "Initial value is absent for mandatory field"]});
+      undef when Presence == optional ->
          {{FieldName, absent}, Data, Context#context{pmap = PMapRest}};
       InitialValue ->
          {{FieldName, InitialValue}, Data, Context#context{pmap = PMapRest}}

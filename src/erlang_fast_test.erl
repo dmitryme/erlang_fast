@@ -127,10 +127,9 @@ decode_test() ->
    ?assertEqual(?msg, Msg).
 
 encode_test() ->
-   ok.
-   %Context = erlang_fast:create_context(?xmlDescr, fun logger/2),
-   %{Data, _} = erlang_fast:encode(?msg, Context),
-   %?debugFmt("~p", [Data]).
+   Context = erlang_fast:create_context(?xmlDescr, fun logger/2),
+   {Data, _} = erlang_fast:encode(?msg, Context),
+   ?debugFmt("~p", [Data]).
 
 find_template_test() ->
    Context = erlang_fast:create_context(?xmlDescr, fun logger/2),

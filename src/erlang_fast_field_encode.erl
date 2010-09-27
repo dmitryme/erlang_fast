@@ -30,10 +30,13 @@
 %% encoding
 %% =========================================================================================================
 
+%% =========================================================================================================
+%% constant
+%% =========================================================================================================
+
 encode(MsgFields = [{FieldName1, _} | MsgFieldsRest],
-   I = #field{name = FieldName2, presence = Presence, operator = #constant{}},
+   #field{name = FieldName2, presence = Presence, operator = #constant{}},
       Context = #context{pmap = PMap}) ->
-?debugFmt("~p ~p", [MsgFields, I]),
    case Presence of
       mandatory ->
          {<<>>, MsgFieldsRest, Context};
@@ -43,83 +46,138 @@ encode(MsgFields = [{FieldName1, _} | MsgFieldsRest],
          {<<>>, MsgFields, Context#context{pmap = <<PMap/bitstring, 0:1>>}}
    end;
 
+%% =========================================================================================================
+%% default
+%% =========================================================================================================
+
 encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
-   I = #field{type = Type, name = FieldName2, presence = Presence, operator = #default{value = InitialValue}},
+   #field{type = Type, name = FieldName2, presence = Presence, operator = #default{value = InitialValue}},
       Context = #context{pmap = PMap}) ->
-?debugFmt("~p ~p", [MsgFields, I]),
    case Presence of
       optional when (FieldName1 =/= FieldName2) ->
-         {encode_type(Type, null, is_nullable(Presence)), MsgFields, Context#context{pmap = <<PMap/bitstring, 1:1>>}};
+         {<<>>, MsgFields, Context#context{pmap = <<PMap/bitstring, 0:1>>}};
       _ when (FieldName1 == FieldName2) andalso (Value =/= InitialValue) ->
          {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 1:1>>}};
       _ when (FieldName1 == FieldName2) andalso (Value == InitialValue) ->
          {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 0:1>>}}
    end;
 
-encode(MsgFields = [{FieldName1, _} | _], I = #field{type = Type, name = FieldName2, presence = optional, operator = #copy{}},
-   Context = #context{pmap = PMap}) when FieldName1 =/= FieldName2 ->
-?debugFmt("~p ~p", [MsgFields, I]),
-   {encode_type(Type, null, true), MsgFields, Context#context{pmap = <<PMap/bitstring, 1:1>>}};
+%% =========================================================================================================
+%% copy
+%% =========================================================================================================
 
-encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
-   I = #field{type = Type, name = FieldName2, presence = Presence, operator = #copy{dictionary = D, key = Key, value = InitialValue}},
+encode([{FieldName1, _} | _],#field{name = FieldName2, presence = mandatory, operator =
+      #copy{}}, _Context) when FieldName1 =/= FieldName2 ->
+   throw({error, ['ERR D6', FieldName2, "Mandatory field can not be absent with copy operator."]});
+
+encode(MsgFields = [{FieldName1, _} | _],
+   #field{type = Type, name = FieldName2, presence = optional, operator = #copy{dictionary = D, key = Key}},
+      Context = #context{pmap = PMap, dicts = Dicts, application = App, template = #template{name = TemplateName}})
+   when FieldName1 =/= FieldName2 ->
+   Dicts1 = erlang_fast_dicts:put_value(select_dict(D, TemplateName, App), Key, empty, Dicts),
+   {encode_type(Type, null, true), MsgFields, Context#context{pmap = <<PMap/bitstring, 1:1>>, dicts = Dicts1}};
+
+encode([{_, Value} | MsgFieldsRest],
+   #field{type = Type, presence = Presence, operator = #copy{dictionary = D, key = Key, value = InitialValue}},
       Context = #context{pmap = PMap, dicts = Dicts, application = App, template = #template{name = TemplateName}}) ->
-?debugFmt("~p ~p", [MsgFields, I]),
    Dict = select_dict(D, TemplateName, App),
    case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
-      undef when (FieldName1 == FieldName2) andalso (Value == InitialValue) ->
-         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
-         {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 0:1>>, dicts = Dicts1}};
-      undef when (FieldName1 == FieldName2) andalso (Value =/= InitialValue) ->
+      empty ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
          {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 1:1>>, dicts = Dicts1}};
-      Value when (FieldName1 == FieldName2)->
+      undef when (Value == InitialValue) ->
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
+         {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 0:1>>, dicts = Dicts1}};
+      undef when (Value =/= InitialValue) ->
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
+         {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 1:1>>, dicts = Dicts1}};
+      Value ->
          {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 0:1>>}};
-      DictValue when (FieldName1 == FieldName2) andalso (Value =/= DictValue) ->
+      DictValue when (Value =/= DictValue) ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
          {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 1:1>>, dicts = Dicts1}}
    end;
 
-encode(MsgFields = [{FieldName1, _} | _], #field{type = Type, name = FieldName2, presence = optional, operator = #delta{}}, Context)
-   when FieldName1 =/= FieldName2 ->
-   {encode_type(Type, null, true), MsgFields, Context};
+%% =========================================================================================================
+%% delta
+%% =========================================================================================================
 
-encode([{FieldName1, Value} | MsgFieldsRest],
-   #field{type = Type, name = FieldName2, presence = Presence, operator = #delta{dictionary = D, key = Key, value = InitialValue}},
+encode(MsgFields = [{FieldName1, _} | _], #field{type = Type, name = FieldName2, presence = Presence, operator = #delta{}}, Context)
+   when FieldName1 =/= FieldName2 ->
+   {encode_type(Type, null, Presence), MsgFields, Context};
+
+encode([{_, Value} | MsgFieldsRest],
+   #field{type = Type, presence = Presence, operator = #delta{dictionary = D, key = Key, value = InitialValue}},
       Context = #context{dicts = Dicts, application = App, template = #template{name = TemplateName}}) ->
    Dict = select_dict(D, TemplateName, App),
    case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
-      undef when (FieldName1 == FieldName2) ->
+      undef ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
          {encode_delta(Type, get_delta(Value, InitialValue), Presence), MsgFieldsRest, Context#context{dicts = Dicts1}};
-      Value when (FieldName1 == FieldName2)->
+      Value ->
          {<<>>, MsgFieldsRest, Context};
-      DictValue when (FieldName1 == FieldName2) andalso (Value =/= DictValue) ->
+      DictValue when (Value =/= DictValue) ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
          {encode_delta(Type, get_delta(Value, DictValue), Presence), MsgFieldsRest, Context#context{dicts = Dicts1}}
    end;
 
-encode(MsgFields = [{FieldName1, _} | _], #field{type = Type, name = FieldName2, presence = optional, operator = #tail{}},
-   Context = #context{pmap = PMap}) when FieldName1 =/= FieldName2 ->
-   {encode_type(Type, null, true), MsgFields, Context#context{pmap = <<PMap/bitstring, 1:1>>}};
+%% =========================================================================================================
+%% tail
+%% =========================================================================================================
 
-%encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
-%   Instr = #field{type = Type, name = FieldName2, presence = Presence, operator = #tail{dictionary = D, key = Key, value = InitialValue}},
-%      Context = #context{dicts = Dicts, application = App, template = #template{name = TemplateName}}) ->
-%   Dict = select_dict(D, TemplateName, App),
-%   case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
-%      undef when (FieldName1 == FieldName2) andalso (Value == InitialValue) ->
-%         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
-%         {encode_delta(Type, get_delta(alue, InitialValue), Presence), MsgFieldsRest, Context#context{dicts = Dicts1}};
-%      undef when (FieldName1 == FieldName2) andalso (Value =/= InitialValue) ->
-%         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-%         {encode_delta(Type, get_delta(Value, InitialValue), Presence), MsgFieldsRest, Context#context{dicts = Dicts1}};
-%      Value when (FieldName1 == FieldName2)->
-%         {<<>>, MsgFieldsRest, Context};
-%      DictValue when (FieldName1 == FieldName2) andalso (Value =/= DictValue) ->
-%         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-%         {encode_delta(Type, get_delta(Value, DictValue), Presence), MsgFieldsRest, Context#context{dicts = Dicts1}}
-%   end.
+encode(MsgFields = [{FieldName1, _} | _], #field{type = Type, presence = Presence, name = FieldName2, operator = #tail{}},
+   Context = #context{pmap = PMap}) when FieldName1 =/= FieldName2 ->
+   {encode_type(Type, null, Presence), MsgFields, Context#context{pmap = <<PMap/bitstring, 1:1>>}};
+
+encode([{_, Value} | MsgFieldsRest],
+   #field{type = Type, presence = Presence, operator = #tail{dictionary = D, key = Key, value = InitialValue}},
+      Context = #context{pmap = PMap, dicts = Dicts, application = App, template = #template{name = TemplateName}}) ->
+   Dict = select_dict(D, TemplateName, App),
+   case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
+      undef ->
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
+         {encode_delta(Type, get_delta(Value, InitialValue), Presence), MsgFieldsRest,
+            Context#context{pmap = <<PMap/bitstring, 1:1>>, dicts = Dicts1}};
+      Value ->
+         {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 0:1>>}};
+      DictValue when (Value =/= DictValue) ->
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
+         {encode_delta(Type, get_delta(Value, DictValue), Presence), MsgFieldsRest, Context#context{pmap =
+               <<PMap/bitstring, 1:1>>, dicts = Dicts1}}
+   end;
+
+%% =========================================================================================================
+%% increment
+%% =========================================================================================================
+
+encode(MsgFields = [{FieldName1, _} | _], #field{type = Type, presence = Presence, name = FieldName2, operator =
+      #increment{}},
+   Context = #context{pmap = PMap}) when FieldName1 =/= FieldName2 ->
+   {encode_type(Type, null, Presence), MsgFields, Context#context{pmap = <<PMap/bitstring, 1:1>>}};
+
+encode([{_, Value} | MsgFieldsRest],
+   #field{type = Type, presence = Presence, operator = #increment{dictionary = D, key = Key, value = InitialValue}},
+      Context = #context{pmap = PMap, dicts = Dicts, application = App, template = #template{name = TemplateName}}) ->
+   Dict = select_dict(D, TemplateName, App),
+   case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
+      undef when (InitialValue == undef) ->
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
+         {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 1:1>>,
+            dicts = Dicts1}};
+      undef when (Value - InitialValue == 1)->
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
+         {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 0:1>>, dicts = Dicts1}};
+      DictValue when (Value - DictValue == 1) ->
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
+         {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 0:1>>, dicts = Dicts1}};
+      _ ->
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
+         {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 0:1>>, dicts = Dicts1}}
+   end;
+
+%% =========================================================================================================
+%% undef
+%% =========================================================================================================
 
 encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
    #field{type = Type, name = FieldName2, presence = Presence, operator = undef}, Context) ->
@@ -130,7 +188,7 @@ encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
          {encode_type(Type, null, true), MsgFields, Context}
    end;
 
-encode(Msgs, Instr, Context) ->
+encode(Msgs, _Instr, Context) ->
    {<<>>, Msgs, Context}.
 
 %encode(_, Instr, _Context) ->

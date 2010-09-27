@@ -117,5 +117,6 @@ encode_fields(MsgFields, Context = #context{template = #template{instructions = 
 %     throw({error, [MsgFields, "not all message fields are encoded"]});
 encode_fields(MsgFields, Context = #context{template = T = #template{instructions = [Instr | Rest]}}) ->
    {Head, MsgFields1, Context1} = erlang_fast_field_encode:encode(MsgFields, Instr, Context),
+   ?debugFmt("~p ~p", [Head, Instr]),
    {Tail, MsgFields2, Context2} = encode_fields(MsgFields1, Context1#context{template = T#template{instructions = Rest}}),
    {<<Head/bitstring, Tail/bitstring>>, MsgFields2, Context2}.

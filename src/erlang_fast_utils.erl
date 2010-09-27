@@ -57,17 +57,17 @@ apply_delta(PrevVal, Len, Delta) when Len < 0 ->
 get_delta(Value, undef) ->
    get_delta(Value, <<"">>);
 get_delta(NewValue, OldValue) ->
-   case binary:longest_common_suffix([NewValue, OldValue]) of
+   case binary:longest_common_prefix([NewValue, OldValue]) of
       0 ->
-         case binary:longest_common_prefix([NewValue, OldValue]) of
+         case binary:longest_common_suffix([NewValue, OldValue]) of
             0 ->
                {byte_size(OldValue), NewValue};
-            PrefixLen ->
-               {byte_size(OldValue) - PrefixLen, binary:part(NewValue, PrefixLen, byte_size(NewValue) - PrefixLen)}
+            SuffixLen ->
+               % if length is negative or 0, it should be decremented by 1 before encoding (see 6.3.7.3 for details)
+               {-(byte_size(OldValue) - SuffixLen) - 1, binary:part(NewValue, 0, byte_size(NewValue) - SuffixLen)}
          end;
-      SuffixLen ->
-         % if length is negative or 0, it should be decremented by 1 before encoding (see 6.3.7.3 for details)
-         {-(byte_size(OldValue) - SuffixLen) - 1, binary:part(NewValue, 0, byte_size(NewValue) - SuffixLen)}
+      PrefixLen ->
+         {byte_size(OldValue) - PrefixLen, binary:part(NewValue, PrefixLen, byte_size(NewValue) - PrefixLen)}
    end.
 
 increment_value(int32, Value, Inc) when Value + Inc >= 2147483647 ->
