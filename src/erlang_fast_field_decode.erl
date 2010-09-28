@@ -265,11 +265,13 @@ decode(Data, #field{type = Type, name = FieldName, presence = Presence, operator
 %% group decoding
 %% =========================================================================================================
 
-decode(Data, #field_group{type = group, name = FieldName}, Context = #context{pmap = <<0:1, PMapRest/bitstring>>}) ->
+decode(Data, #field_group{type = group, presence = optional, name = FieldName}, Context = #context{pmap = <<0:1, PMapRest/bitstring>>}) ->
    {{FieldName, absent}, Data, Context#context{pmap = PMapRest}};
 
-decode(Data, #field_group{type = group, name = FieldName, need_pmap = NeedPMap, instructions = Instrs},
-   Context = #context{pmap = <<1:1, PMapRest/bitstring>>}) ->
+decode(Data,
+   #field_group{type = group, name = FieldName, presence = Presence, need_pmap = NeedPMap, instructions = Instrs},
+      Context = #context{pmap = PMap = <<PresenceBit:1, PMapRest/bitstring>>})
+      when (Presence == mandatory) or ((Presence == optional) andalso (PresenceBit == 1)) ->
    {Data1, Context1} =
    case NeedPMap of
       true ->
@@ -279,7 +281,7 @@ decode(Data, #field_group{type = group, name = FieldName, need_pmap = NeedPMap, 
    end,
    {Msg, Data2, #context{dicts = Dicts}} =
       erlang_fast_segment:decode_fields(Data1, Context1#context.template#template{instructions = Instrs}),
-   {{FieldName, Msg}, Data2, Context#context{pmap = PMapRest, dicts = Dicts}};
+      {{FieldName, Msg}, Data2, Context#context{pmap = if (Presence == optional) -> PMapRest; true -> PMap end, dicts = Dicts}};
 
 %% =========================================================================================================
 %% sequence decoding

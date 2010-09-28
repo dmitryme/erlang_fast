@@ -188,6 +188,34 @@ encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
          {encode_type(Type, null, true), MsgFields, Context}
    end;
 
+%% =========================================================================================================
+%% typeRef
+%% =========================================================================================================
+
+encode(MsgFields, #typeRef{name = AppName}, Context) ->
+   {<<>>, MsgFields, Context#context{application = AppName}};
+
+%% =========================================================================================================
+%% templateRef
+%% =========================================================================================================
+
+encode([{Tid, MsgRefFields} | MsgFieldsRest], #templateRef{name = undef}, Context = #context{pmap = PMap}) ->
+   TemplateRef = erlang_fast_templates:get_by_id(Tid, Context#context.templates#templates.tlist),
+   {TemplRefBin, _, Context1} = erlang_fast_segment:encode(MsgRefFields, Context#context{template = TemplateRef}),
+   {TemplRefBin, MsgFieldsRest,
+      Context#context{pmap = <<PMap/bitstring, (Context1#context.pmap)/bitstring>>, dicts = Context1#context.dicts}};
+
+encode(MsgFields, #templateRef{name = TemplateName}, Context = #context{template = T = #template{instructions = Instrs}}) ->
+   TemplateRef = erlang_fast_templates:get_by_name(TemplateName, Context#context.templates#templates.tlist),
+   {<<>>, MsgFields, Context#context{template = T#template{instructions = TemplateRef#template.instructions ++ Instrs}}};
+
+%% =========================================================================================================
+%% group
+%% =========================================================================================================
+%encode(MsgFields = [{Tid, MsgRefFields} | MsgFieldsRest],
+%   #field_group{type = group, name = GroupName, need_pmap = MeedPMap, dictionary = D, instructions = Instrs},
+%      Context}) ->
+
 encode(Msgs, _Instr, Context) ->
    {<<>>, Msgs, Context}.
 

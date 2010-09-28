@@ -24,10 +24,34 @@ encode_type(string, Value, Nullable) ->
    encode_string(Value, Nullable);
 
 encode_type(Type, Value, Nullable) when (Type == unicode) or (Type == byteVector) ->
-   encode_vector(Value, Nullable).
+   encode_vector(Value, Nullable);
 
-encode_delta(_, _, _) ->
-   <<>>.
+encode_type(decimal, null, Nullable) ->
+   encode_uint(null, Nullable);
+
+encode_type(decimal, {Mantissa, Exponent}, Nullable) ->
+   <<(encode_int(Exponent, Nullable))/bitstring, (encode_int(Mantissa, false))/bitstring>>.
+
+encode_delta(Type, null, Nullable) when (Type == string) or (Type == unicode) or (Type == byteVector) ->
+   encode_int(null, Nullable);
+
+encode_delta(decimal, null, Nullable) ->
+   encode_int(null, Nullable);
+
+encode_delta(Type, Value, Nullable) when (type == int32) or (Type == int64) ->
+   encode_int(Value, Nullable);
+
+encode_delta(Type, Value, Nullable) when (type == uInt32) or (Type == uInt64) ->
+   encode_uint(Value, Nullable);
+
+encode_delta(string, {Len, Value}, Nullable) ->
+   <<(encode_int(int32, Len))/bitstring, (encode_string(Value, Nullable))/bitstring>>;
+
+encode_delta(Type, {Len, Value}, Nullable) when (Type == unicode) or (Type == byteVector) ->
+   <<(encode_int(int32, Len))/bitstring, (encode_vector(Value, Nullable))/bitstring>>;
+
+encode_delta(decimal, {MDelta, EDelta}, Nullable) ->
+   <<(encode_int(EDelta, Nullable))/bitstring, (encode_int(MDelta, Nullable))/bitstring>>.
 
 %% ====================================================================================================================
 %% privates

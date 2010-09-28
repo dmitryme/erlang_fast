@@ -54,8 +54,21 @@ apply_delta(PrevVal, Len, Delta) when Len < 0 ->
    Tail = binary_part(PrevVal, abs(Len + 1), byte_size(PrevVal) + Len + 1),
    <<Delta/binary, Tail/binary>>.
 
+get_delta(NewValue, undef) when is_number(NewValue) ->
+   get_delta(NewValue, 0);
+
+get_delta(NewDecimal = {_, _}, undef) ->
+   get_delta(NewDecimal, {0, 0});
+
 get_delta(Value, undef) ->
    get_delta(Value, <<"">>);
+
+get_delta(NewValue, OldValue) when is_number(NewValue) andalso is_number(OldValue) ->
+   NewValue - OldValue;
+
+get_delta({NewMantissa, NewExponent}, {OldMantissa, OldExponent}) ->
+   {NewMantissa - OldMantissa, NewExponent - OldExponent};
+
 get_delta(NewValue, OldValue) ->
    case binary:longest_common_prefix([NewValue, OldValue]) of
       0 ->

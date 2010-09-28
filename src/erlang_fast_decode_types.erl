@@ -132,7 +132,7 @@ decode_scaled(Data, Nullable) ->
       Res = {null, _Err, _Rest} ->
          Res;
       {ExpValue, Err, Rest} ->
-         {MantValue, Err1, Rest1} = decode_int(Rest, Nullable),
+         {MantValue, Err1, Rest1} = decode_int(Rest, false),
          {{MantValue, ExpValue}, lists:flatten([Err, Err1]), Rest1}
    end.
 
