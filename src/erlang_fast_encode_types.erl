@@ -38,10 +38,10 @@ encode_delta(Type, null, Nullable) when (Type == string) or (Type == unicode) or
 encode_delta(decimal, null, Nullable) ->
    encode_int(null, Nullable);
 
-encode_delta(Type, Value, Nullable) when (type == int32) or (Type == int64) ->
+encode_delta(Type, Value, Nullable) when (Type == int32) or (Type == int64) ->
    encode_int(Value, Nullable);
 
-encode_delta(Type, Value, Nullable) when (type == uInt32) or (Type == uInt64) ->
+encode_delta(Type, Value, Nullable) when (Type == uInt32) or (Type == uInt64) ->
    encode_uint(Value, Nullable);
 
 encode_delta(string, {Len, Value}, Nullable) ->
@@ -139,12 +139,12 @@ encode_number_aux(Value, StopBit) ->
 
 %% encode ASCII string
 
-encode_string_aux([]) ->
+encode_string_aux(<<>>) ->
    <<>>;
-encode_string_aux([Chr]) ->
-   <<1:1, Chr:7>>;
-encode_string_aux([ Chr | Rest ]) ->
-   <<0:1, Chr:7, (encode_string_aux(Rest))/bitstring>>.
+encode_string_aux(<<_:1, Chr:7/bitstring>>) ->
+   <<1:1, Chr/bitstring>>;
+encode_string_aux(<<_:1, Chr:7/bitstring, Rest/bitstring>>) ->
+   <<0:1, Chr/bitstring, (encode_string_aux(Rest))/bitstring>>.
 
 %% ====================================================================================================================
 %% unit testing
@@ -174,11 +174,11 @@ decode_uint_test() ->
    ?assertEqual(<<16#81>>, encode_uint(1, false)).
 
 decode_string_test() ->
-   ?assertEqual(<<16#41, 16#42, 16#c3>>, encode_string("ABC", true)),
+   ?assertEqual(<<16#41, 16#42, 16#c3>>, encode_string(<<"ABC">>, true)),
    ?assertEqual(<<16#80>>, encode_string(null, true)),
-   ?assertEqual(<<16#00, 16#80>>, encode_string("", true)),
-   ?assertEqual(<<16#41, 16#42, 16#c3>>, encode_string("ABC", false)),
-   ?assertEqual(<<16#80>>, encode_string("", false)).
+   ?assertEqual(<<16#00, 16#80>>, encode_string(<<"">>, true)),
+   ?assertEqual(<<16#41, 16#42, 16#c3>>, encode_string(<<"ABC">>, false)),
+   ?assertEqual(<<16#80>>, encode_string(<<"">>, false)).
 
 decode_vector_test() ->
    ?assertEqual(<<16#80>>, encode_vector(null, true)),

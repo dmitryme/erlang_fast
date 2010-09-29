@@ -280,7 +280,7 @@ decode_vector_test() ->
 decode_decimal_test() ->
   ?assertEqual({{942755, 2}, [], <<>>}, decode_scaled(<<16#82, 16#39, 16#45, 16#a3>>, false)),
   ?assertEqual({{9427550, 1}, [], <<>>}, decode_scaled(<<16#81, 16#04, 16#3f, 16#34, 16#de>>, false)),
-  ?assertEqual({{942754,2}, [], <<>>}, decode_scaled(<<16#83, 16#39, 16#45, 16#a3>>, true)),
+  ?assertEqual({{942755,2}, [], <<>>}, decode_scaled(<<16#83, 16#39, 16#45, 16#a3>>, true)),
   ?assertEqual({{942755,-2}, [], <<>>}, decode_scaled(<<16#fe, 16#39, 16#45, 16#a3>>, false)),
   ?assertEqual({{-942755,-2}, [], <<>>}, decode_scaled(<<16#fe, 16#46, 16#3a, 16#dd>>, true)),
   ?assertEqual({{-8193,-3}, [], <<>>}, decode_scaled(<<16#fd, 16#7f, 16#3f, 16#ff>>, true)).

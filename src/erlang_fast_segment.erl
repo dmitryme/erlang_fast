@@ -7,6 +7,7 @@
       ,decode_pmap/2
       ,decode_fields/2
       ,encode/2
+      ,encode_fields/2
    ]).
 
 -include("erlang_fast_template.hrl").
