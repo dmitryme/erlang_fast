@@ -22,6 +22,12 @@
       ,decode_type/3
    ]).
 
+-import(erlang_fast_encode_types,
+   [
+      encode_pmap/1,
+      encode_type/3
+   ]).
+
 %% =========================================================================================================
 %% decoding
 %% =========================================================================================================
@@ -40,7 +46,7 @@ decode(Data, Context) ->
         Err
    end.
 
-decode_template_id(Data, Context = #context{dicts = Dicts, pmap = <<0:1, PMapRest/bitstring>>, logger = L}) -> %
+decode_template_id(Data, Context = #context{dicts = Dicts, pmap = <<0:1, PMapRest/bits>>, logger = L}) -> %
    case erlang_fast_dicts:get_value(global, ?common_template_id_key, Dicts) of
       undef ->
          L('ERR D5', "Unable to get template ID from dictionary."),
@@ -54,7 +60,7 @@ decode_template_id(Data, Context = #context{dicts = Dicts, pmap = <<0:1, PMapRes
    end;
 
 decode_template_id(Data,
-   Context = #context{dicts = Dicts, pmap = <<1:1, PMapRest/bitstring>>, logger = L}) -> % tid is present into stream
+   Context = #context{dicts = Dicts, pmap = <<1:1, PMapRest/bits>>, logger = L}) -> % tid is present into stream
    case decode_type(uInt32, Data, false) of
       {Tid, Err, Data1} ->
          L(Err, Tid),
@@ -98,8 +104,11 @@ encode({TID, MsgFields}, Context) ->
    F =
    fun() ->
       Template = erlang_fast_templates:get_by_id(TID, Context#context.templates#templates.tlist),
-      {Data, _, Context1} = encode_fields(MsgFields, Context#context{pmap = <<>>, template = Template}),
-      {Data, Context1}
+      {Data, _, Context1 = #context{pmap = PMap}} = encode_fields(MsgFields, Context#context{pmap = <<>>, template = Template}),
+      {<<
+         (encode_type(uInt32, TID, false))/bits,
+         (encode_pmap(<<1:1, PMap/bitstring>>))/bits,
+         Data/bits>>, Context1}
    end,
    F().
    %try F()
@@ -110,14 +119,14 @@ encode({TID, MsgFields}, Context) ->
 
 encode_fields([], Context = #context{template = #template{instructions = []}}) ->
    {<<>>, [], Context};
-encode_fields(MsgFields, Context = #context{template = #template{instructions = []}})
-   when is_list(MsgFields) andalso length(MsgFields) > 0 ->
-      {<<>>, MsgFields, Context};
-%encode_fields(MsgFields, #context{template = #template{instructions = []}})
+%encode_fields(MsgFields, Context = #context{template = #template{instructions = []}})
 %   when is_list(MsgFields) andalso length(MsgFields) > 0 ->
-%     throw({error, [MsgFields, "not all message fields are encoded"]});
+%      {<<>>, MsgFields, Context};
+encode_fields(MsgFields, #context{template = #template{instructions = []}})
+  when is_list(MsgFields) andalso length(MsgFields) > 0 ->
+    throw({error, [MsgFields, "not all message fields are encoded"]});
 encode_fields(MsgFields, Context = #context{template = T = #template{instructions = [Instr | Rest]}}) ->
    {Head, MsgFields1, Context1} = erlang_fast_field_encode:encode(MsgFields, Instr, Context),
-   ?debugFmt("~p ~p", [Head, Instr]),
+   ?debugFmt("~p ~p ~p", [Context1#context.pmap, Head, Instr]),
    {Tail, MsgFields2, Context2} = encode_fields(MsgFields1, Context1#context{template = T#template{instructions = Rest}}),
    {<<Head/bitstring, Tail/bitstring>>, MsgFields2, Context2}.

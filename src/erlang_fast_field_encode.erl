@@ -22,6 +22,7 @@
    [
       encode_type/3
       ,encode_delta/3
+      ,encode_pmap/1
    ]).
 
 -include_lib("eunit/include/eunit.hrl").
@@ -161,13 +162,13 @@ encode([{_, Value} | MsgFieldsRest],
       Context = #context{pmap = PMap, dicts = Dicts, application = App, template = #template{name = TemplateName}}) ->
    Dict = select_dict(D, TemplateName, App),
    case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
-      undef when (InitialValue == undef) ->
+      undef when (InitialValue == Value) ->
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
+         {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 0:1>>, dicts = Dicts1}};
+      undef when (InitialValue == undef) orelse (InitialValue =/= Value) ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
          {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 1:1>>,
             dicts = Dicts1}};
-      undef when (Value - InitialValue == 1)->
-         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
-         {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 0:1>>, dicts = Dicts1}};
       DictValue when (Value - DictValue == 1) ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
          {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, 0:1>>, dicts = Dicts1}};
@@ -241,34 +242,34 @@ encode([{GroupName, MsgGroupFields} | MsgFieldsRest],
 %% sequence
 %% =========================================================================================================
 encode(MsgFields = [{SeqName1, MsgSeqFields} | _],
-   #field_group{type = sequence, name = SeqName2, presence = Presence, instructions = Instrs}, Context = #context{pmap = PMap})
+  #field_group{type = sequence, name = SeqName2, presence = Presence, instructions = Instrs}, Context = #context{pmap = PMap})
 when (SeqName1 =/= SeqName2) or ((SeqName1 == SeqName2) andalso (length(MsgSeqFields) == 0)) ->
-   LenField =
-   case (hd(Instrs))#field.type == length of
-      true ->
-         LenInstr = hd(Instrs),
-         LenInstr#field{type = uInt32, presence = Presence};
-      false ->
-         #field{type = uInt32, name = "length", presence = Presence}
-   end,
-   {LenBinary, _, #context{pmap = LenPMap}} = encode([{LenField#field.name, absent}], LenField, Context#context{pmap = <<>>}),
-   {LenBinary, MsgFields, Context#context{pmap = <<PMap/bitstring, LenPMap>>}};
+  LenField =
+  case (hd(Instrs))#field.type == length of
+     true ->
+        LenInstr = hd(Instrs),
+        LenInstr#field{type = uInt32, presence = Presence};
+     false ->
+        #field{type = uInt32, name = "length", presence = Presence}
+  end,
+  {LenBinary, _, #context{pmap = LenPMap}} = encode([{LenField#field.name, absent}], LenField, Context#context{pmap = <<>>}),
+  {LenBinary, MsgFields, Context#context{pmap = <<PMap/bitstring, LenPMap>>}};
 
 encode([{SeqName, MsgSeqFields} | MsgFieldsRest],
-   #field_group{type = sequence, name = SeqName, presence = Presence, instructions = Instrs},
-      Context = #context{pmap = PMap, template = T}) ->
-   {LenField, SeqInstrs} =
-   case (hd(Instrs))#field.type == length of
-      true ->
-         LenInstr = hd(Instrs),
-         {LenInstr#field{type = uInt32, presence = Presence}, tl(Instrs)};
-      false ->
-         {#field{type = uInt32, name = "length", presence = Presence}, Instrs}
-   end,
-   {LenBin, _, #context{pmap = LenPMap}} =
-      encode([{LenField#field.name, length(MsgSeqFields)}], LenField, Context#context{pmap = <<>>}),
-   SeqBin = encode_seq_aux(MsgSeqFields, Context#context{pmap = <<>>, template = T#template{instructions = SeqInstrs}}),
-   {<<LenBin/bitstring, SeqBin/bitstring>>, MsgFieldsRest, Context#context{pmap = <<PMap/bitstring, LenPMap/bitstring>>}};
+  #field_group{type = sequence, name = SeqName, presence = Presence, instructions = Instrs},
+     Context = #context{pmap = PMap, template = T}) ->
+  {LenField, SeqInstrs} =
+  case (hd(Instrs))#field.type == length of
+     true ->
+        LenInstr = hd(Instrs),
+        {LenInstr#field{type = uInt32, presence = Presence}, tl(Instrs)};
+     false ->
+        {#field{type = uInt32, name = "length", presence = Presence}, Instrs}
+  end,
+  {LenBin, _, Context1} =
+     encode([{LenField#field.name, length(MsgSeqFields)}], LenField, Context),
+  SeqBin = encode_seq_aux(MsgSeqFields, Context#context{pmap = <<>>, template = T#template{instructions = SeqInstrs}}),
+  {<<LenBin/bitstring, SeqBin/bitstring>>, MsgFieldsRest, Context1};
 
 %% =========================================================================================================
 %% terminator
@@ -276,13 +277,13 @@ encode([{SeqName, MsgSeqFields} | MsgFieldsRest],
 encode(_, Instr, _Context) ->
    throw({error, [unknown_field, Instr]}).
 
-
 %% =========================================================================================================
 %% encode sequence fields
 %% =========================================================================================================
 encode_seq_aux([], _Context) ->
    <<>>;
 encode_seq_aux([MsgFields | MsgFieldsRest], Context) ->
-   {Head, [], #context{pmap = HeadPMap}} = erlang_fast_segment:encode_fields(MsgFields, Context),
-   TailBin = encode_seq_aux(MsgFieldsRest, Context),
-   <<HeadPMap/bitstring, Head/bitstring, TailBin/bitstring>>.
+   {Head, [], Context1 = #context{pmap = HeadPMap, dicts = Dicts}} = erlang_fast_segment:encode_fields(MsgFields, Context),
+   ?debugFmt("SEQ ~p ~p", [HeadPMap, Head]),
+   TailBin = encode_seq_aux(MsgFieldsRest, Context#context{pmap = <<>>, dicts = Dicts}),
+   <<(encode_pmap(HeadPMap))/bitstring, Head/bitstring, TailBin/bitstring>>.

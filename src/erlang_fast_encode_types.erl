@@ -114,13 +114,8 @@ encode_vector(Binary, Nullable) ->
 
 %% encode pmap
 
-encode_pmap(<<>>) ->
-   <<>>;
-encode_pmap(Data) when bit_size(Data) =< 7 ->
-  TailSize = 7 - bit_size(Data),
-  <<1:1, Data/bitstring, 0:TailSize>>;
-encode_pmap(<<Data:7/bitstring, Rest/bitstring>>) ->
-  <<0:1, Data/bitstring, (encode_pmap(Rest))/bitstring>>.
+encode_pmap(PMap) ->
+   encode_pmap_aux(trim_zero_tail(PMap)).
 
 %% ====================================================================================================================
 %% encoding details
@@ -145,6 +140,30 @@ encode_string_aux(<<_:1, Chr:7/bitstring>>) ->
    <<1:1, Chr/bitstring>>;
 encode_string_aux(<<_:1, Chr:7/bitstring, Rest/bitstring>>) ->
    <<0:1, Chr/bitstring, (encode_string_aux(Rest))/bitstring>>.
+
+%% encode pmap
+
+encode_pmap_aux(<<>>) ->
+   <<>>;
+encode_pmap_aux(Data) when bit_size(Data) =< 7 ->
+  TailSize = 7 - bit_size(Data),
+  <<1:1, Data/bitstring, 0:TailSize>>;
+encode_pmap_aux(<<Data:7/bitstring, Rest/bitstring>>) ->
+  <<0:1, Data/bitstring, (encode_pmap_aux(Rest))/bitstring>>.
+
+trim_zero_tail(<<>>) ->
+   <<>>;
+trim_zero_tail(Bin) when bit_size(Bin) =< 7 ->
+   Bin;
+trim_zero_tail(Bin) ->
+   HeadSize = bit_size(Bin) - 1,
+   <<HeadBin:HeadSize/bitstring, LastBit:1>> = Bin,
+   case LastBit of
+      1 ->
+         Bin;
+      0 ->
+         trim_zero_tail(HeadBin)
+   end.
 
 %% ====================================================================================================================
 %% unit testing
