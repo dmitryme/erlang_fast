@@ -30,7 +30,7 @@ encode_type(decimal, null, Nullable) ->
    encode_uint(null, Nullable);
 
 encode_type(decimal, {Mantissa, Exponent}, Nullable) ->
-   <<(encode_int(Exponent, Nullable))/bitstring, (encode_int(Mantissa, false))/bitstring>>.
+   <<(encode_int(Exponent, Nullable))/bits, (encode_int(Mantissa, false))/bits>>.
 
 encode_delta(Type, null, Nullable) when (Type == string) or (Type == unicode) or (Type == byteVector) ->
    encode_int(null, Nullable);
@@ -45,13 +45,13 @@ encode_delta(Type, Value, Nullable) when (Type == uInt32) or (Type == uInt64) ->
    encode_uint(Value, Nullable);
 
 encode_delta(string, {Len, Value}, Nullable) ->
-   <<(encode_int(int32, Len))/bitstring, (encode_string(Value, Nullable))/bitstring>>;
+   <<(encode_int(int32, Len))/bits, (encode_string(Value, Nullable))/bits>>;
 
 encode_delta(Type, {Len, Value}, Nullable) when (Type == unicode) or (Type == byteVector) ->
-   <<(encode_int(int32, Len))/bitstring, (encode_vector(Value, Nullable))/bitstring>>;
+   <<(encode_int(int32, Len))/bits, (encode_vector(Value, Nullable))/bits>>;
 
 encode_delta(decimal, {MDelta, EDelta}, Nullable) ->
-   <<(encode_int(EDelta, Nullable))/bitstring, (encode_int(MDelta, Nullable))/bitstring>>.
+   <<(encode_int(EDelta, Nullable))/bits, (encode_int(MDelta, Nullable))/bits>>.
 
 %% ====================================================================================================================
 %% privates
@@ -71,7 +71,7 @@ encode_uint(Value, true) ->
 encode_int(null, _) ->
    <<2#10000000:8>>;
 encode_int(Value, Nullable) ->
-   Res = <<_:1, SignBit:1, _/bitstring>> =
+   Res = <<_:1, SignBit:1, _/bits>> =
    case (Value >= 0) of
       true when Nullable == true ->
          encode_number_aux(Value + 1, <<1:1>>);
@@ -80,9 +80,9 @@ encode_int(Value, Nullable) ->
    end,
    case Value >= 0 of
      true when SignBit == 1 ->
-        <<0:8, Res/binary>>;
+        <<0:8, Res/bytes>>;
      false when SignBit == 0 ->
-        <<16#7f:8, Res/binary>>;
+        <<16#7f:8, Res/bytes>>;
       _ ->
          Res
    end.
@@ -110,7 +110,7 @@ encode_string(Str, Nullable) ->
 encode_vector(null, true) ->
    encode_uint(null, true);
 encode_vector(Binary, Nullable) ->
-   <<(encode_uint(byte_size(Binary), Nullable))/binary, Binary/binary>>.
+   <<(encode_uint(byte_size(Binary), Nullable))/bytes, Binary/bytes>>.
 
 %% encode pmap
 
@@ -130,16 +130,16 @@ encode_number_aux(0, _) ->
 encode_number_aux(-1, _) ->
    <<>>;
 encode_number_aux(Value, StopBit) ->
-   <<(encode_number_aux(Value bsr 7, <<0:1>>))/bitstring, StopBit/bitstring, Value:7>>.
+   <<(encode_number_aux(Value bsr 7, <<0:1>>))/bits, StopBit/bits, Value:7>>.
 
 %% encode ASCII string
 
 encode_string_aux(<<>>) ->
    <<>>;
-encode_string_aux(<<_:1, Chr:7/bitstring>>) ->
-   <<1:1, Chr/bitstring>>;
-encode_string_aux(<<_:1, Chr:7/bitstring, Rest/bitstring>>) ->
-   <<0:1, Chr/bitstring, (encode_string_aux(Rest))/bitstring>>.
+encode_string_aux(<<_:1, Chr:7/bits>>) ->
+   <<1:1, Chr/bits>>;
+encode_string_aux(<<_:1, Chr:7/bits, Rest/bits>>) ->
+   <<0:1, Chr/bits, (encode_string_aux(Rest))/bits>>.
 
 %% encode pmap
 
@@ -147,9 +147,9 @@ encode_pmap_aux(<<>>) ->
    <<>>;
 encode_pmap_aux(Data) when bit_size(Data) =< 7 ->
   TailSize = 7 - bit_size(Data),
-  <<1:1, Data/bitstring, 0:TailSize>>;
-encode_pmap_aux(<<Data:7/bitstring, Rest/bitstring>>) ->
-  <<0:1, Data/bitstring, (encode_pmap_aux(Rest))/bitstring>>.
+  <<1:1, Data/bits, 0:TailSize>>;
+encode_pmap_aux(<<Data:7/bits, Rest/bits>>) ->
+  <<0:1, Data/bits, (encode_pmap_aux(Rest))/bits>>.
 
 trim_zero_tail(<<>>) ->
    <<>>;
@@ -157,7 +157,7 @@ trim_zero_tail(Bin) when bit_size(Bin) =< 7 ->
    Bin;
 trim_zero_tail(Bin) ->
    HeadSize = bit_size(Bin) - 1,
-   <<HeadBin:HeadSize/bitstring, LastBit:1>> = Bin,
+   <<HeadBin:HeadSize/bits, LastBit:1>> = Bin,
    case LastBit of
       1 ->
          Bin;

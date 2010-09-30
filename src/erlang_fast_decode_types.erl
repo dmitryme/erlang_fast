@@ -48,7 +48,7 @@ decode_delta(Type, Data, Nullable) when (Type == decimal) ->
 %% privates
 %% ====================================================================================================================
 
-decode_int(<<1:1, 0:7/integer, Rest/binary>>, true) ->
+decode_int(<<1:1, 0:7/integer, Rest/bytes>>, true) ->
    {null, [], Rest};
 decode_int(Data, Nullable) ->
    case decode_int_aux(Data) of
@@ -60,7 +60,7 @@ decode_int(Data, Nullable) ->
          Result
    end.
 
-decode_uint(<<1:1, 0:7/integer, Rest/binary>>, true) ->
+decode_uint(<<1:1, 0:7/integer, Rest/bytes>>, true) ->
    {null, [], Rest};
 decode_uint(Data, Nullable) ->
    Result = decode_uint_aux(Data),
@@ -71,21 +71,21 @@ decode_uint(Data, Nullable) ->
          Result
    end.
 
-decode_string(<<1:1, 0:7/integer, Rest/binary>>, false) ->
+decode_string(<<1:1, 0:7/integer, Rest/bytes>>, false) ->
    {<<"">>, [], Rest};
-decode_string(<<0:8/integer, 1:1, 0:7/integer, Rest/binary>>, false) ->
+decode_string(<<0:8/integer, 1:1, 0:7/integer, Rest/bytes>>, false) ->
    {<<0>>, [], Rest};
-decode_string(<<1:1, 0:7/integer, Rest/binary>>, true) ->
+decode_string(<<1:1, 0:7/integer, Rest/bytes>>, true) ->
    {null, [], Rest};
-decode_string(<<0:8/integer, 1:1, 0:7/integer, Rest/binary>>, true) ->
+decode_string(<<0:8/integer, 1:1, 0:7/integer, Rest/bytes>>, true) ->
    {<<"">>, [], Rest};
-decode_string(<<0:8/integer, 0:8/integer, 1:1, 0:7/integer, Rest/binary>>, true) ->
+decode_string(<<0:8/integer, 0:8/integer, 1:1, 0:7/integer, Rest/bytes>>, true) ->
    {<<0>>, [], Rest};
 decode_string(Data, _Nullable) ->
    case decode_string_aux(Data, <<>>) of
-      {<<0, Next, Remainder/binary>>, Rest} when Next > 0 ->
+      {<<0, Next, Remainder/bytes>>, Rest} when Next > 0 ->
          {<<Next, Remainder>>, ['ERR R9'], Rest};
-      {<<0, 0, Remainder/binary>>, Rest} ->
+      {<<0, 0, Remainder/bytes>>, Rest} ->
          {<<Remainder>>, ['ERR R9'], Rest};
       {Str, Rest} ->
          {Str, [], Rest}
@@ -157,20 +157,20 @@ decode_pmap(Data) ->
 
 decode_int_aux(<<>>) ->
    throw(not_enough_data);
-decode_int_aux(<<1:1, 1:1, Data:6/integer, Rest/binary>>) ->
+decode_int_aux(<<1:1, 1:1, Data:6/integer, Rest/bytes>>) ->
    {(-1 bsl 6) bor Data, [], Rest};
-decode_int_aux(<<1:1, Data:7/integer, Rest/binary>>) ->
+decode_int_aux(<<1:1, Data:7/integer, Rest/bytes>>) ->
    {Data, [], Rest};
-decode_int_aux(<<0:1, 1:1, Data:6/integer, Rest/binary>>) ->
+decode_int_aux(<<0:1, 1:1, Data:6/integer, Rest/bytes>>) ->
    decode_int_aux(Rest, (-1 bsl 6) bor Data, []);
-decode_int_aux(<<0:1, Data:7/integer, Rest/binary>>) ->
+decode_int_aux(<<0:1, Data:7/integer, Rest/bytes>>) ->
    decode_int_aux(Rest, Data, []).
 
 decode_int_aux(<<>>, _Acc, _Err) ->
    throw(not_enough_data);
-decode_int_aux(<<1:1, Data:7/integer, Rest/binary>>, Acc, Err) ->
+decode_int_aux(<<1:1, Data:7/integer, Rest/bytes>>, Acc, Err) ->
    {(Acc bsl 7) bor Data, Err, Rest};
-decode_int_aux(<<0:1, Data:7/integer, Rest/binary>>, Acc, Err) ->
+decode_int_aux(<<0:1, Data:7/integer, Rest/bytes>>, Acc, Err) ->
    NewVal = (Acc bsl 7) bor Data,
    case NewVal =:= Acc of
       true ->
@@ -183,16 +183,16 @@ decode_int_aux(<<0:1, Data:7/integer, Rest/binary>>, Acc, Err) ->
 
 decode_uint_aux(<<>>) ->
    throw(not_enough_data);
-decode_uint_aux(<<1:1, Data:7/integer, Rest/binary>>) ->
+decode_uint_aux(<<1:1, Data:7/integer, Rest/bytes>>) ->
    {Data, [], Rest};
-decode_uint_aux(<<0:1, Data:7/integer, Rest/binary>>) ->
+decode_uint_aux(<<0:1, Data:7/integer, Rest/bytes>>) ->
    decode_uint_aux(Rest, Data, []).
 
 decode_uint_aux(<<>>, _Acc, _Err) ->
    throw(not_enough_data);
-decode_uint_aux(<<1:1, Data:7/integer, Rest/binary>>, Acc, Err) ->
+decode_uint_aux(<<1:1, Data:7/integer, Rest/bytes>>, Acc, Err) ->
    {(Acc bsl 7) bor Data, Err, Rest};
-decode_uint_aux(<<0:1, Data:7/integer, Rest/binary>>, Acc, Err) ->
+decode_uint_aux(<<0:1, Data:7/integer, Rest/bytes>>, Acc, Err) ->
    NewVal = (Acc bsl 7) bor Data,
    case NewVal =:= Acc of
       true ->
@@ -205,25 +205,25 @@ decode_uint_aux(<<0:1, Data:7/integer, Rest/binary>>, Acc, Err) ->
 
 decode_string_aux(<<>>, _Acc) ->
    throw(not_enough_data);
-decode_string_aux(<<0:1, Ch:7/integer, Rest/binary>>, Acc) ->
-   decode_string_aux(Rest, <<Acc/binary, Ch>>);
-decode_string_aux(<<1:1, Ch:7/integer, Rest/binary>>, Acc) ->
-   {<<Acc/binary, Ch>>, Rest}.
+decode_string_aux(<<0:1, Ch:7/integer, Rest/bytes>>, Acc) ->
+   decode_string_aux(Rest, <<Acc/bytes, Ch>>);
+decode_string_aux(<<1:1, Ch:7/integer, Rest/bytes>>, Acc) ->
+   {<<Acc/bytes, Ch>>, Rest}.
 
 %% decode pmap
 decode_pmap_aux(<<>>) ->
    throw(not_enough_data);
-decode_pmap_aux(<<0:1, Data:7/bitstring, Rest/binary>>) ->
+decode_pmap_aux(<<0:1, Data:7/bits, Rest/bytes>>) ->
    decode_pmap_aux(Rest, Data);
-decode_pmap_aux(<<1:1, Data:7/bitstring, Rest/binary>>) ->
+decode_pmap_aux(<<1:1, Data:7/bits, Rest/bytes>>) ->
    {Data, Rest}.
 
 decode_pmap_aux(<<>>, _Acc) ->
    throw(not_enough_data);
-decode_pmap_aux(<<0:1, Data:7/bitstring, Rest/binary>>, Acc) ->
-   decode_pmap_aux(Rest, <<Acc/bitstring, Data/bitstring>>);
-decode_pmap_aux(<<1:1, Data:7/bitstring, Rest/binary>>, Acc) ->
-   {<<Acc/bitstring, Data/bitstring>>, Rest}.
+decode_pmap_aux(<<0:1, Data:7/bits, Rest/bytes>>, Acc) ->
+   decode_pmap_aux(Rest, <<Acc/bits, Data/bits>>);
+decode_pmap_aux(<<1:1, Data:7/bits, Rest/bytes>>, Acc) ->
+   {<<Acc/bits, Data/bits>>, Rest}.
 
 %% ====================================================================================================================
 %% unit testing

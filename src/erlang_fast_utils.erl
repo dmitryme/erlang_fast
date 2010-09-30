@@ -47,12 +47,12 @@ apply_delta(PrevVal, Len, Delta) when byte_size(PrevVal) < abs(Len) ->
 
 apply_delta(PrevVal, Len, Delta) when Len >= 0 ->
    Head = binary_part(PrevVal, 0, byte_size(PrevVal) - Len),
-   <<Head/binary, Delta/binary>>;
+   <<Head/bytes, Delta/bytes>>;
 
 apply_delta(PrevVal, Len, Delta) when Len < 0 ->
    % Len should be incremented by 1 according to 6.3.7.3
    Tail = binary_part(PrevVal, abs(Len + 1), byte_size(PrevVal) + Len + 1),
-   <<Delta/binary, Tail/binary>>.
+   <<Delta/bytes, Tail/bytes>>.
 
 get_delta(NewValue, undef) when is_number(NewValue) ->
    get_delta(NewValue, 0);
@@ -96,9 +96,9 @@ increment_value(Type, Value, Inc) when (Type == int32) or (Type == int64) or (Ty
 
 print_binary(<<>>) ->
    [];
-print_binary(<<0:1, Rest/bitstring>>) ->
+print_binary(<<0:1, Rest/bits>>) ->
    [$0 | print_binary(Rest)];
-print_binary(<<1:1, Rest/bitstring>>) ->
+print_binary(<<1:1, Rest/bits>>) ->
    [$1 | print_binary(Rest)].
 
 %% ====================================================================================================================

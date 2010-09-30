@@ -274,7 +274,7 @@ string_to_type(decimal, Str) ->
    end;
 string_to_type(byteVector, Str) ->
    Bytes = string:tokens(Str, " "),
-   lists:foldl(fun(Byte, Acc) -> Int = erlang:list_to_integer(Byte, 16), <<Acc/binary, Int/integer>> end, <<>>, Bytes);
+   lists:foldl(fun(Byte, Acc) -> Int = erlang:list_to_integer(Byte, 16), <<Acc/bytes, Int/integer>> end, <<>>, Bytes);
 string_to_type(string, Str) ->
    list_to_binary(Str);
 string_to_type(_, Str) ->
