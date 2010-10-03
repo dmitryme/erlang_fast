@@ -14,7 +14,7 @@ init() ->
 new_dict(Name, Dicts) ->
    case gb_trees:lookup(Name, Dicts) of
       none ->
-         gb_trees:insert(Name, dict:new(), Dicts);
+         gb_trees:insert(Name, [], Dicts);
       {value, _} ->
          Dicts
    end.
@@ -24,10 +24,10 @@ get_value(DictName, Key, Dicts) ->
       none ->
          throw({dictionary_not_found, DictName});
       {value, Dict} ->
-         case dict:find(Key, Dict) of
-            {ok, Value} ->
+         case lists:keyfind(Key, 1, Dict) of
+            {Key, Value} ->
                Value;
-            error ->
+            false ->
                undef
          end
    end.
@@ -37,7 +37,7 @@ put_value(DictName, Key, Value, Dicts) ->
       none ->
          throw({dictionary_not_found, DictName});
       {value, Dict} ->
-         Dict1 = dict:store(Key, Value, Dict),
+         Dict1 = lists:keystore(Key, 1, Dict, {Key, Value}),
          gb_trees:update(DictName, Dict1, Dicts)
    end.
 
