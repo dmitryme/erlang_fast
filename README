@@ -1,9 +1,8 @@
-FAST decoding has been implemented.
+FAST decoding/encoding has been implemented.
 
 Example of usage:
 
 decode_one_message() ->
-
    % create context. Assume FAST templates are saved into templates.xml file
    Context = erlang_fast:create_context({file, "templates.xml"}, fun logger/2),
 
@@ -14,7 +13,14 @@ decode_one_message() ->
    {Msg, Data1, Context1} = erlang_fast:decode(Data, Context),
    io:format("Decoded message is ~p~n", [Msg]).
 
+encode_one_message() ->
+   % create context. Assume FAST templates are saved into templates.xml file
+   Context = erlang_fast:create_context({file, "templates.xml"}, fun logger/2),
 
+   % Msg is in format of previously decoded message
+   {Data, Context1} = erlang_fast:encode(Msg, Context),
+
+   io:format("Encoded data: ~p", [Data]).
 
 logger([], _) ->
    ok;
