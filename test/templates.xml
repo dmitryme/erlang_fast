@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xmlns="http://www.fixprotocol.org/ns/fast/td/1.1">
+
+   <template name="MsgHeader">
+      <string id="1128" name="ApplVerID">
+         <constant value="8"/>
+      </string>
+      <string id="49" name="SenderCompID">
+         <constant value="CQG"/>
+      </string>
+      <uInt32 id="34" name="MsgSeqNum"/>
+      <uInt64 id="52" name="SendingTime"/>
+   </template>
+
+   <template dictionary="1" id="1" name="MDIncRefresh">
+      <string id="35" name="MessageType">
+         <constant value="X"/>
+      </string>
+      <templateRef name="MsgHeader"/>
+
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <uInt32 id="279" name="MDUpdateAction" presence="optional">
+            <copy value="0"/>
+         </uInt32>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <default value="1"/>
+         </uInt32>
+         <string id="269" name="MDEntryType"/>
+         <uInt32 id="48" name="SecurityID" presence="optional">
+            <copy/>
+         </uInt32>
+         <uInt32 id="83" name="RptSeq" presence="optional">
+            <increment/>
+         </uInt32>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="0"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <uInt32 id="273" name="MDEntryTime">
+            <copy/>
+         </uInt32>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default value="K"/>
+         </string>
+         <uInt32 id="1070" name="MDQuoteType" presence="optional">
+            <constant value="0"/>
+         </uInt32>
+      </sequence>
+   </template>
+
+   <template dictionary="2" id="2" name="MDSecurityDefinition">
+      <string id="35" name="MessageType">
+         <constant value="d"/>
+      </string>
+      <templateRef name="MsgHeader"/>
+      <uInt32 id="911" name="TotNumReports"/>
+
+      <sequence name="Events" presence="optional">
+         <length id="864" name="NoEvents"/>
+         <uInt32 id="865" name="EventType">
+            <delta/>
+         </uInt32>
+         <uInt64 id="866" name="EventDate">
+            <delta/>
+         </uInt64>
+         <uInt64 id="1145" name="EventTime">
+            <delta/>
+         </uInt64>
+      </sequence>
+
+      <string id="1151" name="SecurityGroup" presence="optional"/>
+      <string id="55" name="Symbol" presence="optional"/>
+      <string id="107" name="SecurityDesc" presence="optional"/>
+      <uInt32 id="22" name="SecurityIDSource"/>
+      <uInt32 id="48" name="SecurityID"/>
+      <string id="461" name="CFICode"/>
+      <string id="207" name="SecurityExchange" presence="optional"/>
+      <decimal id="202" name="StrikePrice" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+      <string id="947" name="StrikeCurrency" presence="optional"/>
+      <string id="15" name="Currency" presence="optional"/>
+      <string id="120" name="SettlCurrency" presence="optional"/>
+
+      <sequence name="MDFeedTypes" presence="optional">
+         <length id="1141" name="NoMDFeedTypes"/>
+         <string id="1022" name="MDFeedType"/>
+         <uInt32 id="264" name="MarketDepth"/>
+      </sequence>
+
+      <sequence name="InstrAttrib" presence="optional">
+         <length id="870" name="NoInstrAttrib"/>
+         <uInt64 id="871" name="InstrAttribType">
+            <delta/>
+         </uInt64>
+         <string id="872" name="InstrAttribValue" presence="optional">
+            <copy/>
+         </string>
+      </sequence>
+
+      <uInt64 id="200" name="MaturityMonthYear" presence="optional"/>
+
+      <decimal id="969" name="MinPriceIncrement" presence="optional">
+         <exponent>
+            <copy value="-2"/>
+         </exponent>
+         <mantissa>
+            <delta/>
+         </mantissa>
+      </decimal>
+      <decimal id="1146" name="MinPriceIncrementAmount" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+
+      <decimal id="9787" name="DisplayFactor" presence="optional">
+         <exponent>
+            <default value="-2"/>
+         </exponent>
+      </decimal>
+
+      <string id="1180" name="ApplID"/>
+
+      <sequence name="Connections">
+         <length id="5001" name="NoConnections"/>
+         <uInt32 id="5002" name="ConnectionType"/> <!-- 1: incremental, 2: snapshot, 3: replay /-->
+         <string id="5003" name="ConnectionIPAddress"/>
+         <uInt32 id="5004" name="ConnectionPortNumber"/>
+      </sequence>
+
+      <sequence name="TradingSessions">
+         <length id="5005" name="NoTradingSessions"/>
+         <uInt64 id="5006" name="TradingDate">
+            <delta/>
+         </uInt64>
+         <uInt64 id="341" name="TradSesStartTime">
+            <delta/>
+         </uInt64>
+         <uInt64 id="342" name="TradSesOpenTime">
+            <delta/>
+         </uInt64>
+         <uInt64 id="344" name="TradSesCloseTime">
+            <delta/>
+         </uInt64>
+         <uInt64 id="345" name="TradSesEndTime">
+            <delta/>
+         </uInt64>
+      </sequence>
+   </template>
+
+   <template dictionary="3" id="3" name="MDSnapshotFullRefresh">
+      <string id="35" name="MessageType">
+         <constant value="W"/>
+      </string>
+      <templateRef name="MsgHeader"/>
+
+      <uInt32 id="369" name="LastMsgSeqNumProcessed"/>
+      <uInt32 id="911" name="TotNumReports"/>
+      <uInt32 id="83" name="RptSeq"/>
+      <uInt32 id="48" name="SecurityID"/>
+
+      <uInt32 id="1682" name="MDSecurityTradingStatus" presence="optional"/>
+
+      <sequence name="MDEntries">
+         <length id="268" name="NoMDEntries"/>
+         <string id="269" name="MDEntryType">
+            <default value="2"/>
+         </string>
+         <decimal id="270" name="MDEntryPx" presence="optional">
+            <exponent>
+               <default value="-2"/>
+            </exponent>
+            <mantissa>
+               <delta/>
+            </mantissa>
+         </decimal>
+         <int32 id="271" name="MDEntrySize" presence="optional">
+            <delta/>
+         </int32>
+         <string id="276" name="QuoteCondition" presence="optional">
+            <default value="K"/>
+         </string>
+         <uInt32 id="1023" name="MDPriceLevel" presence="optional">
+            <copy value="1"/>
+         </uInt32>
+         <uInt32 id="1020" name="TradeVolume" presence="optional">
+            <delta/>
+         </uInt32>
+      </sequence>
+   </template>
+
+   <template dictionary="4" id="4" name="MDHeartbeat">
+      <string id="35" name="MessageType">
+         <constant value="0"/>
+      </string>
+      <templateRef name="MsgHeader"/>
+   </template>
+
+   <template dictionary="5" id="5" name="MDLogon">
+      <string id="35" name="MessageType">
+         <constant value="A"/>
+      </string>
+      <templateRef name="MsgHeader"/>
+      <uInt32 id="98" name="EncryptMethod">
+         <constant value="0"/>
+      </uInt32>
+      <uInt32 id="108" name="HeartbeatInt"/>
+   </template>
+
+   <template dictionary="6" id="6" name="MDLogout">
+      <string id="35" name="MessageType">
+         <constant value="5"/>
+      </string>
+      <templateRef name="MsgHeader"/>
+      <string id="58" name="Text" presence="optional"/>
+   </template>
+
+   <template dictionary="7" id="7" name="MDSecurityDefinitionRequest">
+      <string id="35" name="MessageType">
+         <constant value="c"/>
+      </string>
+      <templateRef name="MsgHeader"/>
+      <string id="1180" name="ApplID"/>
+      <string id="58" name="Text" presence="optional"/>
+   </template>
+
+   <template dictionary="8" id="8" name="SequenceReset">
+      <string name="MessageType" id="35">
+         <constant value="4"/>
+      </string>
+      <templateRef name="MsgHeader"/>
+      <uInt32 name="NewSeqNo" id="36"/>
+   </template>
+
+   <template dictionary="9" id="9" name="MDSecurityStatus">
+      <string id="35" name="MessageType">
+         <constant value="f"/>
+      </string>
+      <templateRef name="MsgHeader"/>
+      <uInt32 id="48" name="SecurityID" presence="optional"/>
+      <string id="55" name="Symbol" presence="optional"/>
+      <uInt32 id="326" name="SecurityTradingStatus" presence="optional"/>
+   </template>
+</templates>
