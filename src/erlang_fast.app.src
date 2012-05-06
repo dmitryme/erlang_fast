@@ -1,0 +1,7 @@
+{application, erlang_fast, [
+    {description, "Erlang FIXFAST Implementation"},
+    {vsn, "1.0.0"},
+    {modules, []},
+    {registered, []},
+    {applications, [kernel, stdlib]}
+]}.
