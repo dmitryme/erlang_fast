@@ -150,6 +150,13 @@ when (Type == sequence) or (Type == group) ->
 parse_instruction([#xmlText{} | Tail], Dicts, DefDict) ->
    parse_instruction(Tail, Dicts, DefDict);
 
+
+% Handle XML comments in template file
+parse_instruction([{xmlComment,_,_,_,_}| Tail],Dicts,DefDict) ->
+  %just ignore them...
+  parse_instruction(Tail,Dicts,DefDict);
+
+
 parse_instruction([I | _Tail], _, _) ->
    erlang:error({unknown_tag, I}).
 
