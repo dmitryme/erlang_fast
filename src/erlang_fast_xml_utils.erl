@@ -10,6 +10,8 @@
          ,get_text/2
          ,get_attribute/2
          ,get_attribute/3
+         ,get_bin_attribute/2
+         ,get_bin_attribute/3
         ]).
 
 -include_lib("xmerl/include/xmerl.hrl").
@@ -58,7 +60,7 @@ get_text(#xmlElement{content = Childs}, DefVal) ->
    end.
 
 %get_attribute(Name, XmlElement) -> [] | String()
-%  Name  = atom(), mane of attribute
+%  Name  = atom(), name of attribute
 %  XmlElement = #xmlElement
 get_attribute(Name, #xmlElement{attributes = Attributes}) ->
    case lists:keyfind(Name, 2, Attributes) of
@@ -69,15 +71,38 @@ get_attribute(Name, #xmlElement{attributes = Attributes}) ->
    end.
 
 %get_attribute(Name, XmlElement, DefVal) -> [] | String()
-%  Name  = atom(), mane of attribute
+%  Name  = atom(), name of attribute
 %  XmlElement = #xmlElement
-%  DefVal = term()
+%  DefVal = String()
 get_attribute(Name, #xmlElement{attributes = Attributes}, DefVal) ->
    case lists:keyfind(Name, 2, Attributes) of
       false ->
          DefVal;
       #xmlAttribute{value = Text} ->
          Text
+   end.
+
+%get_bin_attribute(Name, XmlElement) -> [] | binary()
+%  Name  = atom(), name of attribute
+%  XmlElement = #xmlElement
+get_bin_attribute(Name, #xmlElement{attributes = Attributes}) ->
+   case lists:keyfind(Name, 2, Attributes) of
+      false ->
+         undef;
+      #xmlAttribute{value = Text} ->
+         list_to_binary(Text)
+   end.
+
+%get_bin_attribute(Name, XmlElement, DefVal) -> [] | binary()
+%  Name  = atom(), name of attribute
+%  XmlElement = #xmlElement
+%  DefVal = binary()
+get_bin_attribute(Name, #xmlElement{attributes = Attributes}, DefVal) when is_binary(DefVal) ->
+   case lists:keyfind(Name, 2, Attributes) of
+      false ->
+         DefVal;
+      #xmlAttribute{value = Text} ->
+         list_to_binary(Text)
    end.
 
 get_tag_aux([TagName | Rest], Childs) ->
