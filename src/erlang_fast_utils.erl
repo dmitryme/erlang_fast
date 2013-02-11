@@ -43,7 +43,7 @@ apply_delta(undef, Len, Delta) ->
    apply_delta(<<>>, Len, Delta);
 
 apply_delta(PrevVal, Len, Delta) when byte_size(PrevVal) < abs(Len) ->
-   throw({error, ['ERR D7', PrevVal, {Len, Delta}]});
+   throw({error, {'ERR D7', PrevVal, {Len, Delta}}});
 
 apply_delta(PrevVal, Len, Delta) when Len >= 0 ->
    Head = binary_part(PrevVal, 0, byte_size(PrevVal) - Len),
