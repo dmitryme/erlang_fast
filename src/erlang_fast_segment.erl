@@ -44,14 +44,12 @@ decode(Data, Context) ->
         Err
    end.
 
-decode_template_id(Data, Context = #context{dicts = Dicts, pmap = <<0:1, PMapRest/bits>>, logger = L}) -> %
+decode_template_id(Data, Context = #context{dicts = Dicts, pmap = <<0:1, PMapRest/bits>>}) -> %
    case erlang_fast_dicts:get_value(global, ?common_template_id_key, Dicts) of
       undef ->
-         L('ERR D5', "Unable to get template ID from dictionary."),
-         throw({'ERR D5', unable_to_know_template_id});
+         throw({error, {'ERR D5', unable_to_know_template_id}});
       empty ->
-         L('ERR D6', "Template ID is empty in global dictionary."),
-         throw({'ERR D6', unable_to_know_template_id});
+         throw({error, {'ERR D6', unable_to_know_template_id}});
       Tid ->
          Template = erlang_fast_templates:get_by_id(Tid, Context#context.templates#templates.tlist),
          {Data, Context#context{pmap = PMapRest, template = Template}}
@@ -125,7 +123,7 @@ encode_fields([], Context = #context{template = #template{instructions = []}}) -
    {<<>>, [], Context};
 encode_fields(MsgFields, #context{template = #template{instructions = []}})
   when is_list(MsgFields) andalso length(MsgFields) > 0 ->
-    throw({error, [MsgFields, "not all message fields are encoded"]});
+   throw({error, {MsgFields, "not all message fields are encoded"}});
 encode_fields(MsgFields, Context = #context{template = T = #template{instructions = [Instr | Rest]}}) ->
    {Head, MsgFields1, Context1} = erlang_fast_field_encode:encode(MsgFields, Instr, Context),
    {Tail, MsgFields2, Context2} = encode_fields(MsgFields1, Context1#context{template = T#template{instructions = Rest}}),
