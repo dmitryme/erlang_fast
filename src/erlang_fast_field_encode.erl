@@ -67,7 +67,7 @@ encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
 
 encode([{FieldName1, Value} | _],#field{name = FieldName2, presence = mandatory, operator =
       #copy{}}, _Context) when (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Value == absent)) ->
-   throw({error, ['ERR D6', FieldName2, "Mandatory field can not be absent with copy operator."]});
+   throw({error, {'ERR D6', FieldName2, "Mandatory field can not be absent with copy operator."}});
 
 encode(MsgFields = [{FieldName1, Value} | _], #field{type = Type, name = FieldName2, presence = optional, operator = #copy{}},
       Context = #context{pmap = PMap})
@@ -270,7 +270,7 @@ encode([{SeqName, MsgSeqFields} | MsgFieldsRest],
 %% terminator
 %% =========================================================================================================
 encode(_, Instr, _Context) ->
-   throw({error, [unknown_field, Instr]}).
+   throw({error, {unknown_field, Instr}}).
 
 %% =========================================================================================================
 %% encode sequence fields
