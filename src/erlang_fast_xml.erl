@@ -56,6 +56,9 @@ parse_template([XmlElem = #xmlElement{content = Childs} | Rest], Dicts, DefDict,
    parse_template(Rest, Dicts3, DefDict, Templates1);
 
 parse_template([#xmlText{} | Rest], Dicts, DefDict, Templates) ->
+   parse_template(Rest, Dicts, DefDict, Templates);
+
+parse_template([#xmlComment{} | Rest], Dicts, DefDict, Templates) ->
    parse_template(Rest, Dicts, DefDict, Templates).
 
 parse_instruction([], Dicts, _DefDict) ->
@@ -81,8 +84,8 @@ parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail],
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
    {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
    Presence = get_attribute(presence, I, "mandatory"),
-   Instr =  case get_attribute(charset, I, ascii) of
-               ascii ->
+   Instr =  case get_attribute(charset, I, "ascii") of
+               "ascii" ->
                   #field{
                      type = string,
                      name = OpName,
@@ -90,7 +93,7 @@ parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail],
                      id = string_to_id(get_attribute(id, I)),
                      presence = string_to_presence(Presence),
                      operator = Operator};
-               unicode ->
+               "unicode" ->
                   #field{
                      type = unicode,
                      name = OpName,
@@ -102,7 +105,7 @@ parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail],
    {Dicts2, [Instr | Instructions], NeedPMap or need_pmap(Presence, Operator)};
 
 parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts, DefDict)
-when (Type == int32 ) or (Type == uInt32) or (Type == uInt64) or (Type == 'Int64') or
+when (Type == int32 ) or (Type == uInt32) or (Type == uInt64) or (Type == 'int64') or
      (Type == byteVector) or (Type == decimal)->
    OpName = get_bin_attribute(name, I),
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
