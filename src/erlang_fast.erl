@@ -30,7 +30,7 @@ create_context(TemplatesDescr, Logger) ->
 % reset(Context) -> Context
 %  resets context
 reset(Context = #context{dicts = Dicts}) ->
-   Dicts1 = gb_trees:map(fun(_K, _V) -> undef end, Dicts),
+   Dicts1 = gb_trees:map(fun(_K, _V) -> [] end, Dicts),
    Context#context{dicts = Dicts1}.
 
 % decode(Data, Context) -> {Msg, DataRest, NewContext}
