@@ -26,7 +26,7 @@ add_template(T = #template{name = Name, id = Id}, {TemplsByName, TemplsByID}) ->
 get_by_name(TemplName, {TemplsByName, _}) ->
    case gb_trees:lookup(TemplName, TemplsByName) of
       none ->
-         throw({error, ['ERR D8', TemplName, "no such template"]});
+         throw({error, {'ERR D8', TemplName, "no such template"}});
       {value, Templ} ->
          Templ
    end.
@@ -34,7 +34,7 @@ get_by_name(TemplName, {TemplsByName, _}) ->
 get_by_id(TemplID, {_, TemplsByID}) ->
    case gb_trees:lookup(TemplID, TemplsByID) of
       none ->
-         throw({error, ['ERR D9', TemplID, "no such template"]});
+         throw({error, {'ERR D9', TemplID, "no such template"}});
       {value, Templ} ->
          Templ
    end.
