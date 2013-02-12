@@ -155,7 +155,7 @@ parse_instruction([#xmlText{} | Tail], Dicts, DefDict) ->
 
 
 % Handle XML comments in template file
-parse_instruction([{xmlComment,_,_,_,_}| Tail],Dicts,DefDict) ->
+parse_instruction([#xmlComment{} | Tail],Dicts,DefDict) ->
   %just ignore them...
   parse_instruction(Tail,Dicts,DefDict);
 
