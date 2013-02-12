@@ -283,8 +283,7 @@ string_to_type(decimal, Str) ->
          {list_to_integer(Num) * round(math:pow(10, length(Remainder))) + list_to_integer(Remainder), -length(Remainder)}
    end;
 string_to_type(byteVector, Str) ->
-   Bytes = string:tokens(Str, " "),
-   lists:foldl(fun(Byte, Acc) -> Int = erlang:list_to_integer(Byte, 16), <<Acc/bytes, Int/integer>> end, <<>>, Bytes);
+   erlang:list_to_binary(Str);
 string_to_type(string, Str) ->
    list_to_binary(Str);
 string_to_type(_, Str) ->
@@ -306,6 +305,6 @@ string_to_type_test() ->
    ?assertEqual({1123, -4}, string_to_type(decimal, ".1123")),
    ?assertEqual({12345, -4}, string_to_type(decimal, "1.2345")),
    ?assertEqual(<<"1.2345">>, string_to_type(string, "1.2345")),
-   ?assertEqual(<<160, 239, 18, 186>>, string_to_type(byteVector, "a0 ef 12 ba")).
+   ?assertEqual(<<"FOND">>, string_to_type(byteVector, "FOND")).
 
 -endif.
