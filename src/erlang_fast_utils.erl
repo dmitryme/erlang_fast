@@ -91,6 +91,10 @@ increment_value(uInt32, Value, Inc) when Value + Inc >= 4294967295 ->
    Inc;
 increment_value(uInt64, Value, Inc) when Value + Inc >= 18446744073709551615 ->
    Inc;
+increment_value(decimal, {Mantissa, Exponent}, Inc) when Mantissa + Inc >= 9223372036854775807 ->
+   {-9223372036854775808 + Inc, Exponent};
+increment_value(decimal, {Mantissa, Exponent}, Inc) ->
+   {Mantissa + Inc, Exponent};
 increment_value(Type, Value, Inc) when (Type == int32) or (Type == int64) or (Type == uInt32) or (Type == uInt64)->
    Value + Inc.
 
