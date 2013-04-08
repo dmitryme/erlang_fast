@@ -33,6 +33,31 @@ apply_delta(undef, {MantissaDelta, ExponentDelta}) ->
 apply_delta({BaseMantissa, BaseExponent}, {MantissaDelta, ExponentDelta}) ->
    {BaseMantissa + MantissaDelta , BaseExponent + ExponentDelta};
 
+apply_delta(PrevVal, {delta, Len, Delta}) when Len < 0 andalso byte_size(PrevVal) < abs(Len + 1) ->
+   throw({error, {'ERR D7', PrevVal, {Len, Delta}}});
+
+apply_delta(PrevVal, {delta, Len, Delta}) when Len >= 0 andalso byte_size(PrevVal) < Len ->
+   throw({error, {'ERR D7', PrevVal, {Len, Delta}}});
+
+apply_delta(PrevVal, {delta, Len, Delta}) when Len >= 0 ->
+   Head = binary_part(PrevVal, 0, byte_size(PrevVal) - Len),
+   case Delta of
+      null ->
+         Head;
+      Delta ->
+         <<Head/bytes, Delta/bytes>>
+   end;
+
+apply_delta(PrevVal, {delta, Len, Delta}) when Len < 0 ->
+   % Len should be incremented by 1 according to 6.3.7.3
+   Tail = binary_part(PrevVal, abs(Len + 1), byte_size(PrevVal) + Len + 1),
+   case Delta of
+      null ->
+         Tail;
+      Delta ->
+         <<Delta/bytes, Tail/bytes>>
+   end;
+
 apply_delta(undef, Delta) ->
    apply_delta(0, Delta);
 
@@ -40,19 +65,7 @@ apply_delta(BaseValue, Delta) ->
    BaseValue + Delta.
 
 apply_delta(undef, Len, Delta) ->
-   apply_delta(<<>>, Len, Delta);
-
-apply_delta(PrevVal, Len, Delta) when byte_size(PrevVal) < abs(Len) ->
-   throw({error, {'ERR D7', PrevVal, {Len, Delta}}});
-
-apply_delta(PrevVal, Len, Delta) when Len >= 0 ->
-   Head = binary_part(PrevVal, 0, byte_size(PrevVal) - Len),
-   <<Head/bytes, Delta/bytes>>;
-
-apply_delta(PrevVal, Len, Delta) when Len < 0 ->
-   % Len should be incremented by 1 according to 6.3.7.3
-   Tail = binary_part(PrevVal, abs(Len + 1), byte_size(PrevVal) + Len + 1),
-   <<Delta/bytes, Tail/bytes>>.
+   apply_delta(<<>>, Len, Delta).
 
 get_delta(NewValue, undef) when is_number(NewValue) ->
    get_delta(NewValue, 0);
@@ -91,10 +104,6 @@ increment_value(uInt32, Value, Inc) when Value + Inc >= 4294967295 ->
    Inc;
 increment_value(uInt64, Value, Inc) when Value + Inc >= 18446744073709551615 ->
    Inc;
-increment_value(decimal, {Mantissa, Exponent}, Inc) when Mantissa + Inc >= 9223372036854775807 ->
-   {-9223372036854775808 + Inc, Exponent};
-increment_value(decimal, {Mantissa, Exponent}, Inc) ->
-   {Mantissa + Inc, Exponent};
 increment_value(Type, Value, Inc) when (Type == int32) or (Type == int64) or (Type == uInt32) or (Type == uInt64)->
    Value + Inc.
 
@@ -112,27 +121,27 @@ print_binary(<<1:1, Rest/bits>>) ->
 -include_lib("eunit/include/eunit.hrl").
 
 apply_delta_test() ->
-   ?assertEqual(<<"abcdeab">>, apply_delta(<<"abcdef">>, 1, <<"ab">>)),
-   ?assertEqual(<<"abcdab">>, apply_delta(<<"abcdef">>, 2, <<"ab">>)),
-   ?assertEqual(<<"xybcdef">>, apply_delta(<<"abcdef">>, -2, <<"xy">>)),
-   ?assertEqual(<<"abcdefxy">>, apply_delta(<<"abcdef">>, 0, <<"xy">>)),
-   ?assertThrow({error, ['ERR D7', <<"abcdef">>, {7, <<"abc">>}]}, apply_delta(<<"abcdef">>, 7, <<"abc">>)),
-   ?assertEqual(<<"abxy">>, apply_delta(<<"abcdef">>, 4, <<"xy">>)),
-   ?assertEqual(<<1,2,3,5,6>>, apply_delta(<<1,2,3,4>>, 1, <<5,6>>)),
-   ?assertEqual(<<5,6,3,4>>, apply_delta(<<1,2,3,4>>, -3, <<5,6>>)),
-   ?assertEqual(<<1,2,3,5,6>>, apply_delta(<<1,2,3,4>>, 1, <<5,6>>)),
-   ?assertEqual(<<5,6,3,4>>, apply_delta(<<1,2,3,4>>, -3, <<5,6>>)).
+   ?assertEqual(<<"abcdeab">>, apply_delta(<<"abcdef">>, {delta, 1, <<"ab">>})),
+   ?assertEqual(<<"abcdab">>, apply_delta(<<"abcdef">>, {delta, 2, <<"ab">>})),
+   ?assertEqual(<<"xybcdef">>, apply_delta(<<"abcdef">>, {delta, -2, <<"xy">>})),
+   ?assertEqual(<<"abcdefxy">>, apply_delta(<<"abcdef">>, {delta, 0, <<"xy">>})),
+   ?assertThrow({error, ['ERR D7', <<"abcdef">>, {7, <<"abc">>}]}, apply_delta(<<"abcdef">>, {delta, 7, <<"abc">>})),
+   ?assertEqual(<<"abxy">>, apply_delta(<<"abcdef">>, {delta, 4, <<"xy">>})),
+   ?assertEqual(<<1,2,3,5,6>>, apply_delta(<<1,2,3,4>>, {delta, 1, <<5,6>>})),
+   ?assertEqual(<<5,6,3,4>>, apply_delta(<<1,2,3,4>>, {delta, -3, <<5,6>>})),
+   ?assertEqual(<<1,2,3,5,6>>, apply_delta(<<1,2,3,4>>, {delta, 1, <<5,6>>})),
+   ?assertEqual(<<5,6,3,4>>, apply_delta(<<1,2,3,4>>, {delta, -3, <<5,6>>})).
 
 print_binary_test() ->
    ?assertEqual("10101110", print_binary(<<16#ae>>)).
 
 get_delta_test() ->
-   ?assertEqual({0, <<"123">>}, get_delta(<<"abc123">>, <<"abc">>)),
-   ?assertEqual({1, <<"123">>}, get_delta(<<"abc123">>, <<"abc2">>)),
-   ?assertEqual({-1, <<"123">>}, get_delta(<<"123abc">>, <<"abc">>)),
-   ?assertEqual({-2, <<"123">>}, get_delta(<<"123abc">>, <<"2abc">>)),
-   ?assertEqual({5, <<"abc">>}, get_delta(<<"abc">>, <<"12345">>)),
-   ?assertEqual({-2, <<5,6>>}, get_delta(<<5,6,3,4>>, <<1,3,4>>)),
-   ?assertEqual({2, <<>>}, get_delta(<<5,6>>, <<5,6,3,4>>)).
+   ?assertEqual({delta, 0, <<"123">>}, get_delta(<<"abc123">>, <<"abc">>)),
+   ?assertEqual({delta, 1, <<"123">>}, get_delta(<<"abc123">>, <<"abc2">>)),
+   ?assertEqual({delta, -1, <<"123">>}, get_delta(<<"123abc">>, <<"abc">>)),
+   ?assertEqual({delta, -2, <<"123">>}, get_delta(<<"123abc">>, <<"2abc">>)),
+   ?assertEqual({delta, 5, <<"abc">>}, get_delta(<<"abc">>, <<"12345">>)),
+   ?assertEqual({delta, -2, <<5,6>>}, get_delta(<<5,6,3,4>>, <<1,3,4>>)),
+   ?assertEqual({delta, 2, <<>>}, get_delta(<<5,6>>, <<5,6,3,4>>)).
 
 -endif.
