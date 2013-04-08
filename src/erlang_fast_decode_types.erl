@@ -97,7 +97,7 @@ decode_string_delta(Data, Nullable) ->
          {null, Err, Rest};
       {Len, Err, Rest} ->
          {String, Err1, Rest2} = decode_string(Rest, Nullable),
-         {{Len, String}, Err ++ Err1, Rest2}
+         {{delta, Len, String}, Err ++ Err1, Rest2}
    end.
 
 decode_vector(Data, Nullable) ->
@@ -122,7 +122,7 @@ decode_vector_delta(Data, Nullable) ->
       {Len, Err, Rest} ->
          case decode_vector(Rest, Nullable) of
             {Vector, Err1, Rest2} ->
-               {{Len, Vector}, Err ++ Err1, Rest2}
+               {{delta, Len, Vector}, Err ++ Err1, Rest2}
          end
    end.
 
