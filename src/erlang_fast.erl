@@ -7,7 +7,7 @@
       create_context/3
       ,reset/1
       ,decode/2
-      ,encode/2
+      ,encode/3
    ]).
 
 % Msg = {TemplateId, Fields()}
@@ -44,9 +44,10 @@ decode(Data, Context) ->
    erlang_fast_segment:decode(Data, Context).
 
 % encode(Msg, Context) -> {Data, NewContext}
+%  TemplateId - number() - template ID
 %  Msg = Msg()
 %  Context  = Context()
 %  Data = binary()
 %  NewContext = Context()
-encode(Msg, Context) ->
-   erlang_fast_segment:encode(Msg, Context).
+encode(TemplateId, Msg, Context) ->
+   erlang_fast_segment:encode(TemplateId, Msg, Context).

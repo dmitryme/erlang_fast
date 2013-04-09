@@ -68,7 +68,7 @@
    </template>
    </templates>").
 
--define(msg, {1,
+-define(msg,
        [{<<"ApplVerID">>,<<"13">>},
         {<<"MessageType">>,<<"X">>},
         {<<"SenderCompID">>,<<"XXXXX">>},
@@ -108,9 +108,9 @@
            {<<"MDEntryPx">>,{107475,0}},
            {<<"MDEntrySize">>,72},
            {<<"NumberOfOrders">>,18},
-           {<<"TradingSessionID">>,<<"2">>}]]}]}).
+           {<<"TradingSessionID">>,<<"2">>}]]}]).
 
--define(msg1, {1,
+-define(msg1,
        [{<<"ApplVerID">>,<<"13">>},
         {<<"MessageType">>,<<"X">>},
         {<<"SenderCompID">>,<<"XXXXX">>},
@@ -128,7 +128,7 @@
            {<<"MDEntryPx">>,{10745,1}},
            {<<"MDEntrySize">>,95},
            {<<"NumberOfOrders">>,12},
-           {<<"TradingSessionID">>,<<"2">>}]]}]}).
+           {<<"TradingSessionID">>,<<"2">>}]]}]).
 
 -define(data, <<192, 129, 1, 57, 20, 194, 35, 90, 47, 95, 45, 49, 66, 179, 9, 74, 108, 233, 131, 174, 130, 28, 78, 14, 128,
    1, 80, 218, 2, 52, 25, 128, 6, 71, 161, 1, 189, 158, 129, 130, 121, 65, 145, 185, 132, 176, 129, 177, 6, 63, 161,
@@ -142,24 +142,24 @@
    129>>).
 
 decode_test() ->
-   Context = erlang_fast:create_context(?xmlDescr, fun logger/2),
+   Context = erlang_fast:create_context(?xmlDescr, [], fun logger/2),
    {Msg, Data1, Context1} = erlang_fast:decode(?data, Context),
    ?assertEqual(?msg, Msg),
    {Msg1, _, _} = erlang_fast:decode(Data1, Context1),
    ?assertEqual(?msg1, Msg1).
 
 encode_test() ->
-   Context = erlang_fast:create_context(?xmlDescr, fun logger/2),
-   {Data, Context1} = erlang_fast:encode(?msg, Context),
+   Context = erlang_fast:create_context(?xmlDescr, [], fun logger/2),
+   {Data, Context1} = erlang_fast:encode(1, ?msg, Context),
    ?assertEqual(<<192, 129, 1, 57, 20, 194, 35, 90, 47, 95, 45, 49, 66, 179, 9, 74, 108, 233, 131, 174, 130, 28, 78, 14, 128,
    1, 80, 218, 2, 52, 25, 128, 6, 71, 161, 1, 189, 158, 129, 130, 121, 65, 145, 185, 132, 176, 129, 177, 6, 63, 161,
    126, 210, 240>>, Data),
-   {Data1, _} = erlang_fast:encode(?msg1, Context1),
+   {Data1, _} = erlang_fast:encode(1, ?msg1, Context1),
    ?assertEqual(<<128, 1, 57, 20, 195, 35, 90, 47, 95, 45, 49, 66, 180, 9, 74, 108, 233, 129, 177, 129, 176, 129, 122,
    12, 166, 151, 250>>, Data1).
 
 find_template_test() ->
-   Context = erlang_fast:create_context(?xmlDescr, fun logger/2),
+   Context = erlang_fast:create_context(?xmlDescr, [], fun logger/2),
    ?assertMatch({template, <<"MDIncRefresh">>, _, 1, _, "1", _}, erlang_fast_templates:get_by_id(1,
          Context#context.templates#templates.tlist)).
 

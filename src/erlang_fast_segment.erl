@@ -6,7 +6,7 @@
       ,decode_template_id/2
       ,decode_pmap/2
       ,decode_fields/2
-      ,encode/2
+      ,encode/3
       ,encode_fields/2
    ]).
 
@@ -95,11 +95,11 @@ decode_fields(Data, Context = #context{template = Template = #template{instructi
 %% encoding
 %% =========================================================================================================
 
-encode({Tid, MsgFields}, Context) ->
+encode(TemplateId, MsgFields, Context) ->
    F =
    fun() ->
-      Template = erlang_fast_templates:get_by_id(Tid, Context#context.templates#templates.tlist),
-      {TidBin, Context1} = encode_template_id(Tid, Context#context{pmap = <<>>, template = Template}),
+      Template = erlang_fast_templates:get_by_id(TemplateId, Context#context.templates#templates.tlist),
+      {TidBin, Context1} = encode_template_id(TemplateId, Context#context{pmap = <<>>, template = Template}),
       {Data, _, Context2 = #context{pmap = PMap}} = encode_fields(MsgFields, Context1),
       {<<(encode_pmap(PMap))/bits, TidBin/bits, Data/bits>>, Context2}
    end,
