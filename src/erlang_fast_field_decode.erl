@@ -289,8 +289,7 @@ decode(Data,
 decode(Data, #field_group{type = sequence, name = FieldName, instructions = []}, Context) ->
    {{FieldName, absent}, Data, Context};
 
-decode(Data, #field_group{type = sequence, name = FieldName, presence = Presence, need_pmap = NeedPMap, instructions = Instructions},
-   Context = #context{pmap = <<_:1, PMapRest/bits>>}) ->
+decode(Data, #field_group{type = sequence, name = FieldName, presence = Presence, need_pmap = NeedPMap, instructions = Instructions}, Context) ->
    LenField = case (hd(Instructions))#field.type == length of
       true ->
          LenInstr = hd(Instructions),
@@ -301,7 +300,7 @@ decode(Data, #field_group{type = sequence, name = FieldName, presence = Presence
    {{_, LenValue}, Data1, Context1} = decode(Data, LenField, Context),
    case LenValue of
       absent ->
-         {{FieldName, absent}, Data1, Context1#context{pmap = PMapRest}};
+         {{FieldName, absent}, Data1, Context1};
       LenValue ->
          Instrs = case (hd(Instructions))#field.type == length of
             true ->
@@ -310,8 +309,8 @@ decode(Data, #field_group{type = sequence, name = FieldName, presence = Presence
                Instructions
          end,
          {Sequence, Data2, #context{dicts = Dicts}} = decode_sequence_aux(LenValue, Data1, NeedPMap,
-            Context1#context{pmap = PMapRest, template = Context1#context.template#template{instructions = Instrs}}),
-         {{FieldName, Sequence}, Data2, Context#context{pmap = PMapRest, dicts = Dicts}}
+            Context1#context{template = Context1#context.template#template{instructions = Instrs}}),
+         {{FieldName, Sequence}, Data2, Context1#context{dicts = Dicts}}
    end;
 
 %% =========================================================================================================
