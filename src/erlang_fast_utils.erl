@@ -34,10 +34,10 @@ apply_delta({BaseMantissa, BaseExponent}, {MantissaDelta, ExponentDelta}) ->
    {BaseMantissa + MantissaDelta , BaseExponent + ExponentDelta};
 
 apply_delta(PrevVal, D = {delta, Len, _Delta}) when Len < 0 andalso byte_size(PrevVal) < abs(Len + 1) ->
-   throw({error, ['ERR D7', PrevVal, D]});
+   throw({error, {'ERR D7', PrevVal, D}});
 
 apply_delta(PrevVal, D = {delta, Len, _Delta}) when Len >= 0 andalso byte_size(PrevVal) < Len ->
-   throw({error, ['ERR D7', PrevVal, D]});
+   throw({error, {'ERR D7', PrevVal, D}});
 
 apply_delta(PrevVal, {delta, Len, Delta}) when Len >= 0 ->
    Head = binary_part(PrevVal, 0, byte_size(PrevVal) - Len),
@@ -125,7 +125,7 @@ apply_delta_test() ->
    ?assertEqual(<<"abcdab">>, apply_delta(<<"abcdef">>, {delta, 2, <<"ab">>})),
    ?assertEqual(<<"xybcdef">>, apply_delta(<<"abcdef">>, {delta, -2, <<"xy">>})),
    ?assertEqual(<<"abcdefxy">>, apply_delta(<<"abcdef">>, {delta, 0, <<"xy">>})),
-   ?assertThrow({error, ['ERR D7', <<"abcdef">>, {delta, 7, <<"abc">>}]}, apply_delta(<<"abcdef">>, {delta, 7, <<"abc">>})),
+   ?assertThrow({error, {'ERR D7', <<"abcdef">>, {delta, 7, <<"abc">>}}}, apply_delta(<<"abcdef">>, {delta, 7, <<"abc">>})),
    ?assertEqual(<<"abxy">>, apply_delta(<<"abcdef">>, {delta, 4, <<"xy">>})),
    ?assertEqual(<<1,2,3,5,6>>, apply_delta(<<1,2,3,4>>, {delta, 1, <<5,6>>})),
    ?assertEqual(<<5,6,3,4>>, apply_delta(<<1,2,3,4>>, {delta, -3, <<5,6>>})),
