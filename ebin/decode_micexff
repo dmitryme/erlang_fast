@@ -1,0 +1,42 @@
+#!/usr/bin/env escript
+
+-export([main/1]).
+
+decode(<<_Num:32/unsigned-little-integer, Rest/binary>>, Context) ->
+   case erlang_fast:decode(Rest, Context) of
+      {Msg, _, _} ->
+         io:format("~p~n", [Msg]);
+      Msg ->
+         io:format("ERROR: ~p, Bin = ~p ~n", [Msg, Rest]),
+         exit(failed)
+   end.
+
+loop(Context, Socket) ->
+   receive
+      {udp, _Socket, _SrcAddr, _Port, BinData} ->
+         decode(BinData, Context),
+         loop(Context, Socket)
+   end.
+
+main([Template, MulticastGroup, Port]) ->
+   F = fun([], _) -> ok;
+          (Err, Val) -> io:format("~p: ~p~n", [Err, Val]) end,
+   Context = erlang_fast:create_context({file, Template}, F),
+   {ok, IpAddress} = inet:parse_address(MulticastGroup),
+   {ok, Socket} = gen_udp:open(erlang:list_to_integer(Port),
+      [
+         inet,
+         binary,
+         {active, true},
+         {reuseaddr, true},
+         {add_membership, {IpAddress, {0,0,0,0}}}
+      ]),
+   Pid = spawn(fun() -> loop(Context, Socket) end),
+   ok = gen_udp:controlling_process(Socket, Pid),
+   receive
+      _Msg ->
+         exit(ok)
+   end;
+
+main(_) ->
+  io:format("Usage: decode_micexff <template> <multicast_group> <port>~n").
