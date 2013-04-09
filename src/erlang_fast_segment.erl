@@ -35,8 +35,7 @@ decode(Data, Context) ->
    fun() ->
       {Data1, Context1} = decode_pmap(Data, Context),
       {Data2, Context2} = decode_template_id(Data1, Context1),
-      {Msg, Data3, Context3 = #context{template = #template{id = TID}}} = decode_fields(Data2, Context2),
-      {{TID, Msg}, Data3, Context3}
+      decode_fields(Data2, Context2)
    end,
    try F()
    catch
