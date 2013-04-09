@@ -4,7 +4,7 @@
 
 -export
 ([
-      create_context/2
+      create_context/3
       ,reset/1
       ,decode/2
       ,encode/2
@@ -17,14 +17,16 @@
 % FieldName = string()
 % TemplateId = Number()
 
-% create_context(TemplatesDescr, Logger) -> Context
+% create_context(TemplatesDescr, Options, Logger) -> Context
 %  TemplatesDescr = {file, TemplatesFilename}, TemplatesXmlText
+%  Options = [Option]
+%  Option = use_id - use field id instead of field name in decoded field tuple
 %  TemplatesFilename = String() - path to XML file with templates definitions
 %  TemplatesXmlText = String() - XML text with templates definitions
 %  Logger - is a callback logger function with arity 2, where first param can be
 %             list of Error numbers or [] - if no error, and second parameter is a list with error details
-create_context(TemplatesDescr, Logger) ->
-   {Dicts, Templates} = erlang_fast_xml:parse(TemplatesDescr),
+create_context(TemplatesDescr, Options, Logger) ->
+   {Dicts, Templates} = erlang_fast_xml:parse(TemplatesDescr, Options),
    #context{dicts = Dicts, templates = Templates, logger = Logger}.
 
 % reset(Context) -> Context
