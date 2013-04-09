@@ -2,8 +2,8 @@
 -record(template, {name, templateNs = undef, id = undef, ns = undef, dictionary = undef, instructions}).
 -record(typeRef, {name, ns = undef}).
 -record(templateRef, {name, templateNs = undef, ns = undef}).
--record(field, {type, name, ns = undef, id = undef, presence = mandatory, operator = undef}).
--record(field_group, {type, name, ns = undef, id = undef, presence = mandatory, need_pmap = false, dictionary = undef, instructions}).
+-record(field, {type, name, disp_name, ns = undef, id = undef, presence = mandatory, operator = undef}).
+-record(field_group, {type, name, disp_name, ns = undef, id = undef, presence = mandatory, need_pmap = false, dictionary = undef, instructions}).
 -record(constant, {value = undef}).
 -record(default,  {value = undef}).
 -record(copy, {dictionary = undef, key = undef, ns = undef, value = undef}).
