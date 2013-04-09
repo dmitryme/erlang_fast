@@ -10,41 +10,41 @@
 
 -export(
    [
-      parse/1
+      parse/2
    ]).
 
-parse({file, XmlFile}) ->
+parse({file, XmlFile}, Options) ->
    {RootElem, []} = xmerl_scan:file(XmlFile),
-   init(RootElem);
+   init(RootElem, Options);
 
-parse(XmlText) ->
+parse(XmlText, Options) ->
    {RootElem, []} = xmerl_scan:string(XmlText),
-   init(RootElem).
+   init(RootElem, Options).
 
-init(RootElem) ->
+init(RootElem, Options) ->
    Dicts = erlang_fast_dicts:init(),
    DictName = string_to_dic(get_attribute(dictionary, RootElem, global)),
    Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
    Dicts2 = erlang_fast_dicts:new_dict(?type_dictionary(<<"any">>), Dicts1),
-   {Dicts3, TList} = parse_template(RootElem, Dicts2, DictName, erlang_fast_templates:init()),
+   {Dicts3, TList} = parse_template(RootElem, Dicts2, DictName, Options, erlang_fast_templates:init()),
    {Dicts3, #templates{
          ns = get_bin_attribute(ns, RootElem),
          templateNs = get_bin_attribute(templateNs, RootElem),
          dictionary = DictName,
          tlist = TList}}.
 
-parse_template([], Dicts, _DefDict, Templates) ->
+parse_template([], Dicts, _DefDict, _Options, Templates) ->
    {Dicts, Templates};
 
-parse_template(#xmlElement{name = templates, content = Childs}, Dicts, DefDict, Templates) ->
-   parse_template(Childs, Dicts, DefDict, Templates);
+parse_template(#xmlElement{name = templates, content = Childs}, Dicts, DefDict, Options, Templates) ->
+   parse_template(Childs, Dicts, DefDict, Options, Templates);
 
-parse_template([XmlElem = #xmlElement{content = Childs} | Rest], Dicts, DefDict, Templates) ->
+parse_template([XmlElem = #xmlElement{content = Childs} | Rest], Dicts, DefDict, Options, Templates) ->
    TemplateName = get_bin_attribute(name, XmlElem),
    DictName = string_to_dic(get_attribute(dictionary, XmlElem, DefDict)),
    Dicts1 = erlang_fast_dicts:new_dict(DictName, Dicts),
    Dicts2 = erlang_fast_dicts:new_dict(?template_dictionary(TemplateName), Dicts1),
-   {Dicts3, Instructions, _} = parse_instruction(Childs, Dicts2, DictName),
+   {Dicts3, Instructions, _} = parse_instruction(Childs, Dicts2, DictName, Options),
    Template = #template{
                   name = get_bin_attribute(name, XmlElem),
                   templateNs = get_bin_attribute(templateNs, XmlElem),
@@ -53,35 +53,35 @@ parse_template([XmlElem = #xmlElement{content = Childs} | Rest], Dicts, DefDict,
                   dictionary = DictName,
                   instructions = Instructions},
    Templates1 = erlang_fast_templates:add_template(Template, Templates),
-   parse_template(Rest, Dicts3, DefDict, Templates1);
+   parse_template(Rest, Dicts3, DefDict, Options, Templates1);
 
-parse_template([#xmlText{} | Rest], Dicts, DefDict, Templates) ->
-   parse_template(Rest, Dicts, DefDict, Templates);
+parse_template([#xmlText{} | Rest], Dicts, DefDict, Options, Templates) ->
+   parse_template(Rest, Dicts, DefDict, Options, Templates);
 
-parse_template([#xmlComment{} | Rest], Dicts, DefDict, Templates) ->
-   parse_template(Rest, Dicts, DefDict, Templates).
+parse_template([#xmlComment{} | Rest], Dicts, DefDict, Options, Templates) ->
+   parse_template(Rest, Dicts, DefDict, Options, Templates).
 
-parse_instruction([], Dicts, _DefDict) ->
+parse_instruction([], Dicts, _DefDict, _Options) ->
    {Dicts, [], false};
 
-parse_instruction([I = #xmlElement{name = typeRef} | Tail], Dicts, DefDict) ->
+parse_instruction([I = #xmlElement{name = typeRef} | Tail], Dicts, DefDict, Options) ->
    TypeName = get_attribute(name, I),
    Dicts1 = erlang_fast_dicts:new_dict(?type_dictionary(TypeName), Dicts),
-   {Dicts2, Instructions, NeedPMap} = parse_instruction(Tail, Dicts1, DefDict),
+   {Dicts2, Instructions, NeedPMap} = parse_instruction(Tail, Dicts1, DefDict, Options),
    {Dicts2, [#typeRef{
             name = get_bin_attribute(name, I),
             ns = get_bin_attribute(ns, I)} | Instructions], NeedPMap or false};
 
-parse_instruction([I = #xmlElement{name = templateRef} | Tail], Dicts, DefDict) ->
-   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
+parse_instruction([I = #xmlElement{name = templateRef} | Tail], Dicts, DefDict, Options) ->
+   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict, Options),
    {Dicts1, [#templateRef{
             name = get_bin_attribute(name, I),
             templateNs = get_bin_attribute(templateNs, I),
             ns = get_bin_attribute(ns, I)} | Instructions], NeedPMap or false};
 
-parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail], Dicts, DefDict) ->
+parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail], Dicts, DefDict, Options) ->
    OpName = get_bin_attribute(name, I),
-   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
+   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict, Options),
    {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
    Presence = get_attribute(presence, I, "mandatory"),
    Instr =  case get_attribute(charset, I, "ascii") of
@@ -89,6 +89,7 @@ parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail],
                   #field{
                      type = string,
                      name = OpName,
+                     disp_name = get_disp_name(Options, OpName, string_to_id(get_attribute(id, I))),
                      ns = get_bin_attribute(ns, I),
                      id = string_to_id(get_attribute(id, I)),
                      presence = string_to_presence(Presence),
@@ -97,6 +98,7 @@ parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail],
                   #field{
                      type = unicode,
                      name = OpName,
+                     disp_name = get_disp_name(Options, OpName, string_to_id(get_attribute(id, I))),
                      ns = get_bin_attribute(ns, I),
                      id = string_to_id(get_attribute(id, I)),
                      presence = string_to_presence(Presence),
@@ -104,11 +106,11 @@ parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail],
             end,
    {Dicts2, [Instr | Instructions], NeedPMap or need_pmap(Presence, Operator)};
 
-parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts, DefDict)
+parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts, DefDict, Options)
 when (Type == int32 ) or (Type == uInt32) or (Type == uInt64) or (Type == 'int64') or
      (Type == byteVector) or (Type == decimal)->
    OpName = get_bin_attribute(name, I),
-   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
+   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict, Options),
    {Dicts2, Operator} =
    if
       (Type == decimal) -> parse_dec_op(OpName, Childs, Dicts1, DefDict);
@@ -118,31 +120,34 @@ when (Type == int32 ) or (Type == uInt32) or (Type == uInt64) or (Type == 'int64
    {Dicts2, [#field{
             type = if Type == 'Int64' -> int64; true -> Type end,
             name = OpName,
+            disp_name = get_disp_name(Options, OpName, string_to_id(get_attribute(id, I))),
             ns = get_bin_attribute(ns, I),
             id = string_to_id(get_attribute(id, I)),
             presence = string_to_presence(Presence),
             operator = Operator} | Instructions], NeedPMap or need_pmap(Presence, Operator)};
 
-parse_instruction([I = #xmlElement{name = length = T, content = Childs} | Tail], Dicts, DefDict) ->
+parse_instruction([I = #xmlElement{name = length = T, content = Childs} | Tail], Dicts, DefDict, Options) ->
    OpName = get_bin_attribute(name, I),
-   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict),
+   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict, Options),
    {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
    {Dicts2, [#field{
                type = T,
                name = OpName,
+               disp_name = get_disp_name(Options, OpName, string_to_id(get_attribute(id, I))),
                ns = get_bin_attribute(ns, I),
                id = string_to_id(get_attribute(id, I)),
                operator = Operator} | Instructions], NeedPMap or false};
 
-parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts, DefDict)
+parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts, DefDict, Options)
 when (Type == sequence) or (Type == group) ->
    DictName = string_to_dic(get_attribute(dictionary, I, DefDict)),
-   {Dicts1, GroupInstructions, NeedPMap} = parse_instruction(Childs, Dicts, DictName),
-   {Dicts2, Instructions, _NeedPMap} = parse_instruction(Tail, Dicts1, DictName),
+   {Dicts1, GroupInstructions, NeedPMap} = parse_instruction(Childs, Dicts, DictName, Options),
+   {Dicts2, Instructions, _NeedPMap} = parse_instruction(Tail, Dicts1, DictName,  Options),
    Presence = get_attribute(presence, I, "mandatory"),
    {Dicts2, [#field_group{
             type = Type,
             name = get_bin_attribute(name, I),
+            disp_name = get_disp_name(Options, GroupInstructions, get_bin_attribute(name, I), string_to_id(get_attribute(id, I))),
             ns = get_attribute(ns, I),
             id = string_to_id(get_attribute(id, I)),
             presence = string_to_presence(Presence),
@@ -150,17 +155,17 @@ when (Type == sequence) or (Type == group) ->
             need_pmap = NeedPMap,
             instructions = GroupInstructions} | Instructions], need_pmap(Presence)};
 
-parse_instruction([#xmlText{} | Tail], Dicts, DefDict) ->
-   parse_instruction(Tail, Dicts, DefDict);
+parse_instruction([#xmlText{} | Tail], Dicts, DefDict, Options) ->
+   parse_instruction(Tail, Dicts, DefDict, Options);
 
 
 % Handle XML comments in template file
-parse_instruction([#xmlComment{} | Tail],Dicts,DefDict) ->
+parse_instruction([#xmlComment{} | Tail], Dicts, DefDict, Options) ->
   %just ignore them...
-  parse_instruction(Tail,Dicts,DefDict);
+  parse_instruction(Tail, Dicts, DefDict, Options);
 
 
-parse_instruction([I | _Tail], _, _) ->
+parse_instruction([I | _Tail], _, _, _) ->
    erlang:error({unknown_tag, I}).
 
 parse_dec_op(OpName, Childs, Dicts, DefDict) ->
@@ -288,6 +293,28 @@ string_to_type(string, Str) ->
    list_to_binary(Str);
 string_to_type(_, Str) ->
    Str.
+
+get_disp_name(Options, Name, Id) when is_list(Options) ->
+   get_disp_name(proplists:get_value(use_id, Options, false), Name, Id);
+
+get_disp_name(false, Name, _Id) ->
+   Name;
+get_disp_name(true, Name, undef) ->
+   Name;
+get_disp_name(true, _Name, Id) ->
+   Id.
+
+get_disp_name(Options, GroupInstructions, Name, Id) when is_list(Options) ->
+   get_disp_name(proplists:get_value(use_id, Options, false), GroupInstructions, Name, Id);
+
+get_disp_name(false, _GroupInstructions, Name, _Id) ->
+   Name;
+get_disp_name(true, [#field{type = length, disp_name = DispName}|_Rest], _Name, undef) ->
+   DispName;
+get_disp_name(true, _GroupInstructions, Name, undef) ->
+   Name;
+get_disp_name(true, _GroupInstructions, _Name, Id) ->
+   Id.
 
 %% ====================================================================================================================
 %% unit testing
