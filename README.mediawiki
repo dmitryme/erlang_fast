@@ -1,10 +1,10 @@
 == FAST decoding/encoding library ==
 
-MICEX FAST decoding
+=== MICEX FAST decoding ===
 
 Use ebin/decode_micexff script
 
-Example of usage:
+=== Example of usage ===
 
 decode_one_message() ->
    % create context. Assume FAST templates are saved into templates.xml file
