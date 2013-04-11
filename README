@@ -1,5 +1,9 @@
 FAST decoding/encoding has been implemented.
 
+MICEX FAST decoding
+
+Use ebin/decode_micexff script
+
 Example of usage:
 
 decode_one_message() ->
