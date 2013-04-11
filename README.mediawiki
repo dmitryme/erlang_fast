@@ -1,4 +1,4 @@
-FAST decoding/encoding has been implemented.
+== FAST decoding/encoding library ==
 
 MICEX FAST decoding
 
