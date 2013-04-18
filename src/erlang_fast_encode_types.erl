@@ -175,6 +175,8 @@ trim_zero_tail(Bin) ->
 -include_lib("eunit/include/eunit.hrl").
 
 decode_int_test() ->
+   ?assertEqual(<<255>>, encode_int(-1, true)),
+   ?assertEqual(<<255>>, encode_int(-1, false)),
    ?assertEqual(<<16#39, 16#45, 16#a4>>, encode_int(942755, true)),
    ?assertEqual(<<16#39, 16#45, 16#a3>>, encode_int(942755, false)),
    ?assertEqual(<<16#46, 16#3a, 16#dd>>, encode_int(-942755, true)),
