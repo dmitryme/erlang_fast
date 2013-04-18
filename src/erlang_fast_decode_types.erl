@@ -24,8 +24,11 @@ decode_type(byteVector, Data, Nullable) ->
 decode_type(decimal, Data, Nullable) ->
    decode_scaled(Data, Nullable);
 
-decode_type(Type, Data, Nullable) when (Type == int32) or (Type == int64) or (Type == uInt32) or (Type == uInt64)->
-   decode_int(Data, Nullable).
+decode_type(Type, Data, Nullable) when (Type == int32) or (Type == int64) ->
+   decode_int(Data, Nullable);
+
+decode_type(Type, Data, Nullable) when (Type == uInt32) or (Type == uInt64) ->
+   decode_uint(Data, Nullable).
 
 decode_delta(decimal, Data, Nullable) ->
    decode_scaled(Data, Nullable);
@@ -37,8 +40,7 @@ decode_delta(Type, Data, Nullable)
    when (Type == unicode) or (Type == byteVector) ->
       decode_vector_delta(Data, Nullable);
 
-decode_delta(Type, Data, Nullable)
-   when (Type == int32) or (Type == int64) or (Type == uInt32) or (Type == uInt64) ->
+decode_delta(Type, Data, Nullable) when (Type == int32) or (Type == int64) or (Type == uInt32) or (Type == uInt64) ->
       decode_int(Data, Nullable).
 
 %% ====================================================================================================================
@@ -239,6 +241,8 @@ decode_int_test() ->
   ?assertEqual({null, [], <<>>}, decode_int(<<16#80>>, true)),
   ?assertEqual({11, [], <<>>}, decode_int(<<2#10001011>>, false)),
   ?assertEqual({-2, [], <<>>}, decode_int(<<16#fe>>, true)),
+  ?assertEqual({-1, [], <<>>}, decode_int(<<16#ff>>, true)),
+  ?assertEqual({-1, [], <<>>}, decode_int(<<16#ff>>, false)),
   ?assertEqual({64, [], <<>>}, decode_int(<<16#00, 16#c0>>, false)),
   ?assertThrow(not_enough_data, decode_int(<<2#0001>>, true)),
   ?assertThrow(not_enough_data, decode_int(<<2#00011111>>, true)),
