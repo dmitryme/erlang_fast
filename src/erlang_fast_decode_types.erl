@@ -24,11 +24,8 @@ decode_type(byteVector, Data, Nullable) ->
 decode_type(decimal, Data, Nullable) ->
    decode_scaled(Data, Nullable);
 
-decode_type(Type, Data, Nullable) when (Type == int32) or (Type == int64)->
-   decode_int(Data, Nullable);
-
-decode_type(Type, Data, Nullable) when (Type == uInt32) or (Type == uInt64)->
-   decode_uint(Data, Nullable).
+decode_type(Type, Data, Nullable) when (Type == int32) or (Type == int64) or (Type == uInt32) or (Type == uInt64)->
+   decode_int(Data, Nullable).
 
 decode_delta(decimal, Data, Nullable) ->
    decode_scaled(Data, Nullable);
