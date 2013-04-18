@@ -59,9 +59,9 @@ encode_delta(decimal, {MDelta, EDelta}, Nullable) ->
 encode_uint(null, _) ->
    <<2#10000000:8>>;
 encode_uint(Value, false) ->
-   encode_number_aux(Value, <<1:1>>);
+   encode_number_aux(Value);
 encode_uint(Value, true) ->
-   encode_number_aux(Value + 1, <<1:1>>).
+   encode_number_aux(Value + 1).
 
 %% encode int
 
@@ -71,9 +71,9 @@ encode_int(Value, Nullable) ->
    Res = <<_:1, SignBit:1, _/bits>> =
    case (Value >= 0) of
       true when Nullable == true ->
-         encode_number_aux(Value + 1, <<1:1>>);
+         encode_number_aux(Value + 1);
       _ ->
-         encode_number_aux(Value, <<1:1>>)
+         encode_number_aux(Value)
    end,
    case Value >= 0 of
      true when SignBit == 1 ->
@@ -119,6 +119,9 @@ encode_pmap(PMap) ->
 %% ====================================================================================================================
 
 %% encode number
+
+encode_number_aux(Val) ->
+   encode_number_aux(Val, <<1:1>>).
 
 encode_number_aux(0, <<1:1>>) ->
    <<2#10000000:8>>;
