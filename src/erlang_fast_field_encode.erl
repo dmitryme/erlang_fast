@@ -114,7 +114,7 @@ encode([{_, Value} | MsgFieldsRest],
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
          {encode_delta(Type, get_delta(Value, InitialValue), is_nullable(Presence)), MsgFieldsRest, Context#context{dicts = Dicts1}};
       DictValue ->
-         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, DictValue, Dicts),
+         Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
          {encode_delta(Type, get_delta(Value, DictValue), is_nullable(Presence)), MsgFieldsRest, Context#context{dicts = Dicts1}}
    end;
 
@@ -175,7 +175,7 @@ encode([{_, Value} | MsgFieldsRest],
    end;
 
 %% =========================================================================================================
-%% undef
+%% no operator
 %% =========================================================================================================
 
 encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
