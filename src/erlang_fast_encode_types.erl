@@ -44,11 +44,11 @@ encode_delta(Type, Value, Nullable) when (Type == int32) or (Type == int64) ->
 encode_delta(Type, Value, Nullable) when (Type == uInt32) or (Type == uInt64) ->
    encode_uint(Value, Nullable);
 
-encode_delta(string, {Len, Value}, Nullable) ->
-   <<(encode_int(int32, Len))/bits, (encode_string(Value, Nullable))/bits>>;
+encode_delta(string, {delta, Len, Value}, Nullable) ->
+   <<(encode_int(Len, Nullable))/bits, (encode_string(Value, Nullable))/bits>>;
 
-encode_delta(Type, {Len, Value}, Nullable) when (Type == unicode) or (Type == byteVector) ->
-   <<(encode_int(int32, Len))/bits, (encode_vector(Value, Nullable))/bits>>;
+encode_delta(Type, {delta, Len, Value}, Nullable) when (Type == unicode) or (Type == byteVector) ->
+   <<(encode_int(Len, Nullable))/bits, (encode_vector(Value, Nullable))/bits>>;
 
 encode_delta(decimal, {MDelta, EDelta}, Nullable) ->
    <<(encode_int(EDelta, Nullable))/bits, (encode_int(MDelta, Nullable))/bits>>.
