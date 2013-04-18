@@ -69,9 +69,14 @@ encode([{FieldName1, Value} | _],#field{name = FieldName2, presence = mandatory,
       #copy{}}, _Context) when (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Value == absent)) ->
    throw({error, {'ERR D6', FieldName2, "Mandatory field can not be absent with copy operator."}});
 
+encode(MsgFields = [{FieldName1, _Value} | _], #field{name = FieldName2, presence = optional, operator = #copy{}},
+      Context = #context{pmap = PMap})
+   when (FieldName1 =/= FieldName2) ->
+   {<<>>, MsgFields, Context#context{pmap = <<PMap/bits, 0:1>>}};
+
 encode(MsgFields = [{FieldName1, Value} | _], #field{type = Type, name = FieldName2, presence = optional, operator = #copy{}},
       Context = #context{pmap = PMap})
-   when (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+   when (FieldName1 == FieldName2) andalso (Value == absent) ->
    {encode_type(Type, null, true), MsgFields, Context#context{pmap = <<PMap/bits, 1:1>>}};
 
 encode([{_, Value} | MsgFieldsRest],
