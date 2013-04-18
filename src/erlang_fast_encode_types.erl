@@ -38,11 +38,8 @@ encode_delta(Type, null, Nullable) when (Type == string) or (Type == unicode) or
 encode_delta(decimal, null, Nullable) ->
    encode_int(null, Nullable);
 
-encode_delta(Type, Value, Nullable) when (Type == int32) or (Type == int64) ->
+encode_delta(Type, Value, Nullable) when (Type == int32) or (Type == int64) or (Type == uInt32) or (Type == uInt64) ->
    encode_int(Value, Nullable);
-
-encode_delta(Type, Value, Nullable) when (Type == uInt32) or (Type == uInt64) ->
-   encode_uint(Value, Nullable);
 
 encode_delta(string, {delta, Len, Value}, Nullable) ->
    <<(encode_int(Len, Nullable))/bits, (encode_string(Value, Nullable))/bits>>;
@@ -127,6 +124,8 @@ encode_number_aux(0, <<1:1>>) ->
    <<2#10000000:8>>;
 encode_number_aux(0, _) ->
    <<>>;
+encode_number_aux(-1, <<1:1>>) ->
+   <<2#11111111:8>>;
 encode_number_aux(-1, _) ->
    <<>>;
 encode_number_aux(Value, StopBit) ->
