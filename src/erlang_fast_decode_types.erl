@@ -2,6 +2,10 @@
 
 -author("Dmitry Melnikov <dmitryme@gmail.com>").
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -export([
       decode_pmap/1
       ,decode_type/3
@@ -228,8 +232,7 @@ decode_pmap_aux(<<1:1, Data:7/bits, Rest/bytes>>, Acc) ->
 %% unit testing
 %% ====================================================================================================================
 
--ifdef(EUNIT).
--include_lib("eunit/include/eunit.hrl").
+-ifdef(TEST).
 
 decode_int_test() ->
   ?assertEqual({942755, [], <<>>}, decode_int(<<16#39, 16#45, 16#a4>>, true)),

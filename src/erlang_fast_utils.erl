@@ -15,7 +15,9 @@
 -include("include/erlang_fast_context.hrl").
 -include("include/erlang_fast_template.hrl").
 
+-ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
+-endif.
 
 is_nullable(optional) -> true;
 is_nullable(mandatory) -> false.
@@ -117,8 +119,7 @@ print_binary(<<1:1, Rest/bits>>) ->
 %% ====================================================================================================================
 %% unit testing
 %% ====================================================================================================================
--ifdef(EUNIT).
--include_lib("eunit/include/eunit.hrl").
+-ifdef(TEST).
 
 apply_delta_test() ->
    ?assertEqual(<<"abcdeab">>, apply_delta(<<"abcdef">>, {delta, 1, <<"ab">>})),

@@ -40,7 +40,7 @@ reset(Context = #context{dicts = Dicts}) ->
    Dicts1 = gb_trees:map(fun(_K, _V) -> [] end, Dicts),
    Context#context{dicts = Dicts1}.
 
-% decode(Data, Context) -> {Msg, DataRest, NewContext}
+% decode(Data, Context) -> {ok, {Msg, DataRest, NewContext}} | {error, Reason}
 %  Data = binary()
 %  Context = Context()
 %  DataRest = binary()
@@ -48,7 +48,7 @@ reset(Context = #context{dicts = Dicts}) ->
 decode(Data, Context) ->
    erlang_fast_segment:decode(Data, Context).
 
-% encode(Msg, Context) -> {Data, NewContext}
+% encode(Msg, Context) -> {ok, {Data, NewContext}} | {error, Reason}
 %  TemplateId - number() - template ID
 %  Msg = Msg()
 %  Context  = Context()

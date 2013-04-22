@@ -6,6 +6,10 @@
 -include("erlang_fast_context.hrl").
 -include("erlang_fast_common.hrl").
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -import(erlang_fast_utils,
    [
       is_nullable/1
@@ -343,17 +347,18 @@ decode_sequence_aux(Length, Data, NeedPMap, Context = #context{template = Templa
 %% unit testing
 %% ====================================================================================================================
 
--ifdef(EUNIT).
--include_lib("eunit/include/eunit.hrl").
+-ifdef(TEST).
 
-create_context(PMap) ->
-   Dicts = erlang_fast_dicts:init(),
-   Dicts1 = erlang_fast_dicts:new_dict(global, Dicts),
-   Context = #context{pmap = PMap, dictionary = global, dicts = Dicts1},
+%create_context(PMap) ->
+   %Dicts = erlang_fast_dicts:init(),
+   %Dicts1 = erlang_fast_dicts:new_dict(global, Dicts),
+   %Context = #context{pmap = PMap, dicts = Dicts1}.
 
 appendix_3_2_1_test() ->
    ok.
    %Field = #field{type = uInt32, presence = mandatory, disp_name = "Flag", operator = #constant{value = 0}},
    %Context = create_context(<<2#11111111:8>>),
    %{} = decode(<<>>, Field, Context),
+
 -endif.
+

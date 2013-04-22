@@ -4,6 +4,10 @@
 -include("erlang_fast_context.hrl").
 -include("erlang_fast_common.hrl").
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -export(
    [
       encode/3
@@ -33,14 +37,19 @@
 %% constant
 %% =========================================================================================================
 
-encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
-   #field{name = FieldName2, presence = Presence, operator = #constant{}},
-      Context = #context{pmap = PMap}) ->
+encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest], #field{name = FieldName2, presence = Presence, operator =
+      #constant{value = InitialValue}}, Context = #context{pmap = PMap}) ->
    case Presence of
+      mandatory when FieldName1 =/= FieldName2 ->
+         throw({error, {'ERR D3', FieldName1, "Mandatory constant field not found."}});
+      mandatory when Value =/= InitialValue ->
+         throw({error, {'ERR D3', FieldName1, "Constant initial value is not the same as field one."}});
       mandatory ->
          {<<>>, MsgFieldsRest, Context};
-      optional when (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+      optional when (FieldName1 =/= FieldName2) ->
          {<<>>, MsgFields, Context#context{pmap = <<PMap/bits, 0:1>>}};
+      optional when (FieldName1 == FieldName2) andalso (Value == absent) ->
+         {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bits, 0:1>>}};
       optional when FieldName1 == FieldName2 ->
          {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>}}
    end;
@@ -284,3 +293,32 @@ encode_seq_aux([MsgFields | MsgFieldsRest], Context) ->
    {Head, [], #context{pmap = HeadPMap, dicts = Dicts}} = erlang_fast_segment:encode_fields(MsgFields, Context),
    {TailBin, Context1} = encode_seq_aux(MsgFieldsRest, Context#context{pmap = <<>>, dicts = Dicts}),
    {<<(encode_pmap(HeadPMap))/bits, Head/bits, TailBin/bits>>, Context1}.
+
+%% ============================================================T========================================================
+%% unit testing
+%% ====================================================================================================================
+
+-ifdef(TEST).
+
+create_context(PMap) ->
+   Dicts = erlang_fast_dicts:init(),
+   Dicts1 = erlang_fast_dicts:new_dict(global, Dicts),
+   #context{pmap = PMap, dicts = Dicts1}.
+
+appendix_3_2_1_1_test() ->
+   Field = #field{type = uInt32, presence = mandatory, name = <<"Flag">>, operator = #constant{value = 0}},
+   Context = create_context(<<>>),
+   Dicts = Context#context.dicts,
+   ?assertMatch({<<>>, [], #context{pmap = <<>>, dicts = Dicts}}, encode([{<<"Flag">>, 0}], Field, Context)),
+   ?assertThrow({error, {'ERR D3', <<"Flag">>, "Constant initial value is not the same as field one."}},
+      encode([{<<"Flag">>, 99}], Field, Context)).
+
+appendix_3_2_1_2_test() ->
+   Field = #field{type = uInt32, presence = optional, name = <<"Flag">>, operator = #constant{value = 0}},
+   Context = create_context(<<>>),
+   Dicts = Context#context.dicts,
+   ?assertMatch({<<>>, [], #context{pmap = <<1:1>>, dicts = Dicts}}, encode([{<<"Flag">>, 0}], Field, Context)),
+   ?assertMatch({<<>>, [], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag">>, absent}], Field, Context)),
+   ?assertMatch({<<>>, [{<<"Flag1">>, 0}], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag1">>, 0}], Field, Context)).
+
+-endif.

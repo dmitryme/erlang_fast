@@ -1,5 +1,9 @@
 -module(erlang_fast_dicts).
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -export([
       init/0
       ,new_dict/2
@@ -44,8 +48,7 @@ put_value(DictName, Key, Value, Dicts) ->
 reset() ->
    ok.
 
--ifdef(EUNIT).
--include_lib("eunit/include/eunit.hrl").
+-ifdef(TEST).
 
 dict_test() ->
    Dicts = init(),

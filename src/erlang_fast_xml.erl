@@ -6,6 +6,10 @@
 -include("erlang_fast_template.hrl").
 -include("erlang_fast_common.hrl").
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -import(erlang_fast_xml_utils, [get_attribute/2, get_attribute/3, get_bin_attribute/2, get_bin_attribute/3]).
 
 -export(
@@ -192,7 +196,7 @@ parse_op(OpName, Type, Childs, Dicts, DefDict) ->
       XmlElem = #xmlElement{name = constant} ->
          case get_attribute(value, XmlElem) of
             undef ->
-               throw({error, 'ERR S4', "Constant operator doesn't have an initial value"});
+               throw({error, {'ERR S4', "Constant operator doesn't have an initial value"}});
             Value ->
                {Dicts, #constant{value = string_to_type(Type, Value)}}
          end;
@@ -333,8 +337,7 @@ get_disp_name(true, _GroupInstructions, _Name, Id) ->
 %% unit testing
 %% ====================================================================================================================
 
--ifdef(EUNIT).
--include_lib("eunit/include/eunit.hrl").
+-ifdef(TEST).
 
 string_to_type_test() ->
    ?assertEqual(100123, string_to_type(int32, "100123")),

@@ -4,6 +4,10 @@
 
 -author("Dmitry Melnikov <dmitryme@gmail.com>").
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -export([
          get_tag/2
          ,get_text/1
@@ -121,8 +125,7 @@ get_tag_aux([TagName | Rest], Childs) ->
          get_tag_aux(Rest, ChildTags)
    end.
 
--ifdef(EUNIT).
--include_lib("eunit/include/eunit.hrl").
+-ifdef(TEST).
 
 get_tag_test() ->
    Xml = "<root><tag>text</tag><tag1>text1</tag1></root>",

@@ -2,6 +2,10 @@
 
 -author("Dmitry Melnikov <dmitryme@gmail.com>").
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -export([
       encode_pmap/1
       ,encode_type/3
@@ -171,8 +175,7 @@ trim_zero_tail(Bin) ->
 %% unit testing
 %% ====================================================================================================================
 
--ifdef(EUNIT).
--include_lib("eunit/include/eunit.hrl").
+-ifdef(TEST).
 
 decode_int_test() ->
    ?assertEqual(<<255>>, encode_int(-1, true)),

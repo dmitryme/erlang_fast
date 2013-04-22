@@ -31,13 +31,10 @@
 %% =========================================================================================================
 
 decode(Data, Context) ->
-   F =
-   fun() ->
+   try
       {Data1, Context1} = decode_pmap(Data, Context),
       {Data2, Context2} = decode_template_id(Data1, Context1),
-      decode_fields(Data2, Context2)
-   end,
-   try F()
+      {ok, decode_fields(Data2, Context2)}
    catch
      _:Err ->
         Err
@@ -96,14 +93,11 @@ decode_fields(Data, Context = #context{template = Template = #template{instructi
 %% =========================================================================================================
 
 encode(TemplateId, MsgFields, Context) ->
-   F =
-   fun() ->
+   try
       Template = erlang_fast_templates:get_by_id(TemplateId, Context#context.templates#templates.tlist),
       {TidBin, Context1} = encode_template_id(TemplateId, Context#context{pmap = <<>>, template = Template}),
       {Data, _, Context2 = #context{pmap = PMap}} = encode_fields(MsgFields, Context1),
-      {<<(encode_pmap(PMap))/bits, TidBin/bits, Data/bits>>, Context2}
-   end,
-   try F()
+      {ok, <<(encode_pmap(PMap))/bits, TidBin/bits, Data/bits>>, Context2}
    catch
      _:Err ->
         Err
