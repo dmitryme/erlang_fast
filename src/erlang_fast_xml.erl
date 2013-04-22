@@ -190,7 +190,12 @@ parse_op(OpName, Type, Childs, Dicts, DefDict) ->
       false ->
          {Dicts, undef};
       XmlElem = #xmlElement{name = constant} ->
-         {Dicts, #constant{value = string_to_type(Type, get_attribute(value, XmlElem))}};
+         case get_attribute(value, XmlElem) of
+            undef ->
+               throw({error, 'ERR S4', "Constant operator doesn't have an initial value"});
+            Value ->
+               {Dicts, #constant{value = string_to_type(Type, Value)}}
+         end;
       XmlElem = #xmlElement{name = default} ->
          {Dicts, #default{value = string_to_type(Type, get_attribute(value, XmlElem))}};
       XmlElem = #xmlElement{name = copy} ->
@@ -275,24 +280,32 @@ string_to_type(_Type, undef) ->
    undef;
 string_to_type(Type, Str)
 when (Type =:= int32) or (Type =:= 'Int64') or (Type =:= uInt32) or (Type =:= uInt64) or (Type =:= length) ->
-   erlang:list_to_integer(Str);
-string_to_type(decimal, Str) ->
-   case re:split(Str, "[.]", [{return, list}]) of
-      [Num] ->
-         {list_to_integer(Num), 0};
-      [[], Remainder] ->
-         {list_to_integer(Remainder), -length(Remainder)};
-      [Num, []] ->
-         {erlang:list_to_integer(Num), 0};
-      [Num, Remainder] ->
-         {list_to_integer(Num) * round(math:pow(10, length(Remainder))) + list_to_integer(Remainder), -length(Remainder)}
+   try
+      erlang:list_to_integer(Str)
+   catch
+      _:_ ->
+         Reason = list:flatten(io_lib:format("Unable to convert ~p to number", [Str])),
+         throw({error, 'ERR S3', Reason})
    end;
-string_to_type(byteVector, Str) ->
-   erlang:list_to_binary(Str);
-string_to_type(string, Str) ->
-   list_to_binary(Str);
-string_to_type(_, Str) ->
-   Str.
+string_to_type(decimal, Str) ->
+   try
+      case re:split(Str, "[.]", [{return, list}]) of
+         [Num] ->
+            {list_to_integer(Num), 0};
+         [[], Remainder] ->
+            {list_to_integer(Remainder), -length(Remainder)};
+         [Num, []] ->
+            {erlang:list_to_integer(Num), 0};
+         [Num, Remainder] ->
+            {list_to_integer(Num) * round(math:pow(10, length(Remainder))) + list_to_integer(Remainder), -length(Remainder)}
+      end
+   catch
+      _:_ ->
+         Reason = list:flatten(io_lib:format("Unable to convert ~p to decimal", [Str])),
+         throw({error, 'ERR S3', Reason})
+   end;
+string_to_type(Type, Str) when Type == byteVector orelse Type == string ->
+   erlang:list_to_binary(Str).
 
 get_disp_name(Options, Name, Id) when is_list(Options) ->
    get_disp_name(proplists:get_value(use_id, Options, false), Name, Id);
