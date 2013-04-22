@@ -30,7 +30,7 @@ main([Template, MulticastGroup, Port, UseId]) ->
          Options = [],
          exit(wrong_argument)
    end,
-   Context = erlang_fast:create_context({file, Template}, Options, F),
+   {ok, Context} = erlang_fast:create_context({file, Template}, Options, F),
    {ok, IpAddress} = inet:parse_address(MulticastGroup),
    {ok, Socket} = gen_udp:open(erlang:list_to_integer(Port),
       [
