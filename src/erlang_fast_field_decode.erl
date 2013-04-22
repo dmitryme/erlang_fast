@@ -338,3 +338,22 @@ decode_sequence_aux(Length, Data, NeedPMap, Context = #context{template = Templa
          {Msgs, Data2, Context2} = decode_sequence_aux(Length - 1, Data1, NeedPMap, Context1#context{template = Template}),
          {[Msg | Msgs], Data2, Context2}
    end.
+
+%% ====================================================================================================================
+%% unit testing
+%% ====================================================================================================================
+
+-ifdef(EUNIT).
+-include_lib("eunit/include/eunit.hrl").
+
+create_context(PMap) ->
+   Dicts = erlang_fast_dicts:init(),
+   Dicts1 = erlang_fast_dicts:new_dict(global, Dicts),
+   Context = #context{pmap = PMap, dictionary = global, dicts = Dicts1},
+
+appendix_3_2_1_test() ->
+   ok.
+   %Field = #field{type = uInt32, presence = mandatory, disp_name = "Flag", operator = #constant{value = 0}},
+   %Context = create_context(<<2#11111111:8>>),
+   %{} = decode(<<>>, Field, Context),
+-endif.
