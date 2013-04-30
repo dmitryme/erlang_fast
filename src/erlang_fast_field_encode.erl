@@ -62,8 +62,10 @@ encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
    #field{type = Type, name = FieldName2, presence = Presence, operator = #default{value = InitialValue}},
       Context = #context{pmap = PMap}) ->
    case Presence of
-      optional when (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+      optional when (FieldName1 =/= FieldName2) ->
          {<<>>, MsgFields, Context#context{pmap = <<PMap/bits, 0:1>>}};
+      optional when (FieldName1 == FieldName2) andalso (Value == absent) ->
+         {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bits, 0:1>>}};
       _ when (FieldName1 == FieldName2) andalso (Value =/= InitialValue) ->
          {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>}};
       _ when (FieldName1 == FieldName2) andalso (Value == InitialValue) ->
@@ -74,7 +76,7 @@ encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
 %% copy
 %% =========================================================================================================
 
-encode([{FieldName1, Value} | _],#field{name = FieldName2, presence = mandatory, operator =
+encode([{FieldName1, Value} | _], #field{name = FieldName2, presence = mandatory, operator =
       #copy{}}, _Context) when (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Value == absent)) ->
    throw({error, {'ERR D6', FieldName2, "Mandatory field can not be absent with copy operator."}});
 
@@ -83,10 +85,10 @@ encode(MsgFields = [{FieldName1, _Value} | _], #field{name = FieldName2, presenc
    when (FieldName1 =/= FieldName2) ->
    {<<>>, MsgFields, Context#context{pmap = <<PMap/bits, 0:1>>}};
 
-encode(MsgFields = [{FieldName1, Value} | _], #field{type = Type, name = FieldName2, presence = optional, operator = #copy{}},
+encode([{FieldName1, Value} | MsgFieldsRest], #field{type = Type, name = FieldName2, presence = optional, operator = #copy{}},
       Context = #context{pmap = PMap})
    when (FieldName1 == FieldName2) andalso (Value == absent) ->
-   {encode_type(Type, null, true), MsgFields, Context#context{pmap = <<PMap/bits, 1:1>>}};
+   {encode_type(Type, null, true), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>}};
 
 encode([{_, Value} | MsgFieldsRest],
    #field{type = Type, presence = Presence, operator = #copy{dictionary = D, key = Key, value = InitialValue}},
@@ -300,10 +302,13 @@ encode_seq_aux([MsgFields | MsgFieldsRest], Context) ->
 
 -ifdef(TEST).
 
+-define(template_name, <<"Fake_Template">>).
+
 create_context(PMap) ->
    Dicts = erlang_fast_dicts:init(),
    Dicts1 = erlang_fast_dicts:new_dict(global, Dicts),
-   #context{pmap = PMap, dicts = Dicts1}.
+   Dicts2 = erlang_fast_dicts:new_dict(?template_name, Dicts1),
+   #context{pmap = PMap, template = #template{name = ?template_name}, dicts = Dicts2}.
 
 appendix_3_2_1_1_test() ->
    Field = #field{type = uInt32, presence = mandatory, name = <<"Flag">>, operator = #constant{value = 0}},
@@ -320,5 +325,37 @@ appendix_3_2_1_2_test() ->
    ?assertMatch({<<>>, [], #context{pmap = <<1:1>>, dicts = Dicts}}, encode([{<<"Flag">>, 0}], Field, Context)),
    ?assertMatch({<<>>, [], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag">>, absent}], Field, Context)),
    ?assertMatch({<<>>, [{<<"Flag1">>, 0}], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag1">>, 0}], Field, Context)).
+
+appendix_3_2_2_1_test() ->
+   Field = #field{type = uInt32, presence = mandatory, name = <<"Flag">>, operator = #default{value = 0}},
+   Context = create_context(<<>>),
+   Dicts = Context#context.dicts,
+   ?assertMatch({<<>>, [], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag">>, 0}], Field, Context)),
+   ?assertMatch({<<2#10000001:8>>, [], #context{pmap = <<1:1>>, dicts = Dicts}}, encode([{<<"Flag">>, 1}], Field, Context)).
+
+appendix_3_2_2_2_test() ->
+   Field = #field{type = uInt32, presence = optional, name = <<"Flag">>, operator = #default{value = undef}},
+   Context = create_context(<<>>),
+   Dicts = Context#context.dicts,
+   ?assertMatch({<<>>, [{<<"Flag1">>, 0}], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag1">>, 0}], Field, Context)),
+   ?assertMatch({<<>>, [], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag">>, absent}], Field, Context)).
+
+appendix_3_2_3_1_test() ->
+   Field = #field{type = string, presence = mandatory, name = <<"Flag">>, operator = #copy{dictionary = ?template_name, value = undef, key = "key"}},
+   Context = create_context(<<>>),
+   Res = {_, _, Context1} = encode([{<<"Flag">>, <<"CME">>}], Field, Context),
+   ?assertMatch({<<16#43, 16#4d, 16#c5>>, [], #context{pmap = <<1:1>>}}, Res),
+   Res1 = {_, _, Context2} = encode([{<<"Flag">>, <<"CME">>}], Field, Context1),
+   ?assertMatch({<<>>, [], #context{pmap = <<2#10:2>>}}, Res1),
+   ?assertMatch({<<16#49, 16#53, 16#c5>>, [], #context{pmap = <<2#101:3>>}}, encode([{<<"Flag">>, <<"ISE">>}], Field, Context2)).
+
+appendix_3_2_3_2_test() ->
+   Field = #field{type = string, presence = optional, name = <<"Flag">>, operator = #copy{dictionary = ?template_name, value = undef, key = "key"}},
+   Context = create_context(<<>>),
+   Res = {_, _, Context1} = encode([{<<"Flag">>, absent}], Field, Context),
+   ?assertMatch({<<2#10000000:8>>, [], #context{pmap = <<1:1>>}}, Res),
+   Res1 = {_, _, Context2} = encode([{<<"Flag">>, absent}], Field, Context1),
+   ?assertMatch({<<>>, [], #context{pmap = <<2#10:2>>}}, Res1).
+
 
 -endif.
