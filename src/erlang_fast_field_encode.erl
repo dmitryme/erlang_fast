@@ -372,4 +372,17 @@ appendix_3_2_4_1_test() ->
    Res3 = {_, _, _Context4} = encode([{<<"Flag">>, 5}], Field, Context3),
    ?assertMatch({<<>>, [], #context{pmap = <<2#0010:4>>}}, Res3).
 
+appendix_3_2_5_1_test() ->
+   Field = #field{type = int32, presence = mandatory, name = <<"Price">>, operator = #delta{dictionary = ?template_name,
+         key = "key"}},
+   Context = create_context(<<>>),
+   Res = {_, _, Context1} = encode([{<<"Price">>, 942755}], Field, Context),
+   ?assertMatch({<<16#39, 16#45, 16#a3>>, [], #context{pmap = <<>>}}, Res),
+   Res1 = {_, _, Context2} = encode([{<<"Price">>, 942750}], Field, Context1),
+   ?assertMatch({<<16#fb>>, [], #context{pmap = <<>>}}, Res1),
+   Res2 = {_, _, Context3} = encode([{<<"Price">>, 942745}], Field, Context2),
+   ?assertMatch({<<16#fb>>, [], #context{pmap = <<>>}}, Res2),
+   Res3 = {_, _, _Context4} = encode([{<<"Price">>, 942745}], Field, Context3),
+   ?assertMatch({<<16#80>>, [], #context{pmap = <<>>}}, Res3).
+
 -endif.
