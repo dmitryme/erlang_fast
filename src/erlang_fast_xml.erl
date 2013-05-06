@@ -2,6 +2,8 @@
 
 -author("Dmitry Melnikov <dmitryme@gmail.com>").
 
+-compile({no_auto_import,[list_to_integer/1, length/1]}).
+
 -include_lib("xmerl/include/xmerl.hrl").
 -include("erlang_fast_template.hrl").
 -include("erlang_fast_common.hrl").
@@ -293,16 +295,7 @@ when (Type =:= int32) or (Type =:= 'Int64') or (Type =:= uInt32) or (Type =:= uI
    end;
 string_to_type(decimal, Str) ->
    try
-      case re:split(Str, "[.]", [{return, list}]) of
-         [Num] ->
-            {list_to_integer(Num), 0};
-         [[], Remainder] ->
-            {list_to_integer(Remainder), -length(Remainder)};
-         [Num, []] ->
-            {erlang:list_to_integer(Num), 0};
-         [Num, Remainder] ->
-            {list_to_integer(Num) * round(math:pow(10, length(Remainder))) + list_to_integer(Remainder), -length(Remainder)}
-      end
+      str_to_decimal(Str)
    catch
       _:_ ->
          Reason = list:flatten(io_lib:format("Unable to convert ~p to decimal", [Str])),
@@ -333,6 +326,60 @@ get_disp_name(true, _GroupInstructions, Name, undef) ->
 get_disp_name(true, _GroupInstructions, _Name, Id) ->
    Id.
 
+str_to_decimal([$-|Value]) ->
+   {Mant, Exp} = list_to_decimal(re:split(Value, "[.]", [{return, list}])),
+   {-Mant, Exp};
+str_to_decimal(Value) ->
+   list_to_decimal(re:split(Value, "[.]", [{return, list}])).
+
+list_to_decimal([StrNum]) ->
+   Num = list_to_integer(StrNum),
+   TrZrCnt = count_trailing_zeroes(Num),
+   {Num div round(math:pow(10, TrZrCnt)), TrZrCnt};
+list_to_decimal([Num, []]) ->
+   list_to_decimal([Num]);
+list_to_decimal([[], StrRemainder]) ->
+   Remainder = strip_trailing_zeroes(StrRemainder),
+   {list_to_integer(Remainder), -length(Remainder)};
+list_to_decimal([StrNum, StrRemainder]) ->
+   Remainder = strip_trailing_zeroes(StrRemainder),
+   Num = list_to_integer(StrNum),
+   {Num * round(math:pow(10, length(Remainder))) + list_to_integer(Remainder), -length(Remainder)}.
+
+count_trailing_zeroes(0) ->
+   0;
+count_trailing_zeroes(Val) ->
+   count_trailing_zeroes(Val div 10, Val rem 10, 0).
+
+count_trailing_zeroes(0, _, Cnt) ->
+   Cnt;
+count_trailing_zeroes(_Val, Rem, Cnt) when Rem > 0 ->
+   Cnt;
+count_trailing_zeroes(Val, _Rem, Cnt) ->
+   count_trailing_zeroes(Val div 10, Val rem 10, Cnt + 1).
+
+length("0") ->
+   0;
+length(Val) ->
+   erlang:length(Val).
+
+list_to_integer([]) ->
+   0;
+list_to_integer(Val) ->
+   erlang:list_to_integer(Val).
+
+strip_leading_zeroes([]) ->
+   "0";
+strip_leading_zeroes([$0|Rest]) ->
+   strip_leading_zeroes(Rest);
+strip_leading_zeroes(Val) ->
+   Val.
+
+strip_trailing_zeroes(Value) ->
+   RValue = lists:reverse(Value),
+   RValue1 = strip_leading_zeroes(RValue),
+   lists:reverse(RValue1).
+
 %% ====================================================================================================================
 %% unit testing
 %% ====================================================================================================================
@@ -341,9 +388,16 @@ get_disp_name(true, _GroupInstructions, _Name, Id) ->
 
 string_to_type_test() ->
    ?assertEqual(100123, string_to_type(int32, "100123")),
+   ?assertEqual({1012, -3}, string_to_type(decimal, "1.0120")),
+   ?assertEqual({-1012, -3}, string_to_type(decimal, "-001.012")),
+   ?assertEqual({21, 0}, string_to_type(decimal, "21.0")),
+   ?assertEqual({12, 3}, string_to_type(decimal, "12000")),
+   ?assertEqual({-12, 3}, string_to_type(decimal, "-12000")),
    ?assertEqual({1, 0}, string_to_type(decimal, "1.")),
-   ?assertEqual({0, -1}, string_to_type(decimal, ".0")),
-   ?assertEqual({10, 0}, string_to_type(decimal, "10")),
+   ?assertEqual({0, 0}, string_to_type(decimal, ".0")),
+   ?assertEqual({0, 0}, string_to_type(decimal, "0.0")),
+   ?assertEqual({0, 0}, string_to_type(decimal, "00.0000")),
+   ?assertEqual({1, 1}, string_to_type(decimal, "10")),
    ?assertEqual({1, -1}, string_to_type(decimal, ".1")),
    ?assertEqual({1123, -4}, string_to_type(decimal, ".1123")),
    ?assertEqual({12345, -4}, string_to_type(decimal, "1.2345")),
