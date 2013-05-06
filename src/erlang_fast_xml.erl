@@ -16,7 +16,8 @@
 
 -export(
    [
-      parse/2
+      parse/2,
+      str_to_decimal/1
    ]).
 
 parse({file, XmlFile}, Options) ->
