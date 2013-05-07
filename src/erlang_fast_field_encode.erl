@@ -112,9 +112,13 @@ encode([{_, Value} | MsgFieldsRest],
 %% delta
 %% =========================================================================================================
 
-encode(MsgFields = [{FieldName1, Value} | _], #field{type = Type, name = FieldName2, presence = Presence, operator = #delta{}}, Context)
-when (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+encode(MsgFields = [{FieldName1, _Value} | _], #field{type = Type, name = FieldName2, presence = Presence, operator = #delta{}}, Context)
+when (FieldName1 =/= FieldName2) ->
    {encode_type(Type, null, is_nullable(Presence)), MsgFields, Context};
+
+encode([{FieldName1, Value} | MsgFieldsRest], #field{type = Type, name = FieldName2, presence = Presence, operator = #delta{}}, Context)
+when ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+   {encode_type(Type, null, is_nullable(Presence)), MsgFieldsRest, Context};
 
 encode([{_, Value} | MsgFieldsRest],
    #field{type = Type, presence = Presence, operator = #delta{dictionary = D, key = Key, value = InitialValue}},
@@ -133,10 +137,15 @@ encode([{_, Value} | MsgFieldsRest],
 %% tail
 %% =========================================================================================================
 
-encode(MsgFields = [{FieldName1, Value} | _], #field{type = Type, presence = Presence, name = FieldName2, operator = #tail{}},
+encode(MsgFields = [{FieldName1, _Value} | _], #field{type = Type, presence = Presence, name = FieldName2, operator = #tail{}},
    Context = #context{pmap = PMap})
-when (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+when (FieldName1 =/= FieldName2) ->
    {encode_type(Type, null, is_nullable(Presence)), MsgFields, Context#context{pmap = <<PMap/bits, 0:1>>}};
+
+encode([{FieldName1, Value} | MsgFieldsRest], #field{type = Type, presence = Presence, name = FieldName2, operator = #tail{}},
+   Context = #context{pmap = PMap})
+when ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+   {encode_type(Type, null, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 0:1>>}};
 
 encode([{_, Value} | MsgFieldsRest],
    #field{type = Type, presence = Presence, operator = #tail{dictionary = D, key = Key, value = InitialValue}},
@@ -159,10 +168,15 @@ encode([{_, Value} | MsgFieldsRest],
 %% increment
 %% =========================================================================================================
 
-encode(MsgFields = [{FieldName1, Value} | _], #field{type = Type, presence = Presence, name = FieldName2, operator =
+encode(MsgFields = [{FieldName1, _Value} | _], #field{type = Type, presence = Presence, name = FieldName2, operator =
       #increment{}}, Context = #context{pmap = PMap})
-when (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+when (FieldName1 =/= FieldName2) ->
    {encode_type(Type, null, is_nullable(Presence)), MsgFields, Context#context{pmap = <<PMap/bits, 1:1>>}};
+
+encode([{FieldName1, Value} | MsgFieldsRest], #field{type = Type, presence = Presence, name = FieldName2, operator =
+      #increment{}}, Context = #context{pmap = PMap})
+when ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+   {encode_type(Type, null, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>}};
 
 encode([{_, Value} | MsgFieldsRest],
    #field{type = Type, presence = Presence, operator = #increment{dictionary = D, key = Key, value = InitialValue}},
@@ -189,16 +203,19 @@ encode([{_, Value} | MsgFieldsRest],
 %% no operator
 %% =========================================================================================================
 
-encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
-   #field{type = Type, name = FieldName2, presence = Presence, operator = undef}, Context) ->
-   case (FieldName1 =/= FieldName2) of
-      true ->
-         {encode_type(Type, null, true), MsgFields, Context};
-      false when ((FieldName1 == FieldName2) andalso (Value == absent)) ->
-         {encode_type(Type, null, true), MsgFieldsRest, Context};
-      false ->
-         {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context}
-   end;
+encode(MsgFields = [{FieldName1, _Value} | _MsgFieldsRest],
+   #field{type = Type, name = FieldName2, presence = _Presence, operator = undef}, Context)
+when (FieldName1 =/= FieldName2) ->
+   {encode_type(Type, null, true), MsgFields, Context};
+
+encode([{FieldName1, Value} | MsgFieldsRest],
+   #field{type = Type, name = FieldName2, presence = _Presence, operator = undef}, Context)
+when ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+   {encode_type(Type, null, true), MsgFieldsRest, Context};
+
+encode([{FieldName, Value} | MsgFieldsRest],
+   #field{type = Type, name = FieldName, presence = Presence, operator = undef}, Context) ->
+   {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context};
 
 %% =========================================================================================================
 %% typeRef
@@ -224,10 +241,15 @@ encode(MsgFields, #templateRef{name = TemplateName}, Context = #context{template
 %% =========================================================================================================
 %% decFieldOp
 %% =========================================================================================================
-encode(MsgFields = [{FieldName1, Value} | _],
+encode(MsgFields = [{FieldName1, _Value} | _],
    #field{name = FieldName2, presence = Presence, operator = #decFieldOp{}}, Context = #context{pmap = PMap})
-when (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+when (FieldName1 =/= FieldName2) ->
    {encode_type(decimal, null, is_nullable(Presence)), MsgFields, Context#context{pmap = <<PMap/bits, 0:1>>}};
+
+encode([{FieldName1, Value} | MsgFieldsRest],
+   #field{name = FieldName2, presence = Presence, operator = #decFieldOp{}}, Context = #context{pmap = PMap})
+when ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+   {encode_type(decimal, null, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 0:1>>}};
 
 encode([{FieldName, {Mantissa, Exponent}} | MsgFieldsRest],
    F = #field{name = FieldName, presence = Presence, operator = #decFieldOp{exponent = EOp, mantissa = MOp}}, Context) ->
