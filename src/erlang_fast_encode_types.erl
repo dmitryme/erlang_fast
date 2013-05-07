@@ -188,7 +188,8 @@ decode_int_test() ->
    ?assertEqual(<<16#7f, 16#3f, 16#ff>>, encode_int(-8193, false)),
    ?assertEqual(<<16#80>>, encode_int(null, true)),
    ?assertEqual(<<2#10001011>>, encode_int(11, false)),
-   ?assertEqual(<<16#fe>>, encode_int(-2, true)).
+   ?assertEqual(<<16#fe>>, encode_int(-2, true)),
+   ?assertEqual(<<16#0, 16#ed>>, encode_int(109, false)).
 
 decode_uint_test() ->
    ?assertEqual(<<16#39, 16#45, 16#a4>>, encode_uint(942755, true)),
