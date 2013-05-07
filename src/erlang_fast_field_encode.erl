@@ -191,9 +191,11 @@ encode([{_, Value} | MsgFieldsRest],
 
 encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
    #field{type = Type, name = FieldName2, presence = Presence, operator = undef}, Context) ->
-   case (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Value == absent)) of
+   case (FieldName1 =/= FieldName2) of
       true ->
          {encode_type(Type, null, true), MsgFields, Context};
+      false when ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+         {encode_type(Type, null, true), MsgFieldsRest, Context};
       false ->
          {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context}
    end;
@@ -228,9 +230,9 @@ when (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Val
    {encode_type(decimal, null, is_nullable(Presence)), MsgFields, Context#context{pmap = <<PMap/bits, 0:1>>}};
 
 encode([{FieldName, {Mantissa, Exponent}} | MsgFieldsRest],
-   F = #field{name = FieldName, presence = mandatory, operator = #decFieldOp{exponent = EOp, mantissa = MOp}}, Context) ->
-   {EBin, [], Context1} = encode([{FieldName, Exponent}], F#field{type = int32, operator = EOp}, Context),
-   {MBin, [], Context2} = encode([{FieldName, Mantissa}], F#field{type = int64, operator = MOp}, Context1),
+   F = #field{name = FieldName, presence = Presence, operator = #decFieldOp{exponent = EOp, mantissa = MOp}}, Context) ->
+   {EBin, [], Context1} = encode([{FieldName, Exponent}], F#field{type = int32, presence = Presence, operator = EOp}, Context),
+   {MBin, [], Context2} = encode([{FieldName, Mantissa}], F#field{type = int64, presence = Presence, operator = MOp}, Context1),
    {<<EBin/bits, MBin/bits>>, MsgFieldsRest, Context2};
 
 %% =========================================================================================================
