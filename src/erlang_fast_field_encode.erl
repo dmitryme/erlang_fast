@@ -385,4 +385,48 @@ appendix_3_2_5_1_test() ->
    Res3 = {_, _, _Context4} = encode([{<<"Price">>, 942745}], Field, Context3),
    ?assertMatch({<<16#80>>, [], #context{pmap = <<>>}}, Res3).
 
+appendix_3_2_5_2_test() ->
+   Field = #field{type = decimal, presence = mandatory, name = <<"Price">>, operator = #delta{dictionary = ?template_name,
+         key = "key"}},
+   Context = create_context(<<>>),
+   Res = {_, _, Context1} = encode([{<<"Price">>, {942755, -2}}], Field, Context),
+   ?assertMatch({<<16#fe, 16#39, 16#45, 16#a3>>, [], #context{pmap = <<>>}}, Res),
+   Res1 = {_, _, Context2} = encode([{<<"Price">>, {942751, -2}}], Field, Context1),
+   ?assertMatch({<<16#80, 16#fc>>, [], #context{pmap = <<>>}}, Res1),
+   Res2 = {_, _, _Context3} = encode([{<<"Price">>, {942746, -2}}], Field, Context2),
+   ?assertMatch({<<16#80, 16#fb>>, [], #context{pmap = <<>>}}, Res2).
+
+appendix_3_2_5_3_test() ->
+   Field = #field{type = decimal, presence = mandatory, name = <<"Price">>, operator = #delta{dictionary = ?template_name,
+         key = "key", value = {12, 3}}},
+   Context = create_context(<<>>),
+   Res = {_, _, Context1} = encode([{<<"Price">>, {1210, 1}}], Field, Context),
+   ?assertMatch({<<16#fe, 16#09, 16#ae>>, [], #context{pmap = <<>>}}, Res),
+   Res1 = {_, _, Context2} = encode([{<<"Price">>, {1215, 1}}], Field, Context1),
+   ?assertMatch({<<16#80, 16#85>>, [], #context{pmap = <<>>}}, Res1),
+   Res2 = {_, _, _Context3} = encode([{<<"Price">>, {1220, 1}}], Field, Context2),
+   ?assertMatch({<<16#80, 16#85>>, [], #context{pmap = <<>>}}, Res2).
+
+appendix_3_2_5_4_test() ->
+   Field = #field{type = string, presence = mandatory, name = <<"Security">>, operator = #delta{dictionary = ?template_name,
+         key = "key"}},
+   Context = create_context(<<>>),
+   Res = {_, _, Context1} = encode([{<<"Security">>, <<"GEH6">>}], Field, Context),
+   ?assertMatch({<<16#80, 16#47, 16#45, 16#48, 16#b6>>, [], #context{pmap = <<>>}}, Res),
+   Res1 = {_, _, Context2} = encode([{<<"Security">>, <<"GEM6">>}], Field, Context1),
+   ?assertMatch({<<16#82, 16#4d, 16#b6>>, [], #context{pmap = <<>>}}, Res1),
+   Res2 = {_, _, Context3} = encode([{<<"Security">>, <<"ESM6">>}], Field, Context2),
+   ?assertMatch({<<16#fd, 16#45, 16#d3>>, [], #context{pmap = <<>>}}, Res2),
+   Res3 = {_, _, _Context4} = encode([{<<"Security">>, <<"RSESM6">>}], Field, Context3),
+   ?assertMatch({<<16#ff, 16#52, 16#d3>>, [], #context{pmap = <<>>}}, Res3).
+
+%appendix_3_2_6_3_test() ->
+   %Field = #field{type = decimal, presence = optional, name = <<"Value">>, operator = #decFieldOp{
+         %exponent = #copy{dictionary = ?template_name, key = "key"},
+         %mantissa = #copy{dictionary = ?template_name, key = "key"}
+      %}},
+   %Context = create_context(<<>>),
+   %Res1 = {_, _, Context1} = encode([{<<"Value">>, {942755, -2}}], Field, Context),
+   %?assertMatch({<<16#fe, 16#39, 16#45, 16#a4>>, [], #context{pmap = <<2#11:2>>}}, Res1).
+
 -endif.
