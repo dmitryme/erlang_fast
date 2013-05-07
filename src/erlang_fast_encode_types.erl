@@ -52,7 +52,7 @@ encode_delta(Type, {delta, Len, Value}, Nullable) when (Type == unicode) or (Typ
    <<(encode_int(Len, Nullable))/bits, (encode_vector(Value, Nullable))/bits>>;
 
 encode_delta(decimal, {MDelta, EDelta}, Nullable) ->
-   <<(encode_int(EDelta, Nullable))/bits, (encode_int(MDelta, Nullable))/bits>>.
+   <<(encode_int(EDelta, Nullable))/bits, (encode_int(MDelta, false))/bits>>.
 
 %% ====================================================================================================================
 %% privates
