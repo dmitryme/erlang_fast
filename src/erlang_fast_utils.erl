@@ -41,6 +41,9 @@ apply_delta(PrevVal, D = {delta, Len, _Delta}) when Len < 0 andalso byte_size(Pr
 apply_delta(PrevVal, D = {delta, Len, _Delta}) when Len >= 0 andalso byte_size(PrevVal) < Len ->
    throw({error, {'ERR D7', PrevVal, D}});
 
+apply_delta(undef, D = {delta, Len, _Delta}) ->
+   apply_delta(<<"">>, D);
+
 apply_delta(PrevVal, {delta, Len, Delta}) when Len >= 0 ->
    Head = binary_part(PrevVal, 0, byte_size(PrevVal) - Len),
    case Delta of
