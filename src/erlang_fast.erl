@@ -5,7 +5,7 @@
 -export
 ([
       create_context/3
-      ,reset/1
+      ,reset_context/1
       ,decode/2
       ,encode/3
    ]).
@@ -34,9 +34,9 @@ create_context(TemplatesDescr, Options, Logger) ->
          Err
    end.
 
-% reset(Context) -> {ok, Context}
+% reset_context(Context) -> {ok, Context}
 %  resets context
-reset(Context = #context{dicts = Dicts}) ->
+reset_context(Context = #context{dicts = Dicts}) ->
    Dicts1 = gb_trees:map(fun(_K, _V) -> [] end, Dicts),
    {ok, Context#context{dicts = Dicts1}}.
 
