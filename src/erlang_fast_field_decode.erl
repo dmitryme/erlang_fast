@@ -24,12 +24,9 @@
       ,decode_delta/3
    ]).
 
-%% =========================================================================================================
-%% field decoding
-%% =========================================================================================================
-
-decode(Data, Instr, Context = #context{pmap = <<>>}) ->
-   decode(Data, Instr, Context#context{pmap = <<0:1>>});
+%%% =========================================================================================================
+%%% field decoding
+%%% =========================================================================================================
 
 %% =========================================================================================================
 %% templateRef
@@ -54,16 +51,16 @@ decode(Data, #typeRef{name = TypeName}, Context) ->
 %% constant
 %% =========================================================================================================
 
-decode(Data, #field{disp_name = DispName, presence = Presence, operator = #constant{value = InitialValue}},
-   Context = #context{pmap = <<PresenceBit:1, PMapRest/bits>>}) ->
-   case Presence of
-      mandatory ->
-         {{DispName, InitialValue}, Data, Context};
-      optional when PresenceBit == 1 ->
-         {{DispName, InitialValue}, Data, Context#context{pmap = PMapRest}};
-      optional when PresenceBit == 0 ->
-         {{DispName, absent}, Data, Context#context{pmap = PMapRest}}
-   end;
+decode(Data, #field{disp_name = DispName, presence = mandatory, operator = #constant{value = InitialValue}}, Context) ->
+   {{DispName, InitialValue}, Data, Context};
+
+decode(Data, #field{disp_name = DispName, presence = optional, operator = #constant{value = InitialValue}},
+   Context = #context{pmap = <<1:1, PMapRest/bits>>}) ->
+   {{DispName, InitialValue}, Data, Context#context{pmap = PMapRest}};
+
+decode(Data, #field{disp_name = DispName, presence = optional, operator = #constant{}},
+   Context = #context{pmap = <<0:1, PMapRest/bits>>}) ->
+   {{DispName, absent}, Data, Context#context{pmap = PMapRest}};
 
 %% =========================================================================================================
 %% default
@@ -150,15 +147,15 @@ decode(Data, #field{type = Type, name = FieldName, disp_name = DispName, presenc
       empty when (Presence == mandatory)->
          throw({error, {'ERR D6', FieldName, "Previous value is empty for mandatory field"}});
       empty when (Presence == optional)->
-         {{DispName, absent}, Data, Context};
+         {{DispName, absent}, Data, Context#context{pmap = PMapRest}};
       undef when (InitialValue == undef) and (Presence == mandatory) -> % ERR D5
          throw({error, {'ERR D5', FieldName, "no initial value"}});
       undef when (InitialValue == undef) and (Presence == optional) -> % absent
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
-         {{DispName, absent}, Data, Context#context{dicts = Dicts1}};
+         {{DispName, absent}, Data, Context#context{dicts = Dicts1, pmap = PMapRest}};
       undef ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
-         {{DispName, InitialValue}, Data, Context#context{dicts = Dicts1}};
+         {{DispName, InitialValue}, Data, Context#context{dicts = Dicts1, pmap = PMapRest}};
       Value ->
          NewValue = increment_value(Type, Value, 1),
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewValue, Dicts),
@@ -349,16 +346,122 @@ decode_sequence_aux(Length, Data, NeedPMap, Context = #context{template = Templa
 
 -ifdef(TEST).
 
-%create_context(PMap) ->
-   %Dicts = erlang_fast_dicts:init(),
-   %Dicts1 = erlang_fast_dicts:new_dict(global, Dicts),
-   %Context = #context{pmap = PMap, dicts = Dicts1}.
+-define(template_name, <<"Fake_Template">>).
 
-appendix_3_2_1_test() ->
-   ok.
-   %Field = #field{type = uInt32, presence = mandatory, disp_name = "Flag", operator = #constant{value = 0}},
-   %Context = create_context(<<2#11111111:8>>),
-   %{} = decode(<<>>, Field, Context),
+create_context(PMap) ->
+   Dicts = erlang_fast_dicts:init(),
+   Dicts1 = erlang_fast_dicts:new_dict(global, Dicts),
+   Dicts2 = erlang_fast_dicts:new_dict(?template_name, Dicts1),
+   #context{pmap = PMap, template = #template{name = ?template_name}, dicts = Dicts2, logger = fun(_A, _B) -> ok end}.
+
+appendix_3_2_1_1_test() ->
+   Field = #field{type = uInt32, presence = mandatory, name = <<"Flag">>, disp_name = <<"Flag">>, operator = #constant{value = 0}},
+   Context = create_context(<<>>),
+   Res = decode(<<>>, Field, Context),
+   ?assertMatch({{<<"Flag">>, 0}, <<>>, #context{pmap = <<>>}}, Res).
+
+appendix_3_2_1_2_test() ->
+   Field = #field{type = uInt32, presence = optional, name = <<"Flag">>, disp_name = <<"Flag">>, operator = #constant{value = 0}},
+   Context = create_context(<<2#10:2>>),
+   Res1 = {_, _, Context1} = decode(<<>>, Field, Context),
+   ?assertMatch({{<<"Flag">>, 0}, <<>>, #context{pmap = <<2#0:1>>}}, Res1),
+   Res2 = {_, _, _Context2} = decode(<<>>, Field, Context1),
+   ?assertMatch({{<<"Flag">>, absent}, <<>>, #context{pmap = <<>>}}, Res2).
+
+appendix_3_2_2_1_test() ->
+   Field = #field{type = uInt32, presence = mandatory, name = <<"Flag">>, disp_name = <<"Flag">>, operator = #default{value = 0}},
+   Context = create_context(<<2#01:2>>),
+   Res1 = {_, _, Context1} = decode(<<16#81>>, Field, Context),
+   ?assertMatch({{<<"Flag">>, 0}, <<16#81>>, #context{pmap = <<2#1:1>>}}, Res1),
+   Res2 = {_, _, _Context2} = decode(<<16#81>>, Field, Context1),
+   ?assertMatch({{<<"Flag">>, 1}, <<>>, #context{pmap = <<>>}}, Res2).
+
+appendix_3_2_2_2_test() ->
+   Field = #field{type = uInt32, presence = optional, name = <<"Flag">>, disp_name = <<"Flag">>, operator =
+      #default{value = undef}},
+   Context = create_context(<<2#0:1>>),
+   Res1 = decode(<<>>, Field, Context),
+   ?assertMatch({{<<"Flag">>, absent}, <<>>, #context{pmap = <<>>}}, Res1).
+
+appendix_3_2_3_1_test() ->
+   Field = #field{type = string, presence = mandatory, name = <<"Flag">>, disp_name = <<"Flag">>, operator =
+      #copy{dictionary = ?template_name, key = "key"}},
+   Context = create_context(<<2#101:3>>),
+   Res1 = {_, _, Context1} = decode(<<16#43, 16#4d, 16#c5, 16#49, 16#53, 16#c5>>, Field, Context),
+   ?assertMatch({{<<"Flag">>, <<"CME">>}, <<16#49, 16#53, 16#c5>>, #context{pmap = <<2#01:2>>}}, Res1),
+   Res2 = {_, _, Context2} = decode(<<16#49, 16#53, 16#c5>>, Field, Context1),
+   ?assertMatch({{<<"Flag">>, <<"CME">>}, <<16#49, 16#53, 16#c5>>, #context{pmap = <<2#1:1>>}}, Res2),
+   Res3 = {_, _, _Context3} = decode(<<16#49, 16#53, 16#c5>>, Field, Context2),
+   ?assertMatch({{<<"Flag">>, <<"ISE">>}, <<>>, #context{pmap = <<>>}}, Res3).
+
+appendix_3_2_3_2_test() ->
+   Field = #field{type = string, presence = optional, name = <<"Flag">>, disp_name = <<"Flag">>, operator =
+      #copy{dictionary = ?template_name, key = "key"}},
+   Context = create_context(<<2#101:3>>),
+   Res1 = {_, _, Context1} = decode(<<16#80, 16#43, 16#4d, 16#c5>>, Field, Context),
+   ?assertMatch({{<<"Flag">>, absent}, <<16#43, 16#4d, 16#c5>>, #context{pmap = <<2#01:2>>}}, Res1),
+   Res2 = {_, _, Context2} = decode(<<16#43, 16#4d, 16#c5>>, Field, Context1),
+   ?assertMatch({{<<"Flag">>, absent}, <<16#43, 16#4d, 16#c5>>, #context{pmap = <<2#1:1>>}}, Res2),
+   Res3 = {_, _, _Context3} = decode(<<16#43, 16#4d, 16#c5>>, Field, Context2),
+   ?assertMatch({{<<"Flag">>, <<"CME">>}, <<>>, #context{pmap = <<>>}}, Res3).
+
+appendix_3_2_4_1_test() ->
+   Field = #field{type = uInt32, presence = mandatory, name = <<"Flag">>, disp_name = <<"Flag">>,
+      operator = #increment{dictionary = ?template_name, value = 1, key = "key"}},
+   Context = create_context(<<2#001:3>>),
+   Res1 = {_, _, Context1} = decode(<<16#84>>, Field, Context),
+   ?assertMatch({{<<"Flag">>, 1}, <<16#84>>, #context{pmap = <<2#01:2>>}}, Res1),
+   Res2 = {_, _, Context2} = decode(<<16#84>>, Field, Context1),
+   ?assertMatch({{<<"Flag">>, 2}, <<16#84>>, #context{pmap = <<2#1:1>>}}, Res2),
+   Res3 = {_, _, _Context3} = decode(<<16#84>>, Field, Context2),
+   ?assertMatch({{<<"Flag">>, 4}, <<>>, #context{pmap = <<>>}}, Res3).
+
+appendix_3_2_5_1_test() ->
+   Field = #field{type = int32, presence = mandatory, name = <<"Price">>, disp_name = <<"Price">>,
+      operator = #delta{dictionary = ?template_name, key = "key"}},
+   Context = create_context(<<>>),
+   Res1 = {_, _, Context1} = decode(<<16#39, 16#45, 16#a3, 16#fb, 16#fb, 16#80>>, Field, Context),
+   ?assertMatch({{<<"Price">>, 942755}, <<16#fb, 16#fb, 16#80>>, #context{pmap = <<>>}}, Res1),
+   Res2 = {_, _, Context2} = decode(<<16#fb, 16#fb, 16#80>>, Field, Context1),
+   ?assertMatch({{<<"Price">>, 942750}, <<16#fb, 16#80>>, #context{pmap = <<>>}}, Res2),
+   Res3 = {_, _, Context3} = decode(<<16#fb, 16#80>>, Field, Context2),
+   ?assertMatch({{<<"Price">>, 942745}, <<16#80>>, #context{pmap = <<>>}}, Res3),
+   Res4 = {_, _, _Context4} = decode(<<16#80>>, Field, Context3),
+   ?assertMatch({{<<"Price">>, 942745}, <<>>, #context{pmap = <<>>}}, Res4).
+
+appendix_3_2_5_2_test() ->
+   Field = #field{type = decimal, presence = mandatory, name = <<"Price">>, disp_name = <<"Price">>,
+      operator = #delta{dictionary = ?template_name, key = "key"}},
+   Context = create_context(<<>>),
+   Res1 = {_, _, Context1} = decode(<<16#fe, 16#39, 16#45, 16#a3, 16#80, 16#fc, 16#80, 16#fb>>, Field, Context),
+   ?assertMatch({{<<"Price">>, {942755, -2}}, <<16#80, 16#fc, 16#80, 16#fb>>, #context{pmap = <<>>}}, Res1),
+   Res2 = {_, _, Context2} = decode(<<16#80, 16#fc, 16#80, 16#fb>>, Field, Context1),
+   ?assertMatch({{<<"Price">>, {942751, -2}}, <<16#80, 16#fb>>, #context{pmap = <<>>}}, Res2),
+   Res3 = {_, _, _Context3} = decode(<<16#80, 16#fb>>, Field, Context2),
+   ?assertMatch({{<<"Price">>, {942746, -2}}, <<>>, #context{pmap = <<>>}}, Res3).
+
+appendix_3_2_5_3_test() ->
+   Field = #field{type = decimal, presence = mandatory, name = <<"Price">>, disp_name = <<"Price">>,
+      operator = #delta{dictionary = ?template_name, value = {12, 3}, key = "key"}},
+   Context = create_context(<<>>),
+   Res1 = {_, _, Context1} = decode(<<16#fe, 16#09, 16#ae, 16#80, 16#85, 16#80, 16#85>>, Field, Context),
+   ?assertMatch({{<<"Price">>, {1210, 1}}, <<16#80, 16#85, 16#80, 16#85>>, #context{pmap = <<>>}}, Res1),
+   Res2 = {_, _, Context2} = decode(<<16#80, 16#85, 16#80, 16#85>>, Field, Context1),
+   ?assertMatch({{<<"Price">>, {1215, 1}}, <<16#80, 16#85>>, #context{pmap = <<>>}}, Res2),
+   Res3 = {_, _, _Context3} = decode(<<16#80, 16#85>>, Field, Context2),
+   ?assertMatch({{<<"Price">>, {1220, 1}}, <<>>, #context{pmap = <<>>}}, Res3).
+
+appendix_3_2_5_4_test() ->
+   Field = #field{type = string, presence = mandatory, name = <<"Security">>, disp_name = <<"Security">>,
+      operator = #delta{dictionary = ?template_name, key = "key"}},
+   Context = create_context(<<>>),
+   Res1 = {_, _, Context1} = decode(<<16#80, 16#47, 16#45, 16#48, 16#b6, 16#82, 16#4d, 16#b6, 16#fd, 16#45, 16#d3, 16#ff, 16#52, 16#d3>>, Field, Context),
+   ?assertMatch({{<<"Security">>, <<"GEH6">>}, <<16#82, 16#4d, 16#b6, 16#fd, 16#45, 16#d3, 16#ff, 16#52, 16#d3>>, #context{pmap = <<>>}}, Res1),
+   Res2 = {_, _, Context2} = decode(<<16#82, 16#4d, 16#b6, 16#fd, 16#45, 16#d3, 16#ff, 16#52, 16#d3>>, Field, Context1),
+   ?assertMatch({{<<"Security">>, <<"GEM6">>}, <<16#fd, 16#45, 16#d3, 16#ff, 16#52, 16#d3>>, #context{pmap = <<>>}}, Res2),
+   Res3 = {_, _, Context3} = decode(<<16#fd, 16#45, 16#d3, 16#ff, 16#52, 16#d3>>, Field, Context2),
+   ?assertMatch({{<<"Security">>, <<"ESM6">>}, <<16#ff, 16#52, 16#d3>>, #context{pmap = <<>>}}, Res3),
+   Res4 = {_, _, _Context4} = decode(<<16#ff, 16#52, 16#d3>>, Field, Context3),
+   ?assertMatch({{<<"Security">>, <<"RSESM6">>}, <<>>, #context{pmap = <<>>}}, Res4).
 
 -endif.
-
