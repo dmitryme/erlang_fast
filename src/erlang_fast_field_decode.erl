@@ -28,6 +28,7 @@
 %%% field decoding
 %%% =========================================================================================================
 
+% PMap has an infinite tail of zero bits, even if PMap has no bits
 decode(Data, Instr, Context = #context{pmap = <<>>}) ->
    decode(Data, Instr, Context#context{pmap = <<0:1>>});
 
@@ -361,7 +362,7 @@ appendix_3_2_1_1_test() ->
    Field = #field{type = uInt32, presence = mandatory, name = <<"Flag">>, disp_name = <<"Flag">>, operator = #constant{value = 0}},
    Context = create_context(<<>>),
    Res = decode(<<>>, Field, Context),
-   ?assertMatch({{<<"Flag">>, 0}, <<>>, #context{pmap = <<>>}}, Res).
+   ?assertMatch({{<<"Flag">>, 0}, <<>>, #context{pmap = <<2#0:1>>}}, Res).
 
 appendix_3_2_1_2_test() ->
    Field = #field{type = uInt32, presence = optional, name = <<"Flag">>, disp_name = <<"Flag">>, operator = #constant{value = 0}},
@@ -424,48 +425,48 @@ appendix_3_2_5_1_test() ->
       operator = #delta{dictionary = ?template_name, key = "key"}},
    Context = create_context(<<>>),
    Res1 = {_, _, Context1} = decode(<<16#39, 16#45, 16#a3, 16#fb, 16#fb, 16#80>>, Field, Context),
-   ?assertMatch({{<<"Price">>, 942755}, <<16#fb, 16#fb, 16#80>>, #context{pmap = <<>>}}, Res1),
+   ?assertMatch({{<<"Price">>, 942755}, <<16#fb, 16#fb, 16#80>>, #context{pmap = <<2#0:1>>}}, Res1),
    Res2 = {_, _, Context2} = decode(<<16#fb, 16#fb, 16#80>>, Field, Context1),
-   ?assertMatch({{<<"Price">>, 942750}, <<16#fb, 16#80>>, #context{pmap = <<>>}}, Res2),
+   ?assertMatch({{<<"Price">>, 942750}, <<16#fb, 16#80>>, #context{pmap = <<2#0:1>>}}, Res2),
    Res3 = {_, _, Context3} = decode(<<16#fb, 16#80>>, Field, Context2),
-   ?assertMatch({{<<"Price">>, 942745}, <<16#80>>, #context{pmap = <<>>}}, Res3),
+   ?assertMatch({{<<"Price">>, 942745}, <<16#80>>, #context{pmap = <<2#0:1>>}}, Res3),
    Res4 = {_, _, _Context4} = decode(<<16#80>>, Field, Context3),
-   ?assertMatch({{<<"Price">>, 942745}, <<>>, #context{pmap = <<>>}}, Res4).
+   ?assertMatch({{<<"Price">>, 942745}, <<>>, #context{pmap = <<2#0:1>>}}, Res4).
 
 appendix_3_2_5_2_test() ->
    Field = #field{type = decimal, presence = mandatory, name = <<"Price">>, disp_name = <<"Price">>,
       operator = #delta{dictionary = ?template_name, key = "key"}},
    Context = create_context(<<>>),
    Res1 = {_, _, Context1} = decode(<<16#fe, 16#39, 16#45, 16#a3, 16#80, 16#fc, 16#80, 16#fb>>, Field, Context),
-   ?assertMatch({{<<"Price">>, {942755, -2}}, <<16#80, 16#fc, 16#80, 16#fb>>, #context{pmap = <<>>}}, Res1),
+   ?assertMatch({{<<"Price">>, {942755, -2}}, <<16#80, 16#fc, 16#80, 16#fb>>, #context{pmap = <<2#0:1>>}}, Res1),
    Res2 = {_, _, Context2} = decode(<<16#80, 16#fc, 16#80, 16#fb>>, Field, Context1),
-   ?assertMatch({{<<"Price">>, {942751, -2}}, <<16#80, 16#fb>>, #context{pmap = <<>>}}, Res2),
+   ?assertMatch({{<<"Price">>, {942751, -2}}, <<16#80, 16#fb>>, #context{pmap = <<2#0:1>>}}, Res2),
    Res3 = {_, _, _Context3} = decode(<<16#80, 16#fb>>, Field, Context2),
-   ?assertMatch({{<<"Price">>, {942746, -2}}, <<>>, #context{pmap = <<>>}}, Res3).
+   ?assertMatch({{<<"Price">>, {942746, -2}}, <<>>, #context{pmap = <<2#0:1>>}}, Res3).
 
 appendix_3_2_5_3_test() ->
    Field = #field{type = decimal, presence = mandatory, name = <<"Price">>, disp_name = <<"Price">>,
       operator = #delta{dictionary = ?template_name, value = {12, 3}, key = "key"}},
    Context = create_context(<<>>),
    Res1 = {_, _, Context1} = decode(<<16#fe, 16#09, 16#ae, 16#80, 16#85, 16#80, 16#85>>, Field, Context),
-   ?assertMatch({{<<"Price">>, {1210, 1}}, <<16#80, 16#85, 16#80, 16#85>>, #context{pmap = <<>>}}, Res1),
+   ?assertMatch({{<<"Price">>, {1210, 1}}, <<16#80, 16#85, 16#80, 16#85>>, #context{pmap = <<2#0:1>>}}, Res1),
    Res2 = {_, _, Context2} = decode(<<16#80, 16#85, 16#80, 16#85>>, Field, Context1),
-   ?assertMatch({{<<"Price">>, {1215, 1}}, <<16#80, 16#85>>, #context{pmap = <<>>}}, Res2),
+   ?assertMatch({{<<"Price">>, {1215, 1}}, <<16#80, 16#85>>, #context{pmap = <<2#0:1>>}}, Res2),
    Res3 = {_, _, _Context3} = decode(<<16#80, 16#85>>, Field, Context2),
-   ?assertMatch({{<<"Price">>, {1220, 1}}, <<>>, #context{pmap = <<>>}}, Res3).
+   ?assertMatch({{<<"Price">>, {1220, 1}}, <<>>, #context{pmap = <<2#0:1>>}}, Res3).
 
 appendix_3_2_5_4_test() ->
    Field = #field{type = string, presence = mandatory, name = <<"Security">>, disp_name = <<"Security">>,
       operator = #delta{dictionary = ?template_name, key = "key"}},
    Context = create_context(<<>>),
    Res1 = {_, _, Context1} = decode(<<16#80, 16#47, 16#45, 16#48, 16#b6, 16#82, 16#4d, 16#b6, 16#fd, 16#45, 16#d3, 16#ff, 16#52, 16#d3>>, Field, Context),
-   ?assertMatch({{<<"Security">>, <<"GEH6">>}, <<16#82, 16#4d, 16#b6, 16#fd, 16#45, 16#d3, 16#ff, 16#52, 16#d3>>, #context{pmap = <<>>}}, Res1),
+   ?assertMatch({{<<"Security">>, <<"GEH6">>}, <<16#82, 16#4d, 16#b6, 16#fd, 16#45, 16#d3, 16#ff, 16#52, 16#d3>>, #context{pmap = <<2#0:1>>}}, Res1),
    Res2 = {_, _, Context2} = decode(<<16#82, 16#4d, 16#b6, 16#fd, 16#45, 16#d3, 16#ff, 16#52, 16#d3>>, Field, Context1),
-   ?assertMatch({{<<"Security">>, <<"GEM6">>}, <<16#fd, 16#45, 16#d3, 16#ff, 16#52, 16#d3>>, #context{pmap = <<>>}}, Res2),
+   ?assertMatch({{<<"Security">>, <<"GEM6">>}, <<16#fd, 16#45, 16#d3, 16#ff, 16#52, 16#d3>>, #context{pmap = <<2#0:1>>}}, Res2),
    Res3 = {_, _, Context3} = decode(<<16#fd, 16#45, 16#d3, 16#ff, 16#52, 16#d3>>, Field, Context2),
-   ?assertMatch({{<<"Security">>, <<"ESM6">>}, <<16#ff, 16#52, 16#d3>>, #context{pmap = <<>>}}, Res3),
+   ?assertMatch({{<<"Security">>, <<"ESM6">>}, <<16#ff, 16#52, 16#d3>>, #context{pmap = <<2#0:1>>}}, Res3),
    Res4 = {_, _, _Context4} = decode(<<16#ff, 16#52, 16#d3>>, Field, Context3),
-   ?assertMatch({{<<"Security">>, <<"RSESM6">>}, <<>>, #context{pmap = <<>>}}, Res4).
+   ?assertMatch({{<<"Security">>, <<"RSESM6">>}, <<>>, #context{pmap = <<2#0:1>>}}, Res4).
 
 appendix_3_2_6_3_test() ->
    Field = #field{type = decimal, presence = optional, name = <<"Value">>, disp_name = <<"Value">>, operator = #decFieldOp{
