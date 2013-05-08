@@ -464,4 +464,17 @@ appendix_3_2_5_4_test() ->
    Res4 = {_, _, _Context4} = decode(<<16#ff, 16#52, 16#d3>>, Field, Context3),
    ?assertMatch({{<<"Security">>, <<"RSESM6">>}, <<>>, #context{pmap = <<>>}}, Res4).
 
+appendix_3_2_6_3_test() ->
+   Field = #field{type = decimal, presence = optional, name = <<"Value">>, disp_name = <<"Value">>, operator = #decFieldOp{
+         exponent = #copy{dictionary = ?template_name, key = "key_exponent"},
+         mantissa = #copy{dictionary = ?template_name, key = "key_mantissa"}
+      }},
+   Context = create_context(<<2#11011:5>>),
+   Res1 = {_, _, Context1} = decode(<<16#fe, 16#39, 16#45, 16#a3, 16#39, 16#45, 16#a8, 16#80>>, Field, Context),
+   ?assertMatch({{<<"Value">>, {942755, -2}}, <<16#39, 16#45, 16#a8, 16#80>>, #context{pmap = <<2#011:3>>}}, Res1),
+   Res2 = {_, _, Context2} = decode(<<16#39, 16#45, 16#a8, 16#80>>, Field, Context1),
+   ?assertMatch({{<<"Value">>, {942760, -2}}, <<16#80>>, #context{pmap = <<2#1:1>>}}, Res2),
+   Res3 = {_, _, _Context3} = decode(<<16#80>>, Field, Context2),
+   ?assertMatch({{<<"Value">>, absent}, <<>>, #context{pmap = <<>>}}, Res3).
+
 -endif.
