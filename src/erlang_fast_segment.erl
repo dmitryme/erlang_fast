@@ -103,13 +103,18 @@ encode(TemplateId, MsgFields, Context) ->
         Err
    end.
 
-encode_template_id(Tid, Context = #context{pmap = PMap, dicts = Dicts}) ->
-   case erlang_fast_dicts:get_value(global, ?common_template_id_key, Dicts) of
-      DictValue when (DictValue == undef) orelse (DictValue =/= Tid) ->
-         Dicts1 = erlang_fast_dicts:put_value(global, ?common_template_id_key, Tid, Dicts),
-         {encode_type(uInt32, Tid, false), Context#context{pmap = <<PMap/bits, 1:1>>, dicts = Dicts1}};
-      Tid ->
-         {<<>>, Context#context{pmap = <<PMap/bits, 0:1>>}}
+encode_template_id(Tid, Context = #context{pmap = PMap, dicts = Dicts, options = Options}) ->
+   case proplists:get_bool(encode_tid, Options) of
+      true ->
+         {encode_type(uInt32, Tid, false), Context#context{pmap = <<PMap/bits, 1:1>>}};
+      false ->
+         case erlang_fast_dicts:get_value(global, ?common_template_id_key, Dicts) of
+            DictValue when (DictValue == undef) orelse (DictValue =/= Tid) ->
+               Dicts1 = erlang_fast_dicts:put_value(global, ?common_template_id_key, Tid, Dicts),
+               {encode_type(uInt32, Tid, false), Context#context{pmap = <<PMap/bits, 1:1>>, dicts = Dicts1}};
+            Tid ->
+               {<<>>, Context#context{pmap = <<PMap/bits, 0:1>>}}
+         end
    end.
 
 encode_fields([], Context = #context{template = #template{instructions = []}}) ->
