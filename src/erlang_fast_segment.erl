@@ -104,7 +104,7 @@ encode(TemplateId, MsgFields, Context) ->
    end.
 
 encode_template_id(Tid, Context = #context{pmap = PMap, dicts = Dicts, options = Options}) ->
-   case proplists:get_bool(encode_tid, Options) of
+   case proplists:get_bool(force_encode_tid, Options) of
       true ->
          {encode_type(uInt32, Tid, false), Context#context{pmap = <<PMap/bits, 1:1>>}};
       false ->
