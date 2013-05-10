@@ -113,15 +113,14 @@
    129>>).
 
 decode_test() ->
-   ok.
    %Context = erlang_fast:create_context(?xmlDescr, [], fun logger/2),
    %{Msg, Data1, Context1} = erlang_fast:decode(?data, Context),
    %?assertEqual(?msg, Msg),
    %{Msg1, _, _} = erlang_fast:decode(Data1, Context1),
    %?assertEqual(?msg1, Msg1).
+   ok.
 
 encode_test() ->
-   ok.
    %Context = erlang_fast:create_context(?xmlDescr, [], fun logger/2),
    %{Data, Context1} = erlang_fast:encode(1, ?msg, Context),
    %?assertEqual(<<192, 129, 1, 57, 20, 194, 35, 90, 47, 95, 45, 49, 66, 179, 9, 74, 108, 233, 131, 174, 130, 28, 78, 14, 128,
@@ -130,14 +129,15 @@ encode_test() ->
    %{Data1, _} = erlang_fast:encode(1, ?msg1, Context1),
    %?assertEqual(<<128, 1, 57, 20, 195, 35, 90, 47, 95, 45, 49, 66, 180, 9, 74, 108, 233, 129, 177, 129, 176, 129, 122,
    %12, 166, 151, 250>>, Data1).
+   ok.
 
 find_template_test() ->
-   ok.
    %Context = erlang_fast:create_context(?xmlDescr, [], fun logger/2),
    %?assertMatch({template, <<"MDIncRefresh">>, _, 1, _, "1", _}, erlang_fast_templates:get_by_id(1,
          %Context#context.templates#templates.tlist)).
+   ok.
 
-logger([], _) ->
-   ok;
-logger(Err, Value) ->
-   io:format("~p: ~p~n", [Err, Value]).
+%logger([], _) ->
+   %ok;
+%logger(Err, Value) ->
+   %io:format("~p: ~p~n", [Err, Value]).
