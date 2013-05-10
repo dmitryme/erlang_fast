@@ -21,7 +21,7 @@
 %  TemplatesDescr = {file, TemplatesFilename}, TemplatesXmlText
 %  Options = [Option]
 %  Option = use_id - use field id instead of field name in decoded field tuple
-%           encode_tid - always encode template ID, even if previous template ID is the same
+%           force_encode_tid - always encode template ID, even if previous template ID is the same
 %  TemplatesFilename = String() - path to XML file with templates definitions
 %  TemplatesXmlText = String() - XML text with templates definitions
 %  Logger - is a callback logger function with arity 2, where first param can be
