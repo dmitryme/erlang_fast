@@ -33,24 +33,40 @@
 %% encoding
 %% =========================================================================================================
 
+encode([], F = #field{name = FieldName}, Context) ->
+   encode([{FieldName, absent}], F, Context);
+
+encode(MsgFields = [{FieldName1, _Value} | _], F = #field{name = FieldName2}, Context) when (FieldName1 =/= FieldName2) ->
+   encode([{FieldName2, absent} | MsgFields], F, Context);
+
+encode([], F = #field_group{name = GroupName, type = group}, Context) ->
+   encode([{GroupName, absent}], F, Context);
+
+encode(MsgFields = [{GroupName1, _Value} | _], F = #field_group{name = GroupName2, type = group}, Context) when (GroupName1 =/= GroupName2) ->
+   encode([{GroupName2, absent} | MsgFields], F, Context);
+
+encode([], F = #field_group{name = GroupName, type = sequence}, Context) ->
+   encode([{GroupName, []}], F, Context);
+
+encode(MsgFields = [{GroupName1, _Value} | _], F = #field_group{name = GroupName2, type = sequence}, Context) when (GroupName1 =/= GroupName2) ->
+   encode([{GroupName2, []} | MsgFields], F, Context);
+
 %% =========================================================================================================
 %% constant
 %% =========================================================================================================
 
-encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest], #field{name = FieldName2, presence = Presence, operator =
+encode([{FieldName, Value} | MsgFieldsRest], #field{name = FieldName, presence = Presence, operator =
       #constant{value = InitialValue}}, Context = #context{pmap = PMap}) ->
    case Presence of
-      mandatory when FieldName1 =/= FieldName2 ->
-         throw({error, {'ERR D3', FieldName1, "Mandatory constant field not found."}});
+      mandatory when Value == absent ->
+         throw({error, {'ERR D3', FieldName, "Mandatory constant field not found."}});
       mandatory when Value =/= InitialValue ->
-         throw({error, {'ERR D3', FieldName1, "Constant initial value is not the same as field one."}});
+         throw({error, {'ERR D3', FieldName, "Constant initial value is not the same as field one."}});
       mandatory ->
          {<<>>, MsgFieldsRest, Context};
-      optional when (FieldName1 =/= FieldName2) ->
-         {<<>>, MsgFields, Context#context{pmap = <<PMap/bits, 0:1>>}};
-      optional when (FieldName1 == FieldName2) andalso (Value == absent) ->
+      optional when Value == absent ->
          {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bits, 0:1>>}};
-      optional when FieldName1 == FieldName2 ->
+      optional ->
          {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>}}
    end;
 
@@ -58,21 +74,17 @@ encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest], #field{name = FieldNam
 %% default
 %% =========================================================================================================
 
-encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
-   #field{type = Type, name = FieldName2, presence = Presence, operator = #default{value = InitialValue}},
+encode([{FieldName, Value} | MsgFieldsRest],
+   #field{type = Type, name = FieldName, presence = Presence, operator = #default{value = InitialValue}},
       Context = #context{pmap = PMap}) ->
    case Presence of
-      optional when (FieldName1 =/= FieldName2) andalso (InitialValue == undef) ->
-         {<<>>, MsgFields, Context#context{pmap = <<PMap/bits, 0:1>>}};
-      optional when (FieldName1 == FieldName2) andalso (Value == absent) andalso (InitialValue == undef) ->
+      optional when (Value == absent) andalso (InitialValue == undef) ->
          {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bits, 0:1>>}};
-      optional when (FieldName1 =/= FieldName2) ->
-         {encode_type(Type, null, true), MsgFields, Context#context{pmap = <<PMap/bits, 1:1>>}};
-      optional when (FieldName1 == FieldName2) andalso (Value == absent) ->
+      optional when (Value == absent) ->
          {encode_type(Type, null, true), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>}};
-      _ when (FieldName1 == FieldName2) andalso (Value =/= InitialValue) ->
+      _ when (Value =/= InitialValue) ->
          {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>}};
-      _ when (FieldName1 == FieldName2) andalso (Value == InitialValue) ->
+      _ when (Value == InitialValue) ->
          {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bits, 0:1>>}}
    end;
 
@@ -80,22 +92,21 @@ encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
 %% copy
 %% =========================================================================================================
 
-encode([{FieldName1, Value} | _], #field{name = FieldName2, presence = mandatory, operator =
-      #copy{}}, _Context) when (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Value == absent)) ->
-   throw({error, {'ERR D6', FieldName2, "Mandatory field can not be absent with copy operator."}});
+encode([{FieldName, Value} | _], #field{name = FieldName, presence = mandatory, operator = #copy{}}, _Context)
+   when (Value == absent) ->
+   throw({error, {'ERR D6', FieldName, "Mandatory field can not be absent with copy operator."}});
 
-encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
-   #field{type = Type, name = FieldName2, presence = optional, operator = #copy{dictionary = D, key = Key}},
+encode([{FieldName, Value} | MsgFieldsRest],
+   #field{type = Type, name = FieldName, presence = optional, operator = #copy{dictionary = D, key = Key}},
       Context = #context{pmap = PMap, dicts = Dicts, application = App, template = #template{name = TemplateName}})
-   when (FieldName1 =/= FieldName2) orelse ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+   when (Value == absent) ->
    Dict = select_dict(D, TemplateName, App),
-   RetMsgFields = if (FieldName1 =/= FieldName2) -> MsgFields; true -> MsgFieldsRest end,
    case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
       empty ->
-         {<<>>, RetMsgFields, Context#context{pmap = <<PMap/bits, 0:1>>}};
+         {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bits, 0:1>>}};
       _Value -> % or undef
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
-         {encode_type(Type, null, true), RetMsgFields, Context#context{pmap = <<PMap/bits, 1:1>>, dicts = Dicts1}}
+         {encode_type(Type, null, true), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>, dicts = Dicts1}}
    end;
 
 encode([{_, Value} | MsgFieldsRest],
@@ -123,12 +134,8 @@ encode([{_, Value} | MsgFieldsRest],
 %% delta
 %% =========================================================================================================
 
-encode(MsgFields = [{FieldName1, _Value} | _], #field{type = Type, name = FieldName2, presence = Presence, operator = #delta{}}, Context)
-when (FieldName1 =/= FieldName2) ->
-   {encode_type(Type, null, is_nullable(Presence)), MsgFields, Context};
-
-encode([{FieldName1, Value} | MsgFieldsRest], #field{type = Type, name = FieldName2, presence = Presence, operator = #delta{}}, Context)
-when ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+encode([{FieldName, Value} | MsgFieldsRest], #field{type = Type, name = FieldName, presence = Presence, operator = #delta{}}, Context)
+when (Value == absent) ->
    {encode_type(Type, null, is_nullable(Presence)), MsgFieldsRest, Context};
 
 encode([{_, Value} | MsgFieldsRest],
@@ -148,14 +155,8 @@ encode([{_, Value} | MsgFieldsRest],
 %% tail
 %% =========================================================================================================
 
-encode(MsgFields = [{FieldName1, _Value} | _], #field{type = Type, presence = Presence, name = FieldName2, operator = #tail{}},
-   Context = #context{pmap = PMap})
-when (FieldName1 =/= FieldName2) ->
-   {encode_type(Type, null, is_nullable(Presence)), MsgFields, Context#context{pmap = <<PMap/bits, 1:1>>}};
-
-encode([{FieldName1, Value} | MsgFieldsRest], #field{type = Type, presence = Presence, name = FieldName2, operator = #tail{}},
-   Context = #context{pmap = PMap})
-when ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+encode([{FieldName, Value} | MsgFieldsRest], #field{type = Type, presence = Presence, name = FieldName, operator = #tail{}},
+   Context = #context{pmap = PMap}) when (Value == absent) ->
    {encode_type(Type, null, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>}};
 
 encode([{_, Value} | MsgFieldsRest],
@@ -179,14 +180,8 @@ encode([{_, Value} | MsgFieldsRest],
 %% increment
 %% =========================================================================================================
 
-encode(MsgFields = [{FieldName1, _Value} | _], #field{type = Type, presence = Presence, name = FieldName2, operator =
-      #increment{}}, Context = #context{pmap = PMap})
-when (FieldName1 =/= FieldName2) ->
-   {encode_type(Type, null, is_nullable(Presence)), MsgFields, Context#context{pmap = <<PMap/bits, 1:1>>}};
-
-encode([{FieldName1, Value} | MsgFieldsRest], #field{type = Type, presence = Presence, name = FieldName2, operator =
-      #increment{}}, Context = #context{pmap = PMap})
-when ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+encode([{FieldName, Value} | MsgFieldsRest], #field{type = Type, presence = Presence, name = FieldName, operator =
+      #increment{}}, Context = #context{pmap = PMap}) when (Value == absent) ->
    {encode_type(Type, null, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>}};
 
 encode([{_, Value} | MsgFieldsRest],
@@ -214,14 +209,8 @@ encode([{_, Value} | MsgFieldsRest],
 %% no operator
 %% =========================================================================================================
 
-encode(MsgFields = [{FieldName1, _Value} | _MsgFieldsRest],
-   #field{type = Type, name = FieldName2, presence = _Presence, operator = undef}, Context)
-when (FieldName1 =/= FieldName2) ->
-   {encode_type(Type, null, true), MsgFields, Context};
-
-encode([{FieldName1, Value} | MsgFieldsRest],
-   #field{type = Type, name = FieldName2, presence = _Presence, operator = undef}, Context)
-when ((FieldName1 == FieldName2) andalso (Value == absent)) ->
+encode([{FieldName, Value} | MsgFieldsRest],
+   #field{type = Type, name = FieldName, presence = _Presence, operator = undef}, Context) when (Value == absent) ->
    {encode_type(Type, null, true), MsgFieldsRest, Context};
 
 encode([{FieldName, Value} | MsgFieldsRest],
@@ -252,16 +241,10 @@ encode(MsgFields, #templateRef{name = TemplateName}, Context = #context{template
 %% =========================================================================================================
 %% decFieldOp
 %% =========================================================================================================
-encode(MsgFields = [{FieldName1, _Value} | _],
-   F = #field{name = FieldName2, presence = Presence, operator = #decFieldOp{exponent = EOp}}, Context)
-when (FieldName1 =/= FieldName2) ->
-   {EBin, [], Context1} = encode([{FieldName2, absent}], F#field{type = int32, name = FieldName2, presence = Presence, operator = EOp}, Context),
-   {EBin, MsgFields, Context1};
-
-encode(MsgFields = [{FieldName1, Value} | MsgFieldsRest],
-   F = #field{name = FieldName2, presence = Presence, operator = #decFieldOp{exponent = EOp}}, Context)
-when ((FieldName1 == FieldName2) andalso (Value == absent)) ->
-   {EBin, [], Context1} = encode(MsgFields, F#field{type = int32, name = FieldName1, presence = Presence, operator = EOp}, Context),
+encode(MsgFields = [{FieldName, Value} | MsgFieldsRest],
+   F = #field{name = FieldName, presence = Presence, operator = #decFieldOp{exponent = EOp}}, Context)
+when (Value == absent) ->
+   {EBin, [], Context1} = encode(MsgFields, F#field{type = int32, name = FieldName, presence = Presence, operator = EOp}, Context),
    {EBin, MsgFieldsRest, Context1};
 
 encode([{FieldName, {Mantissa, Exponent}} | MsgFieldsRest],
@@ -273,9 +256,9 @@ encode([{FieldName, {Mantissa, Exponent}} | MsgFieldsRest],
 %% =========================================================================================================
 %% group
 %% =========================================================================================================
-encode(MsgFields = [{GroupName1, _} | _], #field_group{type = group, name = GroupName2}, Context = #context{pmap = PMap})
-when GroupName1 =/= GroupName2 ->
-   {<<>>, MsgFields, Context#context{pmap = <<PMap/bits, 0:1>>}};
+encode([{GroupName, Value} | MsgFieldsRest], #field_group{type = group, name = GroupName}, Context = #context{pmap = PMap})
+when  (Value == absent) ->
+   {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bits, 0:1>>}};
 
 encode([{GroupName, MsgGroupFields} | MsgFieldsRest],
    #field_group{type = group, name = GroupName, instructions = Instrs}, Context = #context{pmap = PMap, template = T}) ->
@@ -286,19 +269,18 @@ encode([{GroupName, MsgGroupFields} | MsgFieldsRest],
 %% =========================================================================================================
 %% sequence
 %% =========================================================================================================
-encode(MsgFields = [{SeqName1, MsgSeqFields} | _],
-  #field_group{type = sequence, name = SeqName2, presence = Presence, instructions = Instrs}, Context = #context{pmap = PMap})
-when (SeqName1 =/= SeqName2) or ((SeqName1 == SeqName2) andalso (length(MsgSeqFields) == 0)) ->
-  LenField =
+encode([{SeqName, MsgSeqFields} | MsgFieldsRest],
+  #field_group{type = sequence, name = SeqName, presence = Presence, instructions = Instrs}, Context = #context{pmap = PMap})
+when (length(MsgSeqFields) == 0) ->
   case (hd(Instrs))#field.type == length of
      true ->
         LenInstr = hd(Instrs),
-        LenInstr#field{type = uInt32, presence = Presence};
+        LenField = LenInstr#field{type = uInt32, presence = Presence};
      false ->
-        #field{type = uInt32, name = "length", presence = Presence}
+        LenField = #field{type = uInt32, name = "length", presence = Presence}
   end,
   {LenBinary, _, #context{pmap = LenPMap}} = encode([{LenField#field.name, absent}], LenField, Context#context{pmap = <<>>}),
-  {LenBinary, MsgFields, Context#context{pmap = <<PMap/bits, LenPMap>>}};
+  {LenBinary, MsgFieldsRest, Context#context{pmap = <<PMap/bits, LenPMap/bits>>}};
 
 encode([{SeqName, MsgSeqFields} | MsgFieldsRest],
    #field_group{type = sequence, name = SeqName, presence = Presence, instructions = Instrs},
