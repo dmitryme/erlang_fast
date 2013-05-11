@@ -24,6 +24,9 @@ encode_type(Type, Value, Nullable) when (Type == int32) or (Type == int64) ->
 encode_type(Type, Value, Nullable) when (Type == uInt32) or (Type == uInt64) ->
    encode_uint(Value, Nullable);
 
+encode_type(string, Value, Nullable) when is_list(Value) ->
+   encode_type(string, list_to_binary(Value), Nullable);
+
 encode_type(string, Value, Nullable) ->
    encode_string(Value, Nullable);
 
@@ -32,6 +35,9 @@ encode_type(Type, Value, Nullable) when (Type == unicode) or (Type == byteVector
 
 encode_type(decimal, null, Nullable) ->
    encode_uint(null, Nullable);
+
+encode_type(decimal, Value, Nullable) when is_float(Value) ->
+   encode_type(decimal, erlang_fast_utils:float_to_decimal(Value), Nullable);
 
 encode_type(decimal, {Mantissa, Exponent}, Nullable) ->
    <<(encode_int(Exponent, Nullable))/bits, (encode_int(Mantissa, false))/bits>>.
