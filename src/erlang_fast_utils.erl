@@ -10,6 +10,7 @@
       ,print_binary/1
       ,select_dict/3
       ,str_to_decimal/1
+      ,float_to_decimal/1
    ]).
 
 -include("include/erlang_fast_common.hrl").
@@ -125,6 +126,9 @@ str_to_decimal([$-|Value]) ->
    {-Mant, Exp};
 str_to_decimal(Value) ->
    list_to_decimal(re:split(Value, "[.]", [{return, list}])).
+
+float_to_decimal(Value) ->
+   str_to_decimal(float_to_list(Value, [{decimals, 8}])).
 
 list_to_decimal([StrNum]) ->
    Num = str_to_integer(StrNum),
