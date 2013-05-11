@@ -9,6 +9,7 @@
       ,increment_value/3
       ,print_binary/1
       ,select_dict/3
+      ,str_to_decimal/1
    ]).
 
 -include("include/erlang_fast_common.hrl").
@@ -118,6 +119,61 @@ print_binary(<<0:1, Rest/bits>>) ->
    [$0 | print_binary(Rest)];
 print_binary(<<1:1, Rest/bits>>) ->
    [$1 | print_binary(Rest)].
+
+str_to_decimal([$-|Value]) ->
+   {Mant, Exp} = list_to_decimal(re:split(Value, "[.]", [{return, list}])),
+   {-Mant, Exp};
+str_to_decimal(Value) ->
+   list_to_decimal(re:split(Value, "[.]", [{return, list}])).
+
+list_to_decimal([StrNum]) ->
+   Num = str_to_integer(StrNum),
+   TrZrCnt = count_trailing_zeroes(Num),
+   {Num div round(math:pow(10, TrZrCnt)), TrZrCnt};
+list_to_decimal([Num, []]) ->
+   list_to_decimal([Num]);
+list_to_decimal([[], StrRemainder]) ->
+   Remainder = strip_trailing_zeroes(StrRemainder),
+   {str_to_integer(Remainder), -str_length(Remainder)};
+list_to_decimal([StrNum, StrRemainder]) ->
+   Remainder = strip_trailing_zeroes(StrRemainder),
+   Num = str_to_integer(StrNum),
+   {Num * round(math:pow(10, str_length(Remainder))) + str_to_integer(Remainder), -str_length(Remainder)}.
+
+count_trailing_zeroes(0) ->
+   0;
+count_trailing_zeroes(Val) ->
+   count_trailing_zeroes(Val div 10, Val rem 10, 0).
+
+count_trailing_zeroes(0, _, Cnt) ->
+   Cnt;
+count_trailing_zeroes(_Val, Rem, Cnt) when Rem > 0 ->
+   Cnt;
+count_trailing_zeroes(Val, _Rem, Cnt) ->
+   count_trailing_zeroes(Val div 10, Val rem 10, Cnt + 1).
+
+str_length("0") ->
+   0;
+str_length(Val) ->
+   erlang:length(Val).
+
+str_to_integer([]) ->
+   0;
+str_to_integer(Val) ->
+   erlang:list_to_integer(Val).
+
+strip_leading_zeroes([]) ->
+   "0";
+strip_leading_zeroes([$0|Rest]) ->
+   strip_leading_zeroes(Rest);
+strip_leading_zeroes(Val) ->
+   Val.
+
+strip_trailing_zeroes(Value) ->
+   RValue = lists:reverse(Value),
+   RValue1 = strip_leading_zeroes(RValue),
+   lists:reverse(RValue1).
+
 
 %% ====================================================================================================================
 %% unit testing

@@ -16,8 +16,7 @@
 
 -export(
    [
-      parse/2,
-      str_to_decimal/1
+      parse/2
    ]).
 
 parse({file, XmlFile}, Options) ->
@@ -296,10 +295,10 @@ when (Type =:= int32) or (Type =:= 'Int64') or (Type =:= uInt32) or (Type =:= uI
    end;
 string_to_type(decimal, Str) ->
    try
-      str_to_decimal(Str)
+      erlang_fast_utils:str_to_decimal(Str)
    catch
       _:_ ->
-         Reason = list:flatten(io_lib:format("Unable to convert ~p to decimal", [Str])),
+         Reason = lists:flatten(io_lib:format("Unable to convert ~p to decimal", [Str])),
          throw({error, 'ERR S3', Reason})
    end;
 string_to_type(Type, Str) when Type == byteVector orelse Type == string ->
@@ -326,60 +325,6 @@ get_disp_name(true, _GroupInstructions, Name, undef) ->
    Name;
 get_disp_name(true, _GroupInstructions, _Name, Id) ->
    Id.
-
-str_to_decimal([$-|Value]) ->
-   {Mant, Exp} = list_to_decimal(re:split(Value, "[.]", [{return, list}])),
-   {-Mant, Exp};
-str_to_decimal(Value) ->
-   list_to_decimal(re:split(Value, "[.]", [{return, list}])).
-
-list_to_decimal([StrNum]) ->
-   Num = list_to_integer(StrNum),
-   TrZrCnt = count_trailing_zeroes(Num),
-   {Num div round(math:pow(10, TrZrCnt)), TrZrCnt};
-list_to_decimal([Num, []]) ->
-   list_to_decimal([Num]);
-list_to_decimal([[], StrRemainder]) ->
-   Remainder = strip_trailing_zeroes(StrRemainder),
-   {list_to_integer(Remainder), -length(Remainder)};
-list_to_decimal([StrNum, StrRemainder]) ->
-   Remainder = strip_trailing_zeroes(StrRemainder),
-   Num = list_to_integer(StrNum),
-   {Num * round(math:pow(10, length(Remainder))) + list_to_integer(Remainder), -length(Remainder)}.
-
-count_trailing_zeroes(0) ->
-   0;
-count_trailing_zeroes(Val) ->
-   count_trailing_zeroes(Val div 10, Val rem 10, 0).
-
-count_trailing_zeroes(0, _, Cnt) ->
-   Cnt;
-count_trailing_zeroes(_Val, Rem, Cnt) when Rem > 0 ->
-   Cnt;
-count_trailing_zeroes(Val, _Rem, Cnt) ->
-   count_trailing_zeroes(Val div 10, Val rem 10, Cnt + 1).
-
-length("0") ->
-   0;
-length(Val) ->
-   erlang:length(Val).
-
-list_to_integer([]) ->
-   0;
-list_to_integer(Val) ->
-   erlang:list_to_integer(Val).
-
-strip_leading_zeroes([]) ->
-   "0";
-strip_leading_zeroes([$0|Rest]) ->
-   strip_leading_zeroes(Rest);
-strip_leading_zeroes(Val) ->
-   Val.
-
-strip_trailing_zeroes(Value) ->
-   RValue = lists:reverse(Value),
-   RValue1 = strip_leading_zeroes(RValue),
-   lists:reverse(RValue1).
 
 %% ====================================================================================================================
 %% unit testing
