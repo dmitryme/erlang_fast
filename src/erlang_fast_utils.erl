@@ -11,6 +11,7 @@
       ,select_dict/3
       ,str_to_decimal/1
       ,float_to_decimal/1
+      ,decimal_to_float/1
    ]).
 
 -include("include/erlang_fast_common.hrl").
@@ -129,6 +130,9 @@ str_to_decimal(Value) ->
 
 float_to_decimal(Value) ->
    str_to_decimal(float_to_list(Value, [{decimals, 8}])).
+
+decimal_to_float({Mantissa, Exponent}) ->
+   Mantissa * math:pow(10, Exponent).
 
 list_to_decimal([StrNum]) ->
    Num = str_to_integer(StrNum),
