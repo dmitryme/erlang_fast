@@ -4,8 +4,8 @@
 
 decode(<<_Num:32/unsigned-little-integer, Rest/binary>>, Context) ->
    case erlang_fast:decode(Rest, Context) of
-      {ok, {Msg, _, _}} ->
-         io:format("~p~n", [Msg]);
+      {TemplateName, Msg, _, _} ->
+         io:format("~p ~p~n", [TemplateName, Msg]);
       {error, Reason} ->
          io:format("ERROR: ~p, Bin = ~p ~n", [Reason, Rest]),
          exit(failed)
