@@ -34,7 +34,8 @@ decode(Data, Context) ->
    try
       {Data1, Context1} = decode_pmap(Data, Context),
       {Data2, Context2} = decode_template_id(Data1, Context1),
-      {ok, decode_fields(Data2, Context2)}
+      {Msg, Data3, Context3} = decode_fields(Data2, Context2),
+      {Context3#context.template#template.name, Msg, Data3, Context3}
    catch
      _:Err ->
         Err
@@ -97,7 +98,7 @@ encode(TemplateId, MsgFields, Context) ->
       Template = erlang_fast_templates:get_by_id(TemplateId, Context#context.templates#templates.tlist),
       {TidBin, Context1} = encode_template_id(TemplateId, Context#context{pmap = <<>>, template = Template}),
       {Data, _, Context2 = #context{pmap = PMap}} = encode_fields(MsgFields, Context1),
-      {ok, <<(encode_pmap(PMap))/bits, TidBin/bits, Data/bits>>, Context2}
+      {<<(encode_pmap(PMap))/bits, TidBin/bits, Data/bits>>, Context2}
    catch
      _:Err ->
         Err
