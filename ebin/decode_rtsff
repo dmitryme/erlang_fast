@@ -1,0 +1,35 @@
+#!/usr/bin/env escript
+
+-export([main/1]).
+
+print_binary(<<>>) ->
+   io:format("~n");
+print_binary(<<A, Rest/binary>>)->
+   io:format("~.16B", [A]),
+   print_binary(Rest).
+
+decode(Context, Binary) ->
+   case erlang_fast:decode(Binary, Context) of
+      {<<"Reset">>, _Msg, Rest, NewContext} ->
+         print_binary(binary:part(Binary, 0, erlang:byte_size(Binary) - erlang:byte_size(Rest))),
+         {ok, CleanContext} = erlang_fast:reset_context(NewContext),
+         decode(CleanContext, Rest);
+      {_TemplateName, _Msg, Rest, NewContext} ->
+         print_binary(binary:part(Binary, 0, erlang:byte_size(Binary) - erlang:byte_size(Rest))),
+         decode(NewContext, Rest);
+      {error, Reason} ->
+         io:format("ERROR: ~p~n", [Reason]),
+         exit(failed)
+   end.
+
+main([TemplateFile, DataFile])->
+   F = fun([], _) -> ok;
+          (Err, Val) -> io:format("~p: ~p~n", [Err, Val]) end,
+   {ok, Binary} = file:read_file(DataFile),
+   {ok, Context} = erlang_fast:create_context({file, TemplateFile}, [], F),
+   decode(Context, Binary);
+
+main(_) ->
+  io:format("Usage: rts2bin <template> <binary_file>~n"),
+  io:format("   template        - path to FAST xml template file.~n"),
+  io:format("   binary_file     - file with FAST stream data.~n").
