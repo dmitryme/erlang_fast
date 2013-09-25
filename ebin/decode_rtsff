@@ -2,34 +2,54 @@
 
 -export([main/1]).
 
+-mode(compile).
+
 print_binary(<<>>) ->
    io:format("~n");
 print_binary(<<A, Rest/binary>>)->
-   io:format("~.16B", [A]),
+   io:format("~2.16.0B", [A]),
    print_binary(Rest).
 
-decode(Context, Binary) ->
+decode(_Context, <<>>, _)->
+   ok;
+decode(Context, Binary, BinaryOutput) ->
    case erlang_fast:decode(Binary, Context) of
-      {<<"Reset">>, _Msg, Rest, NewContext} ->
+      {<<"Reset">>, _Msg, Rest, NewContext} when BinaryOutput == true ->
          print_binary(binary:part(Binary, 0, erlang:byte_size(Binary) - erlang:byte_size(Rest))),
          {ok, CleanContext} = erlang_fast:reset_context(NewContext),
-         decode(CleanContext, Rest);
-      {_TemplateName, _Msg, Rest, NewContext} ->
+         decode(CleanContext, Rest, BinaryOutput);
+      {T = <<"Reset">>, Msg, Rest, NewContext} ->
+         io:format("~p: ~p~n", [T, Msg]),
+         {ok, CleanContext} = erlang_fast:reset_context(NewContext),
+         decode(CleanContext, Rest, BinaryOutput);
+      {_TemplateName, _Msg, Rest, NewContext} when BinaryOutput == true->
          print_binary(binary:part(Binary, 0, erlang:byte_size(Binary) - erlang:byte_size(Rest))),
-         decode(NewContext, Rest);
+         decode(NewContext, Rest, BinaryOutput);
+      {TemplateName, Msg, Rest, NewContext} ->
+         io:format("~p: ~p~n", [TemplateName, Msg]),
+         decode(NewContext, Rest, BinaryOutput);
       {error, Reason} ->
          io:format("ERROR: ~p~n", [Reason]),
          exit(failed)
    end.
+
+main(["-b", TemplateFile, DataFile])->
+   F = fun([], _) -> ok;
+          (Err, Val) -> io:format("~p: ~p~n", [Err, Val]) end,
+   {ok, Binary} = file:read_file(DataFile),
+   {ok, Context} = erlang_fast:create_context({file, TemplateFile}, [], F),
+   decode(Context, Binary, true);
 
 main([TemplateFile, DataFile])->
    F = fun([], _) -> ok;
           (Err, Val) -> io:format("~p: ~p~n", [Err, Val]) end,
    {ok, Binary} = file:read_file(DataFile),
    {ok, Context} = erlang_fast:create_context({file, TemplateFile}, [], F),
-   decode(Context, Binary);
+   decode(Context, Binary, false);
 
 main(_) ->
-  io:format("Usage: rts2bin <template> <binary_file>~n"),
+  io:format("Usage: rts2bin [-b] <template> <binary_file>~n"),
   io:format("   template        - path to FAST xml template file.~n"),
-  io:format("   binary_file     - file with FAST stream data.~n").
+  io:format("   binary_file     - file with FAST stream data.~n"),
+  io:format("Flags:~n"),
+  io:format("   -b              - binary output.~n").
