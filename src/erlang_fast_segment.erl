@@ -98,7 +98,7 @@ encode(TemplateId, MsgFields, Context) ->
       Template = erlang_fast_templates:get_by_id(TemplateId, Context#context.templates#templates.tlist),
       {TidBin, Context1} = encode_template_id(TemplateId, Context#context{pmap = <<>>, template = Template}),
       {Data, _, Context2 = #context{pmap = PMap}} = encode_fields(MsgFields, Context1),
-      {<<(encode_pmap(PMap))/bits, TidBin/bits, Data/bits>>, Context2}
+      {ok, {<<(encode_pmap(PMap))/bits, TidBin/bits, Data/bits>>, Context2}}
    catch
      _:Err ->
         Err
