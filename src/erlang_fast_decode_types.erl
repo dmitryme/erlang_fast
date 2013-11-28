@@ -263,8 +263,8 @@ decode_uint_test() ->
   ?assertThrow(not_enough_data, decode_uint(<<>>, true)).
 
 decode_string_test() ->
-   ?assertEqual({<<"ABC">>, [], <<>>}, decode_string(<<16#41, 16#42, 16#c3>>, true)),
-   ?assertEqual({null, [], <<>>}, decode_string(<<16#80>>, true)),
+  ?assertEqual({<<"ABC">>, [], <<>>}, decode_string(<<16#41, 16#42, 16#c3>>, true)),
+  ?assertEqual({null, [], <<>>}, decode_string(<<16#80>>, true)),
   ?assertEqual({<<>>, [], <<>>}, decode_string(<<16#00, 16#80>>, true)),
   ?assertEqual({<<"ABC">>, [], <<>>}, decode_string(<<16#41, 16#42, 16#c3>>, false)),
   ?assertEqual({<<>>, [], <<>>}, decode_string(<<16#80>>, false)),
