@@ -230,7 +230,7 @@ encode(MsgFields, #typeRef{name = AppName}, Context) ->
 
 encode([{Tid, MsgRefFields} | MsgFieldsRest], #templateRef{name = undef}, Context = #context{pmap = PMap}) ->
    TemplateRef = erlang_fast_templates:get_by_id(Tid, Context#context.templates#templates.tlist),
-   {TemplRefBin, _, Context1} = erlang_fast_segment:encode(MsgRefFields, Context#context{template = TemplateRef}),
+   {ok, {TemplRefBin, _, Context1}} = erlang_fast_segment:encode(MsgRefFields, Context#context{template = TemplateRef}),
    {TemplRefBin, MsgFieldsRest,
       Context#context{pmap = <<PMap/bits, (Context1#context.pmap)/bits>>, dicts = Context1#context.dicts}};
 

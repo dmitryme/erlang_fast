@@ -41,9 +41,10 @@ reset_context(Context = #context{dicts = Dicts}) ->
    Dicts1 = gb_trees:map(fun(_K, _V) -> [] end, Dicts),
    {ok, Context#context{dicts = Dicts1}}.
 
-% decode(Data, Context) -> {ok, {Msg, DataRest, NewContext}} | {error, Reason}
+% decode(Data, Context) -> {ok, {Name, Msg, DataRest, NewContext}} | {error, Reason}
 %  Data = binary()
 %  Context = Context()
+%  Name = term()
 %  DataRest = binary()
 %  NewContext = Context()
 decode(Data, Context) ->
