@@ -35,10 +35,10 @@ decode(Data, Context) ->
       {Data1, Context1} = decode_pmap(Data, Context),
       {Data2, Context2} = decode_template_id(Data1, Context1),
       {Msg, Data3, Context3} = decode_fields(Data2, Context2),
-      {Context3#context.template#template.name, Msg, Data3, Context3}
+      {ok, {Context3#context.template#template.name, Msg, Data3, Context3}}
    catch
-     _:Err ->
-        Err
+      _:Err ->
+         {error, Err}
    end.
 
 decode_template_id(Data, Context = #context{dicts = Dicts, pmap = <<0:1, PMapRest/bits>>}) -> %
@@ -100,8 +100,8 @@ encode(TemplateId, MsgFields, Context) ->
       {Data, _, Context2 = #context{pmap = PMap}} = encode_fields(MsgFields, Context1),
       {ok, {<<(encode_pmap(PMap))/bits, TidBin/bits, Data/bits>>, Context2}}
    catch
-     _:Err ->
-        Err
+      _:Err ->
+        {error, Err}
    end.
 
 encode_template_id(Tid, Context = #context{pmap = PMap, dicts = Dicts, options = Options}) ->
