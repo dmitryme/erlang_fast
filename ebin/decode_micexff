@@ -4,7 +4,7 @@
 
 decode(<<_Num:32/unsigned-little-integer, Rest/binary>>, Context) ->
    case erlang_fast:decode(Rest, Context) of
-      {TemplateName, Msg, _, _} ->
+      {ok, {TemplateName, Msg, _, _}} ->
          io:format("~p ~p~n", [TemplateName, Msg]);
       {error, Reason} ->
          io:format("ERROR: ~p, Bin = ~p ~n", [Reason, Rest]),
@@ -18,7 +18,10 @@ loop(Context, Socket) ->
          loop(Context, Socket)
    end.
 
-main([Template, MulticastGroup, Port, UseId]) ->
+mk_request({A1, A2, A3, A4}, {B1, B2, B3, B4}, {C1, C2, C3, C4}) ->
+   <<A1, A2, A3, A4, B1, B2, B3, B4, C1, C2, C3, C4>>.
+
+main([Template, GroupIpStr, Port, SourceIpStr, IfaceIpStr, UseId]) ->
    F = fun([], _) -> ok;
           (Err, Val) -> io:format("~p: ~p~n", [Err, Val]) end,
    case list_to_atom(UseId) of
@@ -31,15 +34,18 @@ main([Template, MulticastGroup, Port, UseId]) ->
          exit(wrong_argument)
    end,
    {ok, Context} = erlang_fast:create_context({file, Template}, Options, F),
-   {ok, IpAddress} = inet:parse_address(MulticastGroup),
+   {ok, GroupIp} = inet:parse_address(GroupIpStr),
+   {ok, IfaceIp} = inet:parse_address(IfaceIpStr),
+   {ok, SourceIp} = inet:parse_address(SourceIpStr),
    {ok, Socket} = gen_udp:open(erlang:list_to_integer(Port),
       [
          inet,
          binary,
          {active, true},
          {reuseaddr, true},
-         {add_membership, {IpAddress, {0,0,0,0}}}
+         {add_membership, {GroupIp, IfaceIp}}
       ]),
+   ok = inet:setopts(Socket, [{raw, 0, 39, mk_request(GroupIp, IfaceIp, SourceIp)}]),
    Pid = spawn(fun() -> loop(Context, Socket) end),
    ok = gen_udp:controlling_process(Socket, Pid),
    receive
@@ -48,8 +54,10 @@ main([Template, MulticastGroup, Port, UseId]) ->
    end;
 
 main(_) ->
-  io:format("Usage: decode_micexff <template> <multicast_group> <port> <use_id>~n"),
+  io:format("Usage: decode_micexff <template> <group_ip> <port> <source_ip> <iface_ip> <use_id>~n"),
   io:format("   template        - path to FAST xml template file.~n"),
-  io:format("   multicast_group -  multicast group to join.~n"),
+  io:format("   group_ip        -  multicast group to join.~n"),
   io:format("   port            -  multicast port.~n"),
+  io:format("   source_ip       -  data source ip.~n"),
+  io:format("   iface_ip        -  iface to go through.~n"),
   io:format("   use_id          -  (yes|no) use field id instead of field name in decoded output.~n").
