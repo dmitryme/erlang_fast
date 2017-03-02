@@ -148,10 +148,10 @@ parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts
   when (Type == sequence) or (Type == group) ->
    DictName = string_to_dic(get_attribute(dictionary, I, DefDict)),
    {Dicts1, Length, NeedPMap, Childs1} = parse_length(Childs, Dicts, DictName, Options),
-   {Dicts1, GroupInstructions, NeedPMap} = parse_instruction(Childs1, Dicts, DictName, Options),
-   {Dicts2, Instructions, _NeedPMap} = parse_instruction(Tail, Dicts1, DictName,  Options),
+   {Dicts2, GroupInstructions, NeedPMap1} = parse_instruction(Childs1, Dicts1, DictName, Options),
+   {Dicts3, Instructions, _NeedPMap} = parse_instruction(Tail, Dicts2, DictName,  Options),
    Presence = get_attribute(presence, I, "mandatory"),
-   {Dicts2, [#field_group{
+   {Dicts3, [#field_group{
             type = Type,
             name = get_bin_attribute(name, I),
             disp_name = get_disp_name(Options, GroupInstructions, get_bin_attribute(name, I), string_to_id(get_attribute(id, I))),
@@ -159,7 +159,7 @@ parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts
             id = string_to_id(get_attribute(id, I)),
             presence = string_to_presence(Presence),
             dictionary = DictName,
-            need_pmap = NeedPMap,
+            need_pmap = NeedPMap1,
             instructions = [Length | GroupInstructions]} | Instructions], NeedPMap};
 
 parse_instruction([#xmlText{} | Tail], Dicts, DefDict, Options) ->
