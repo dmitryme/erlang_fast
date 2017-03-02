@@ -113,8 +113,8 @@ parse_instruction([I = #xmlElement{name = string = T, content = Childs} | Tail],
    {Dicts2, [Instr | Instructions], NeedPMap or need_pmap(Presence, Operator)};
 
 parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts, DefDict, Options)
-when (Type == int32 ) or (Type == uInt32) or (Type == uInt64) or (Type == 'int64') or
-     (Type == byteVector) or (Type == decimal)->
+  when (Type == int32 ) or (Type == uInt32) or (Type == uInt64) or (Type == 'int64') or (Type == byteVector) or
+       (Type == decimal)->
    OpName = get_bin_attribute(name, I),
    {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict, Options),
    {Dicts2, Operator} =
@@ -145,7 +145,7 @@ parse_instruction([I = #xmlElement{name = length = T, content = Childs} | Tail],
                operator = Operator} | Instructions], NeedPMap or false};
 
 parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts, DefDict, Options)
-when (Type == sequence) or (Type == group) ->
+  when (Type == sequence) or (Type == group) ->
    DictName = string_to_dic(get_attribute(dictionary, I, DefDict)),
    {Dicts1, GroupInstructions, NeedPMap} = parse_instruction(Childs, Dicts, DictName, Options),
    {Dicts2, Instructions, _NeedPMap} = parse_instruction(Tail, Dicts1, DictName,  Options),
@@ -159,7 +159,7 @@ when (Type == sequence) or (Type == group) ->
             presence = string_to_presence(Presence),
             dictionary = DictName,
             need_pmap = NeedPMap,
-            instructions = GroupInstructions} | Instructions], need_pmap(Presence)};
+            instructions = GroupInstructions} | Instructions], false};% #need_pmap(Presence)};
 
 parse_instruction([#xmlText{} | Tail], Dicts, DefDict, Options) ->
    parse_instruction(Tail, Dicts, DefDict, Options);

@@ -270,7 +270,8 @@ decode(Data, #field{type = Type, disp_name = DispName, presence = Presence, oper
 %% group decoding
 %% =========================================================================================================
 
-decode(Data, #field_group{type = group, presence = optional, disp_name = DispName}, Context = #context{pmap = <<0:1, PMapRest/bits>>}) ->
+decode(Data, #field_group{type = group, presence = optional, disp_name = DispName},
+       Context = #context{pmap = <<0:1, PMapRest/bits>>}) ->
    {{DispName, absent}, Data, Context#context{pmap = PMapRest}};
 
 decode(Data,
@@ -294,7 +295,8 @@ decode(Data,
 decode(Data, #field_group{type = sequence, disp_name = DispName, instructions = []}, Context) ->
    {{DispName, absent}, Data, Context};
 
-decode(Data, #field_group{type = sequence, disp_name = DispName, presence = Presence, need_pmap = NeedPMap, instructions = Instructions}, Context) ->
+decode(Data, #field_group{type = sequence, disp_name = DispName, presence = Presence, need_pmap = NeedPMap,
+                          instructions = Instructions}, Context) ->
    LenField = case (hd(Instructions))#field.type == length of
       true ->
          LenInstr = hd(Instructions),

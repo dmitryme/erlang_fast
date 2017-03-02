@@ -39,7 +39,7 @@
    </template>
    </templates>").
 
--define(xmlDescr1, 
+-define(xmlDescr1,
    "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
     <templates xmlns=\"http://www.fixprotocol.org/ns/fast/td/1.1\">
 	   <template name=\"d\" id=\"2115\" xmlns=\"http://www.fixprotocol.org/ns/fast/td/1.1\">
@@ -52,7 +52,7 @@
          <string name=\"MessageEncoding\" id=\"347\"><default value=\"UTF-8\"/></string>
          <int32 name=\"TotNumReports\" id=\"911\" presence=\"optional\"></int32>
          <string name=\"Symbol\" id=\"55\" presence=\"optional\"></string>
-           <byteVector name=\"SecurityID\" id=\"48\" presence=\"optional\"></byteVector>
+         <byteVector name=\"SecurityID\" id=\"48\" presence=\"optional\"></byteVector>
          <byteVector name=\"SecurityIDSource\" id=\"22\" presence=\"optional\"></byteVector>
          <int32 name=\"Product\" id=\"460\" presence=\"optional\"></int32>
          <byteVector name=\"CFICode\" id=\"461\" presence=\"optional\"></byteVector>
