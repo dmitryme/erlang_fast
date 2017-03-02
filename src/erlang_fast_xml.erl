@@ -147,7 +147,8 @@ parse_instruction([I = #xmlElement{name = length = T, content = Childs} | Tail],
 parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts, DefDict, Options)
   when (Type == sequence) or (Type == group) ->
    DictName = string_to_dic(get_attribute(dictionary, I, DefDict)),
-   {Dicts1, GroupInstructions, NeedPMap} = parse_instruction(Childs, Dicts, DictName, Options),
+   {Dicts1, Length, NeedPMap, Childs1} = parse_length(Childs, Dicts, DictName, Options),
+   {Dicts1, GroupInstructions, NeedPMap} = parse_instruction(Childs1, Dicts, DictName, Options),
    {Dicts2, Instructions, _NeedPMap} = parse_instruction(Tail, Dicts1, DictName,  Options),
    Presence = get_attribute(presence, I, "mandatory"),
    {Dicts2, [#field_group{
@@ -159,7 +160,7 @@ parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts
             presence = string_to_presence(Presence),
             dictionary = DictName,
             need_pmap = NeedPMap,
-            instructions = GroupInstructions} | Instructions], false};% #need_pmap(Presence)};
+            instructions = [Length | GroupInstructions]} | Instructions], NeedPMap};
 
 parse_instruction([#xmlText{} | Tail], Dicts, DefDict, Options) ->
    parse_instruction(Tail, Dicts, DefDict, Options);
@@ -173,6 +174,36 @@ parse_instruction([#xmlComment{} | Tail], Dicts, DefDict, Options) ->
 
 parse_instruction([I | _Tail], _, _, _) ->
    erlang:error({unknown_tag, I}).
+
+parse_length([], Dicts, _DefDict, _Options) ->
+   OpName = <<"Length">>,
+   Operator = undef,
+   Presence = "optional",
+   {Dicts, #field{
+               type = uInt32,
+               name = OpName,
+               disp_name = <<"Length">>,
+               ns = undef,
+               id = undef,
+               operator = Operator}, need_pmap(Presence, Operator), []};
+
+parse_length([I = #xmlElement{name = length, content = Childs} | Tail], Dicts, DefDict, Options) ->
+   OpName = get_bin_attribute(name, I),
+   {Dicts1, Operator} = parse_op(OpName, length, Childs, Dicts, DefDict),
+   Presence = get_attribute(presence, I, "mandatory"),
+   {Dicts1, #field{
+               type = uInt32,
+               name = OpName,
+               disp_name = get_disp_name(Options, OpName, string_to_id(get_attribute(id, I))),
+               ns = get_bin_attribute(ns, I),
+               id = string_to_id(get_attribute(id, I)),
+               operator = Operator}, need_pmap(Presence, Operator), Tail};
+
+parse_length([#xmlElement{} | _Tail], Dicts, DefDict, Options) ->
+   parse_length([], Dicts, DefDict, Options);
+
+parse_length([_ | Tail], Dicts, DefDict, Options) ->
+   parse_length(Tail, Dicts, DefDict, Options).
 
 parse_dec_op(OpName, Childs, Dicts, DefDict) ->
    Res = lists:foldr(fun(#xmlElement{name = exponent, content = C}, {D, DecFieldOp}) ->
@@ -241,9 +272,6 @@ parse_op(OpName, Type, Childs, Dicts, DefDict) ->
 %% ====================================================================================================================
 %% helpers
 %% ====================================================================================================================
-need_pmap("mandatory") -> false;
-need_pmap("optional") -> true.
-
 need_pmap("mandatory", #constant{}) ->
    false;
 need_pmap("optional", #constant{}) ->

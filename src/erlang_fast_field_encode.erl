@@ -270,33 +270,20 @@ encode([{GroupName, MsgGroupFields} | MsgFieldsRest],
 %% sequence
 %% =========================================================================================================
 encode([{SeqName, MsgSeqFields} | MsgFieldsRest],
-  #field_group{type = sequence, name = SeqName, presence = Presence, instructions = Instrs}, Context = #context{pmap = PMap})
+  #field_group{type = sequence, name = SeqName, instructions = [LenField | _Instrs]},
+  Context = #context{pmap = PMap})
 when (length(MsgSeqFields) == 0) ->
-  case (hd(Instrs))#field.type == length of
-     true ->
-        LenInstr = hd(Instrs),
-        LenField = LenInstr#field{type = uInt32, presence = Presence};
-     false ->
-        LenField = #field{type = uInt32, name = "length", presence = Presence}
-  end,
-  {LenBinary, _, #context{pmap = LenPMap}} = encode([{LenField#field.name, absent}], LenField, Context#context{pmap = <<>>}),
+  {LenBinary, _, #context{pmap = LenPMap}} = encode([{LenField#field.name, absent}],
+                                                    LenField, Context#context{pmap = <<>>}),
   {LenBinary, MsgFieldsRest, Context#context{pmap = <<PMap/bits, LenPMap/bits>>}};
 
 encode([{SeqName, MsgSeqFields} | MsgFieldsRest],
-   #field_group{type = sequence, name = SeqName, presence = Presence, instructions = Instrs},
+   #field_group{type = sequence, name = SeqName, instructions = [LenField | Instrs]},
    Context = #context{template = T}) ->
-   {LenField, SeqInstrs} =
-   case (hd(Instrs))#field.type == length of
-      true ->
-         LenInstr = hd(Instrs),
-         {LenInstr#field{type = uInt32, presence = Presence}, tl(Instrs)};
-      false ->
-         {#field{type = uInt32, name = "length", presence = Presence}, Instrs}
-   end,
    {LenBin, _, Context1} =
       encode([{LenField#field.name, length(MsgSeqFields)}], LenField, Context),
    {SeqBin, #context{dicts = Dicts1}} =
-      encode_seq_aux(MsgSeqFields, Context1#context{pmap = <<>>, template = T#template{instructions = SeqInstrs}}),
+      encode_seq_aux(MsgSeqFields, Context1#context{pmap = <<>>, template = T#template{instructions = Instrs}}),
    {<<LenBin/bits, SeqBin/bits>>, MsgFieldsRest, Context1#context{dicts = Dicts1}};
 
 %% =========================================================================================================

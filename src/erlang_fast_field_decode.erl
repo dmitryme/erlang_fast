@@ -295,28 +295,15 @@ decode(Data,
 decode(Data, #field_group{type = sequence, disp_name = DispName, instructions = []}, Context) ->
    {{DispName, absent}, Data, Context};
 
-decode(Data, #field_group{type = sequence, disp_name = DispName, presence = Presence, need_pmap = NeedPMap,
-                          instructions = Instructions}, Context) ->
-   LenField = case (hd(Instructions))#field.type == length of
-      true ->
-         LenInstr = hd(Instructions),
-         LenInstr#field{type = uInt32, presence = Presence};
-      false ->
-         #field{type = uInt32, name = "length", presence = Presence}
-   end,
-   {{_, LenValue}, Data1, Context1} = decode(Data, LenField, Context),
+decode(Data, #field_group{type = sequence, disp_name = DispName, need_pmap = NeedPMap,
+                          instructions = [LengthField | Instructions]}, Context) ->
+   {{_, LenValue}, Data1, Context1} = decode(Data, LengthField, Context),
    case LenValue of
       absent ->
          {{DispName, absent}, Data1, Context1};
       LenValue ->
-         Instrs = case (hd(Instructions))#field.type == length of
-            true ->
-               tl(Instructions);
-            false ->
-               Instructions
-         end,
          {Sequence, Data2, #context{dicts = Dicts}} = decode_sequence_aux(LenValue, Data1, NeedPMap,
-            Context1#context{template = Context1#context.template#template{instructions = Instrs}}),
+            Context1#context{template = Context1#context.template#template{instructions = Instructions}}),
          {{DispName, Sequence}, Data2, Context1#context{dicts = Dicts}}
    end;
 
