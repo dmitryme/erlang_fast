@@ -1,6 +1,6 @@
 -module(erlang_fast_field_decode).
 
--export([decode/3]).
+-export([decode/4]).
 
 -include("erlang_fast_template.hrl").
 -include("erlang_fast_context.hrl").
@@ -29,66 +29,67 @@
 %%% =========================================================================================================
 
 % PMap has an infinite tail of zero bits, even if PMap has no bits
-decode(Data, Instr, Context = #context{pmap = <<>>}) ->
-   decode(Data, Instr, Context#context{pmap = <<0:1>>});
+decode(Data, Instr, Context = #context{pmap = <<>>}, Map) ->
+   decode(Data, Instr, Context#context{pmap = <<0:1>>}, Map);
 
 %% =========================================================================================================
 %% templateRef
 %% =========================================================================================================
 
-decode(Data, #templateRef{name = undef}, Context) ->
-   {Msg, Data1, #context{dicts = D}} = erlang_fast_segment:decode(Data, Context),
-   {Msg, Data1, Context#context{dicts = D}};
+decode(Data, #templateRef{name = undef}, Context, Map) ->
+   {Map1, Data1, #context{dicts = D}} = erlang_fast_segment:decode(Data, Context, Map),
+   {Map1, Data1, Context#context{dicts = D}};
 
-decode(Data, #templateRef{name = Name}, Context = #context{template = T = #template{instructions = Instrs}}) ->
+decode(Data, #templateRef{name = Name}, Context = #context{template = T = #template{instructions = Instrs}}, Map) ->
    TemplateRef = erlang_fast_templates:get_by_name(Name, Context#context.templates#templates.tlist),
-   {skip, Data, Context#context{template = T#template{instructions = TemplateRef#template.instructions ++ Instrs}}};
+   {Map, Data, Context#context{template = T#template{instructions = TemplateRef#template.instructions ++ Instrs}}};
 
 %% =========================================================================================================
 %% templateRef
 %% =========================================================================================================
 
-decode(Data, #typeRef{name = TypeName}, Context) ->
-   {skip, Data, Context#context{application = TypeName}};
+decode(Data, #typeRef{name = TypeName}, Context, Map) ->
+   {Map, Data, Context#context{application = TypeName}};
 
 %% =========================================================================================================
 %% constant
 %% =========================================================================================================
 
-decode(Data, #field{disp_name = DispName, presence = mandatory, operator = #constant{value = InitialValue}}, Context) ->
-   {{DispName, InitialValue}, Data, Context};
+decode(Data, #field{disp_name = DispName, presence = mandatory, operator = #constant{value = InitialValue}},
+       Context, Map) ->
+   {Map#{DispName => InitialValue}, Data, Context};
 
 decode(Data, #field{disp_name = DispName, presence = optional, operator = #constant{value = InitialValue}},
-   Context = #context{pmap = <<1:1, PMapRest/bits>>}) ->
-   {{DispName, InitialValue}, Data, Context#context{pmap = PMapRest}};
+   Context = #context{pmap = <<1:1, PMapRest/bits>>}, Map) ->
+   {Map#{DispName => InitialValue}, Data, Context#context{pmap = PMapRest}};
 
-decode(Data, #field{disp_name = DispName, presence = optional, operator = #constant{}},
-   Context = #context{pmap = <<0:1, PMapRest/bits>>}) ->
-   {{DispName, absent}, Data, Context#context{pmap = PMapRest}};
+decode(Data, #field{presence = optional, operator = #constant{}},
+   Context = #context{pmap = <<0:1, PMapRest/bits>>}, Map) ->
+   {Map, Data, Context#context{pmap = PMapRest}};
 
 %% =========================================================================================================
 %% default
 %% =========================================================================================================
 
 decode(Data, #field{name = FieldName, disp_name = DispName, presence = Presence, operator = #default{value = InitialValue}},
-   Context = #context{pmap = <<0:1, PMapRest/bits>>}) ->
+   Context = #context{pmap = <<0:1, PMapRest/bits>>}, Map) ->
    case InitialValue of
       undef when Presence == mandatory ->
          throw({error, {'ERR D5', FieldName, "Initial value is absent for mandatory field"}});
       undef when Presence == optional ->
-         {{DispName, absent}, Data, Context#context{pmap = PMapRest}};
+         {Map, Data, Context#context{pmap = PMapRest}};
       InitialValue ->
-         {{DispName, InitialValue}, Data, Context#context{pmap = PMapRest}}
+         {Map#{DispName => InitialValue}, Data, Context#context{pmap = PMapRest}}
    end;
 
 decode(Data, #field{type = Type, disp_name = DispName, presence = Presence, operator = #default{value = _InitialValue}},
-   Context = #context{logger = L, pmap = <<1:1, PMapRest/bits>>}) ->
+   Context = #context{logger = L, pmap = <<1:1, PMapRest/bits>>}, Map) ->
    case decode_type(Type, Data, is_nullable(Presence)) of
       {null, _, Data1} ->
-         {{DispName, absent}, Data1, Context#context{pmap = PMapRest}};
+         {Map, Data1, Context#context{pmap = PMapRest}};
       {Value, Err, Data1} ->
          L(Err, Value),
-         {{DispName, Value}, Data1, Context#context{pmap = PMapRest}}
+         {Map#{DispName => Value}, Data1, Context#context{pmap = PMapRest}}
    end;
 
 %% =========================================================================================================
@@ -97,21 +98,22 @@ decode(Data, #field{type = Type, disp_name = DispName, presence = Presence, oper
 
 decode(Data, #field{type = Type, disp_name = DispName, presence = Presence, operator = #copy{dictionary = D, key = Key}},
    Context = #context{logger = L, pmap = <<1:1, PMapRest/bits>>, dicts = Dicts,
-      application = App, template = #template{name = TemplateName}}) ->
+      application = App, template = #template{name = TemplateName}}, Map) ->
    Dict = select_dict(D, TemplateName, App),
    case decode_type(Type, Data, is_nullable(Presence)) of
       {null, _, Data1} ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
-         {{DispName, absent}, Data1, Context#context{pmap = PMapRest, dicts = Dicts1}};
+         {Map, Data1, Context#context{pmap = PMapRest, dicts = Dicts1}};
       {Value, Err, Data1} ->
          L(Err, Value),
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-         {{DispName, Value}, Data1, Context#context{pmap = PMapRest, dicts = Dicts1}}
+         {Map#{DispName => Value}, Data1, Context#context{pmap = PMapRest, dicts = Dicts1}}
    end;
 
-decode(Data, #field{name = FieldName, disp_name = DispName, presence = Presence, operator = #copy{dictionary = D, key = Key, value = InitialValue}},
-   Context = #context{pmap = <<0:1, PMapRest/bits>>, dicts = Dicts,
-      application = App, template = #template{name = TemplateName}}) ->
+decode(Data, #field{name = FieldName, disp_name = DispName, presence = Presence,
+                    operator = #copy{dictionary = D, key = Key, value = InitialValue}},
+       Context = #context{pmap = <<0:1, PMapRest/bits>>, dicts = Dicts,
+      application = App, template = #template{name = TemplateName}}, Map) ->
    Dict = select_dict(D, TemplateName, App),
    case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
       empty when Presence == mandatory ->
@@ -122,12 +124,12 @@ decode(Data, #field{name = FieldName, disp_name = DispName, presence = Presence,
          throw({error, {'ERR D5', FieldName, "no initial value"}});
       undef when (Presence == optional) and (InitialValue == undef) -> % it becomes empty
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
-         {{DispName, absent}, Data, Context#context{pmap = PMapRest, dicts = Dicts1}};
+         {Map, Data, Context#context{pmap = PMapRest, dicts = Dicts1}};
       undef ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
-         {{DispName, InitialValue}, Data, Context#context{pmap = PMapRest, dicts = Dicts1}};
+         {Map#{DispName => InitialValue}, Data, Context#context{pmap = PMapRest, dicts = Dicts1}};
       Value ->
-         {{DispName, Value}, Data, Context#context{pmap = PMapRest}}
+         {Map#{DispName => Value}, Data, Context#context{pmap = PMapRest}}
    end;
 
 %% =========================================================================================================
@@ -136,16 +138,18 @@ decode(Data, #field{name = FieldName, disp_name = DispName, presence = Presence,
 
 decode(Data, #field{type = Type, disp_name = DispName, presence = Presence, operator = #increment{dictionary = Dict, key = Key}},
    Context = #context{logger = L, pmap = <<1:1, PMapRest/bits>>, dicts = Dicts, application = App,
-      template = #template{name = TemplateName}}) ->
+      template = #template{name = TemplateName}}, Map) ->
    case decode_type(Type, Data, is_nullable(Presence)) of
       {Value, Err, Data1} ->
          L(Err, Value),
          Dicts1 = erlang_fast_dicts:put_value(select_dict(Dict, TemplateName, App), Key, Value, Dicts),
-         {{DispName, Value}, Data1, Context#context{dicts = Dicts1, pmap = PMapRest}}
+         {Map#{DispName => Value}, Data1, Context#context{dicts = Dicts1, pmap = PMapRest}}
    end;
 
-decode(Data, #field{type = Type, name = FieldName, disp_name = DispName, presence = Presence, operator = #increment{dictionary = D, key = Key, value = InitialValue}},
-      Context = #context{pmap = <<0:1, PMapRest/bits>>, dicts = Dicts, application = App, template = #template{name = TemplateName}}) ->
+decode(Data, #field{type = Type, name = FieldName, disp_name = DispName, presence = Presence,
+                    operator = #increment{dictionary = D, key = Key, value = InitialValue}},
+      Context = #context{pmap = <<0:1, PMapRest/bits>>, dicts = Dicts, application = App,
+                         template = #template{name = TemplateName}}, Map) ->
    Dict = select_dict(D, TemplateName, App),
    case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
       empty when (Presence == mandatory)->
@@ -156,25 +160,26 @@ decode(Data, #field{type = Type, name = FieldName, disp_name = DispName, presenc
          throw({error, {'ERR D5', FieldName, "no initial value"}});
       undef when (InitialValue == undef) and (Presence == optional) -> % absent
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
-         {{DispName, absent}, Data, Context#context{dicts = Dicts1, pmap = PMapRest}};
+         {Map, Data, Context#context{dicts = Dicts1, pmap = PMapRest}};
       undef ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
-         {{DispName, InitialValue}, Data, Context#context{dicts = Dicts1, pmap = PMapRest}};
+         {Map#{DispName => InitialValue}, Data, Context#context{dicts = Dicts1, pmap = PMapRest}};
       Value ->
          NewValue = increment_value(Type, Value, 1),
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewValue, Dicts),
-         {{DispName, NewValue}, Data, Context#context{dicts = Dicts1, pmap = PMapRest}}
+         {Map#{DispName => NewValue}, Data, Context#context{dicts = Dicts1, pmap = PMapRest}}
    end;
 
 %% =========================================================================================================
 %% delta
 %% =========================================================================================================
 
-decode(Data, #field{type = Type, name = FieldName, disp_name = DispName, presence = Presence, operator = #delta{dictionary = D, key = Key, value = InitialValue}},
-   Context = #context{logger = L, dicts = Dicts, application = App, template = #template{name = TemplateName}}) ->
+decode(Data, #field{type = Type, name = FieldName, disp_name = DispName, presence = Presence,
+                    operator = #delta{dictionary = D, key = Key, value = InitialValue}},
+   Context = #context{logger = L, dicts = Dicts, application = App, template = #template{name = TemplateName}}, Map) ->
    case decode_delta(Type, Data, is_nullable(Presence)) of
       {null, _, Data1} ->
-         {{DispName, absent}, Data1, Context};
+         {Map, Data1, Context};
       {Delta, Err, Data1} ->
          L(Err, Delta),
          Dict = select_dict(D, TemplateName, App),
@@ -184,11 +189,11 @@ decode(Data, #field{type = Type, name = FieldName, disp_name = DispName, presenc
             undef ->
                NewVal = apply_delta(InitialValue, Delta),
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{DispName, NewVal}, Data1, Context#context{dicts = Dicts1}};
+               {Map#{DispName => NewVal}, Data1, Context#context{dicts = Dicts1}};
             PrevValue ->
                NewVal = apply_delta(PrevValue, Delta),
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{DispName, NewVal}, Data1, Context#context{dicts = Dicts1}}
+               {Map#{DispName => NewVal}, Data1, Context#context{dicts = Dicts1}}
          end
    end;
 
@@ -196,9 +201,10 @@ decode(Data, #field{type = Type, name = FieldName, disp_name = DispName, presenc
 %% tail
 %% =========================================================================================================
 
-decode(Data, #field{type = Type, disp_name = DispName, presence = Presence, operator = #tail{dictionary = D, key = Key, value = InitialValue}},
+decode(Data, #field{type = Type, disp_name = DispName, presence = Presence,
+                    operator = #tail{dictionary = D, key = Key, value = InitialValue}},
    Context = #context{logger = L, dicts = Dicts, pmap = <<1:1, PMapRest/bits>>,
-      application = App, template = #template{name = TemplateName}}) ->
+      application = App, template = #template{name = TemplateName}}, Map) ->
    Dict = select_dict(D, TemplateName, App),
    case decode_type(Type, Data, is_nullable(Presence)) of
       {null, _, Data1} ->
@@ -210,17 +216,18 @@ decode(Data, #field{type = Type, disp_name = DispName, presence = Presence, oper
             PrevValue when (PrevValue == empty) or (PrevValue == undef)->
                NewVal = apply_delta(InitialValue, Delta),
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{DispName, NewVal}, Data1, Context#context{pmap = PMapRest, dicts = Dicts1}};
+               {Map#{DispName => NewVal}, Data1, Context#context{pmap = PMapRest, dicts = Dicts1}};
             PrevValue ->
                NewVal = apply_delta(PrevValue, Delta),
                Dicts1 = erlang_fast_dicts:put_value(Dict, Key, NewVal, Dicts),
-               {{DispName, NewVal}, Data1, Context#context{pmap = PMapRest, dicts = Dicts1}}
+               {Map#{DispName => NewVal}, Data1, Context#context{pmap = PMapRest, dicts = Dicts1}}
          end
    end;
 
-decode(Data, #field{name = FieldName, disp_name = DispName, presence = Presence, operator = #tail{dictionary = D, key = Key, value = InitialValue}},
+decode(Data, #field{name = FieldName, disp_name = DispName, presence = Presence,
+                    operator = #tail{dictionary = D, key = Key, value = InitialValue}},
    Context = #context{dicts = Dicts, pmap = <<0:1, PMapRest/bits>>,
-      application = App, template = #template{name = TemplateName}}) ->
+      application = App, template = #template{name = TemplateName}}, Map) ->
    Dict = select_dict(D, TemplateName, App),
    case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
       empty when (Presence == mandatory)->
@@ -231,52 +238,56 @@ decode(Data, #field{name = FieldName, disp_name = DispName, presence = Presence,
          throw({error, {'ERR D5', FieldName, "no initial value"}});
       undef when (InitialValue == undef) andalso (Presence == optional) ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, empty, Dicts),
-         {{DispName, absent}, Data, Context#context{pmap = PMapRest, dicts = Dicts1}};
+         {Map, Data, Context#context{pmap = PMapRest, dicts = Dicts1}};
       undef ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, InitialValue, Dicts),
-         {{DispName, InitialValue}, Data, Context#context{pmap = PMapRest, dicts = Dicts1}};
+         {Map#{DispName => InitialValue}, Data, Context#context{pmap = PMapRest, dicts = Dicts1}};
       Value ->
-         {{DispName, Value}, Data, Context#context{pmap = PMapRest}}
+         {Map#{DispName => Value}, Data, Context#context{pmap = PMapRest}}
    end;
 
 %% =========================================================================================================
 %% decFieldOp
 %% =========================================================================================================
 
-decode(Data, #field{name = FieldName, disp_name = DispName, presence = Presence, operator = #decFieldOp{exponent = ExpOp, mantissa = MantOp}}, Context) ->
-   case decode(Data, #field{type = int32, name = FieldName, disp_name = DispName, presence = Presence, operator = ExpOp}, Context) of
-      R = {{DispName, absent}, _, _} ->
-         R;
-      {{DispName, Exponent}, Data1, Context1} ->
-         {{DispName, Mantissa}, Data2, Context2} =
-            decode(Data1, #field{type = int64, name = FieldName, disp_name = DispName, presence = mandatory, operator = MantOp}, Context1),
-         {{DispName, {Mantissa, Exponent}}, Data2, Context2}
+decode(Data, #field{name = FieldName, disp_name = DispName, presence = Presence,
+                    operator = #decFieldOp{exponent = ExpOp, mantissa = MantOp}}, Context, Map) ->
+   case decode(Data, #field{type = int32, name = FieldName, disp_name = DispName,
+                            presence = Presence, operator = ExpOp}, Context, #{}) of
+      {#{}, Data1, Context1} ->
+         {Map, Data1, Context1};
+      {#{DispName := Exponent}, Data1, Context1} ->
+         {#{DispName := Mantissa}, Data2, Context2} =
+            decode(Data1, #field{type = int64, name = FieldName, disp_name = DispName,
+                                 presence = mandatory, operator = MantOp}, Context1, #{}),
+         {Map#{DispName => {Mantissa, Exponent}}, Data2, Context2}
    end;
 
 %% =========================================================================================================
 %% no operator
 %% =========================================================================================================
 
-decode(Data, #field{type = Type, disp_name = DispName, presence = Presence, operator = undef}, Context = #context{logger = L}) ->
+decode(Data, #field{type = Type, disp_name = DispName, presence = Presence, operator = undef},
+       Context = #context{logger = L}, Map) ->
    case decode_type(Type, Data, is_nullable(Presence)) of
       {null, _, Data1} ->
-         {{DispName, absent}, Data1, Context};
+         {Map, Data1, Context};
       {Value, Err, Data1} ->
          L(Err, Value),
-         {{DispName, Value}, Data1, Context}
+         {Map#{DispName => Value}, Data1, Context}
    end;
 
 %% =========================================================================================================
 %% group decoding
 %% =========================================================================================================
 
-decode(Data, #field_group{type = group, presence = optional, disp_name = DispName},
-       Context = #context{pmap = <<0:1, PMapRest/bits>>}) ->
-   {{DispName, absent}, Data, Context#context{pmap = PMapRest}};
+decode(Data, #field_group{type = group, presence = optional},
+       Context = #context{pmap = <<0:1, PMapRest/bits>>}, Map) ->
+   {Map, Data, Context#context{pmap = PMapRest}};
 
 decode(Data,
-   #field_group{type = group, disp_name = DispName, presence = Presence, need_pmap = NeedPMap, instructions = Instrs},
-      Context = #context{pmap = PMap = <<PresenceBit:1, PMapRest/bits>>})
+   #field_group{type = group, presence = Presence, need_pmap = NeedPMap, instructions = Instrs},
+      Context = #context{pmap = PMap = <<PresenceBit:1, PMapRest/bits>>}, Map)
       when (Presence == mandatory) or ((Presence == optional) andalso (PresenceBit == 1)) ->
    {Data1, Context1} =
    case NeedPMap of
@@ -285,52 +296,58 @@ decode(Data,
       false ->
          {Data, Context}
    end,
-   {Msg, Data2, #context{dicts = Dicts}} =
-      erlang_fast_segment:decode_fields(Data1, Context1#context.template#template{instructions = Instrs}),
-      {{DispName, Msg}, Data2, Context#context{pmap = if (Presence == optional) -> PMapRest; true -> PMap end, dicts = Dicts}};
+   {Map1, Data2, #context{dicts = Dicts}} =
+      erlang_fast_segment:decode_fields(Data1, Context1#context.template#template{instructions = Instrs}, Map),
+      {Map1, Data2, Context#context{pmap = if (Presence == optional) -> PMapRest;
+                                                               true -> PMap end, dicts = Dicts}};
 
 %% =========================================================================================================
 %% sequence decoding
 %% =========================================================================================================
-decode(Data, #field_group{type = sequence, disp_name = DispName, instructions = []}, Context) ->
-   {{DispName, absent}, Data, Context};
+decode(Data, #field_group{type = sequence, disp_name = _DispName, instructions = []}, Context, Map) ->
+   {Map, Data, Context};
 
 decode(Data, #field_group{type = sequence, disp_name = DispName, need_pmap = NeedPMap,
-                          instructions = [LengthField | Instructions]}, Context) ->
-   {{_, LenValue}, Data1, Context1} = decode(Data, LengthField, Context),
+                          instructions = [LengthField = #field{disp_name = LenDispName} | Instructions]}, Context, Map) ->
+   {#{LenDispName := LenValue}, Data1, Context1} = decode(Data, LengthField, Context, #{}),
    case LenValue of
       absent ->
-         {{DispName, absent}, Data1, Context1};
+         {Map, Data1, Context1};
       LenValue ->
          {Sequence, Data2, #context{dicts = Dicts}} = decode_sequence_aux(LenValue, Data1, NeedPMap,
             Context1#context{template = Context1#context.template#template{instructions = Instructions}}),
-         {{DispName, Sequence}, Data2, Context1#context{dicts = Dicts}}
+         {Map#{DispName => Sequence}, Data2, Context1#context{dicts = Dicts}}
    end;
 
 %% =========================================================================================================
 %% decoding terminator
 %% =========================================================================================================
-decode(_, Instr, _) ->
+decode(_, Instr, _, _) ->
    throw({error, {unknown_field, Instr}}).
 
 
 %% =========================================================================================================
 %% decoding terminator
 %% =========================================================================================================
-decode_sequence_aux(0, Data, _NeedPMap, Context) ->
-   {[], Data, Context};
+decode_sequence_aux(Length, Data, NeedPMap, Context) ->
+   decode_sequence_aux(Length, 0, Data, NeedPMap, Context, #{}).
 
-decode_sequence_aux(Length, Data, NeedPMap, Context = #context{template = Template}) ->
+decode_sequence_aux(Length, Count, Data, _NeedPMap, Context, Map) when Count == Length ->
+   {Map, Data, Context};
+
+decode_sequence_aux(Length, Count, Data, NeedPMap, Context = #context{template = Template}, Map) ->
    case NeedPMap of
       true ->
          {Data1, Context1} = erlang_fast_segment:decode_pmap(Data, Context),
-         {Msg, Data2, Context2} = erlang_fast_segment:decode_fields(Data1, Context1),
-         {Msgs, Data3, Context3} = decode_sequence_aux(Length - 1, Data2, NeedPMap, Context2#context{template = Template}),
-         {[Msg | Msgs], Data3, Context3};
+         {Map1, Data2, Context2} = erlang_fast_segment:decode_fields(Data1, Context1, #{}),
+         {Map2, Data3, Context3} = decode_sequence_aux(Length, Count + 1, Data2, NeedPMap,
+                                                       Context2#context{template = Template}, Map#{Count => Map1}),
+         {Map2, Data3, Context3};
       false ->
-         {Msg, Data1, Context1} = erlang_fast_segment:decode_fields(Data, Context),
-         {Msgs, Data2, Context2} = decode_sequence_aux(Length - 1, Data1, NeedPMap, Context1#context{template = Template}),
-         {[Msg | Msgs], Data2, Context2}
+         {Map1, Data1, Context1} = erlang_fast_segment:decode_fields(Data, Context, #{}),
+         {Map2, Data2, Context2} = decode_sequence_aux(Length, Count + 1, Data1, NeedPMap,
+                                                       Context1#context{template = Template}, Map#{Count => Map1}),
+         {Map2, Data2, Context2}
    end.
 
 %% ====================================================================================================================

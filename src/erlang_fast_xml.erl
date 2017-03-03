@@ -138,17 +138,18 @@ parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts
    Presence = get_attribute(presence, I, "mandatory"),
    {Dicts1, Length, NeedPMap, Childs1} = parse_length(Childs, Presence, Dicts, DictName, Options),
    {Dicts2, GroupInstructions, NeedPMap1} = parse_instruction(Childs1, Dicts1, DictName, Options),
+   GrpInstrLen = [Length | GroupInstructions],
    {Dicts3, Instructions, _NeedPMap} = parse_instruction(Tail, Dicts2, DictName,  Options),
    {Dicts3, [#field_group{
             type = Type,
             name = get_bin_attribute(name, I),
-            disp_name = get_disp_name(Options, GroupInstructions, get_bin_attribute(name, I), string_to_id(get_attribute(id, I))),
+            disp_name = get_disp_name(Options, GrpInstrLen, get_bin_attribute(name, I), string_to_id(get_attribute(id, I))),
             ns = get_attribute(ns, I),
             id = string_to_id(get_attribute(id, I)),
             presence = string_to_presence(Presence),
             dictionary = DictName,
             need_pmap = NeedPMap1,
-            instructions = [Length | GroupInstructions]} | Instructions], NeedPMap};
+            instructions = GrpInstrLen} | Instructions], NeedPMap};
 
 parse_instruction([#xmlText{} | Tail], Dicts, DefDict, Options) ->
    parse_instruction(Tail, Dicts, DefDict, Options);
@@ -333,10 +334,12 @@ get_disp_name(true, _Name, Id) ->
 get_disp_name(Options, GroupInstructions, Name, Id) when is_list(Options) ->
    get_disp_name(proplists:get_value(use_id, Options, false), GroupInstructions, Name, Id);
 
-get_disp_name(false, _GroupInstructions, Name, _Id) ->
-   Name;
-get_disp_name(true, [#field{type = length, disp_name = DispName}|_Rest], _Name, undef) ->
+get_disp_name(false, [#field{disp_name = DispName}|_Rest], _Name, _Id) ->
    DispName;
+get_disp_name(true, [#field{id = undef, disp_name = DispName}|_Rest], _Name, undef) ->
+   DispName;
+get_disp_name(true, [#field{id = Id}|_Rest], _Name, undef) ->
+   Id;
 get_disp_name(true, _GroupInstructions, Name, undef) ->
    Name;
 get_disp_name(true, _GroupInstructions, _Name, Id) ->

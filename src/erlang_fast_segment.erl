@@ -3,9 +3,10 @@
 -export(
    [
       decode/2
+      ,decode/3
       ,decode_template_id/2
       ,decode_pmap/2
-      ,decode_fields/2
+      ,decode_fields/3
       ,encode/3
       ,encode_fields/2
    ]).
@@ -34,8 +35,19 @@ decode(Data, Context) ->
    try
       {Data1, Context1} = decode_pmap(Data, Context),
       {Data2, Context2} = decode_template_id(Data1, Context1),
-      {Msg, Data3, Context3} = decode_fields(Data2, Context2),
-      {ok, {Context3#context.template#template.name, Msg, Data3, Context3}}
+      {Map1, Data3, Context3} = decode_fields(Data2, Context2, #{}),
+      {ok, {Context3#context.template#template.name, Map1, Data3, Context3}}
+   catch
+      _:Err ->
+         {error, Err}
+   end.
+
+decode(Data, Context, Map) ->
+   try
+      {Data1, Context1} = decode_pmap(Data, Context),
+      {Data2, Context2} = decode_template_id(Data1, Context1),
+      {Map1, Data3, Context3} = decode_fields(Data2, Context2, Map),
+      {ok, {Context3#context.template#template.name, Map1, Data3, Context3}}
    catch
       _:Err ->
          {error, Err}
@@ -69,25 +81,15 @@ decode_pmap(Data, Context = #context{logger = L}) ->
          {Data1, Context#context{pmap = Value}}
    end.
 
-decode_fields(Data, Context = #context{template = #template{instructions = []}}) ->
-   {[], Data, Context};
+decode_fields(Data, Context = #context{template = #template{instructions = []}}, Map) ->
+   {Map, Data, Context};
 
-decode_fields(Data, Context = #context{template = Template = #template{instructions = [Instr | Tail]}}) ->
-   {DecodedField, Data1, Context1} = erlang_fast_field_decode:decode(
+decode_fields(Data, Context = #context{template = Template = #template{instructions = [Instr | Tail]}}, Map) ->
+   {Map1, Data1, Context1} = erlang_fast_field_decode:decode(
       Data,
       Instr,
-      Context#context{template = Template#template{instructions = Tail}}),
-   {DecodedFields, Data2, Context2} = decode_fields(Data1, Context1),
-   case DecodedField of
-      skip ->
-         {DecodedFields, Data2, Context2};
-      {_FieldName, absent} ->
-         {DecodedFields, Data2, Context2};
-      DecodedField when is_list(DecodedField) ->
-         {DecodedField ++ DecodedFields, Data2, Context2};
-      DecodedField ->
-         {[DecodedField | DecodedFields], Data2, Context2}
-   end.
+      Context#context{template = Template#template{instructions = Tail}}, Map),
+   decode_fields(Data1, Context1, Map1).
 
 %% =========================================================================================================
 %% encoding
