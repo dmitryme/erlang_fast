@@ -132,18 +132,6 @@ parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts
             presence = string_to_presence(Presence),
             operator = Operator} | Instructions], NeedPMap or need_pmap(Presence, Operator)};
 
-parse_instruction([I = #xmlElement{name = length = T, content = Childs} | Tail], Dicts, DefDict, Options) ->
-   OpName = get_bin_attribute(name, I),
-   {Dicts1, Instructions, NeedPMap} = parse_instruction(Tail, Dicts, DefDict, Options),
-   {Dicts2, Operator} = parse_op(OpName, T, Childs, Dicts1, DefDict),
-   {Dicts2, [#field{
-               type = T,
-               name = OpName,
-               disp_name = get_disp_name(Options, OpName, string_to_id(get_attribute(id, I))),
-               ns = get_bin_attribute(ns, I),
-               id = string_to_id(get_attribute(id, I)),
-               operator = Operator} | Instructions], NeedPMap or false};
-
 parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts, DefDict, Options)
   when (Type == sequence) or (Type == group) ->
    DictName = string_to_dic(get_attribute(dictionary, I, DefDict)),
@@ -178,13 +166,13 @@ parse_instruction([I | _Tail], _, _, _) ->
 parse_length([], Presence, Dicts, _DefDict, _Options) ->
    OpName = <<"Length">>,
    Operator = undef,
-   Presence = "optional",
    {Dicts, #field{
                type = uInt32,
                name = OpName,
                disp_name = <<"Length">>,
                ns = undef,
                id = undef,
+               presence = string_to_presence(Presence),
                operator = Operator}, need_pmap(Presence, Operator), []};
 
 parse_length([I = #xmlElement{name = length, content = Childs} | Tail], Presence, Dicts, DefDict, Options) ->
@@ -196,6 +184,7 @@ parse_length([I = #xmlElement{name = length, content = Childs} | Tail], Presence
                disp_name = get_disp_name(Options, OpName, string_to_id(get_attribute(id, I))),
                ns = get_bin_attribute(ns, I),
                id = string_to_id(get_attribute(id, I)),
+               presence = string_to_presence(Presence),
                operator = Operator}, need_pmap(Presence, Operator), Tail};
 
 parse_length([#xmlElement{} | _Tail], Presence, Dicts, DefDict, Options) ->

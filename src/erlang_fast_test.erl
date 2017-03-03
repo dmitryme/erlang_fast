@@ -169,6 +169,53 @@
            {<<"NumberOfOrders">>,12},
            {<<"TradingSessionID">>,<<"2">>}]]}]).
 
+-define(msg2,
+      [{<<"MessageType">>,<<"d">>},
+       {<<"ApplVerID">>,<<"9">>},
+       {<<"BeginString">>,<<"FIXT.1.1">>},
+       {<<"SenderCompID">>,<<"MOEX">>},
+       {<<"MsgSeqNum">>,7532},
+       {<<"SendingTime">>,170301201510506199},
+       {<<"MessageEncoding">>,<<"UTF-8">>},
+       {<<"TotNumReports">>,13376},
+       {<<"Symbol">>,<<"RU000A0JTMG7">>},
+       {<<"SecurityID">>,<<"RU000A0JTMG7">>},
+       {<<"SecurityIDSource">>,<<"4">>},
+       {<<"Product">>,3},
+       {<<"CFICode">>,<<"DBXXXX">>},
+       {<<"SecurityType">>,<<"CORP">>},
+       {<<"MaturityDate">>,20230202},
+       {<<"SettlDate">>,20170301},
+       {<<"OrigIssueAmt">>,{1,7}},
+       {<<"CouponPaymentDate">>,20170810},
+       {<<"CouponRate">>,{4238,-5}},
+       {<<"SecurityDesc">>,<<"RusGidro(PAO) 07">>},
+       {<<"EncodedSecurityDesc">>,
+        <<208,160,209,131,209,129,208,147,208,184,208,180,209,128,208,190,32,40,208,
+          159,208,144,208,158,41,32,48,55>>},
+       {<<"GroupInstrAttrib">>,
+        [[{<<"InstrAttribType">>,27},{<<"InstrAttribValue">>,<<"4">>}],
+         [{<<"InstrAttribType">>,8},{<<"InstrAttribValue">>,<<"182">>}]]},
+       {<<"Currency">>,<<"RUB">>},
+       {<<"MarketSegmentGrp">>,
+        [[{<<"RoundLot">>,{1,0}},
+          {<<"TradingSessionRulesGrp">>,
+           [[{<<"TradingSessionID">>,<<"PSRD">>},
+             {<<"TradingSessionSubID">>,<<"NA">>},
+             {<<"SecurityTradingStatus">>,18},
+             {<<"OrderNote">>,1}]]}]]},
+       {<<"SettlCurrency">>,<<"USD">>},
+       {<<"PriceType">>,1},
+       {<<"StateSecurityID">>,<<"4-07-55038-E">>},
+       {<<"EncodedShortSecurityDesc">>,
+        <<208,160,209,131,209,129,208,147,208,184,208,180,209,128,208,190,48,55>>},
+       {<<"MarketCode">>,<<"REPT">>},
+       {<<"MinPriceIncrement">>,{1,-4}},
+       {<<"FaceValue">>,{1,3}},
+       {<<"BuyBackPx">>,{1,2}},
+       {<<"BuyBackDate">>,20210207},
+       {<<"NoSharesIssued">>,{1,7}}]).
+
 -define(data,<<192,129,1,57,20,194,35,90,47,95,45,49,66,179,9,74,108,233,131,174,130,28,78,14,128,
                1,80,218,2,52,25,128,6,71,161,1,189,158,129,130,121,65,145,185,132,176,129,177,6,63,161,
                126,210,240,128,1,57,20,195,35,90,47,95,45,49,66,180,9,74,108,233,129,177,129,176,129,122,
@@ -198,7 +245,8 @@ decode_test() ->
 
 decode1_test() ->
    {ok, Context} = erlang_fast:create_context(?xmlDescr1, [], fun logger/2),
-   {ok, {_, Msg, Data1, Context1}} = erlang_fast:decode(?data1, Context).
+   {ok, {_, Msg, _Data1, _Context1}} = erlang_fast:decode(?data1, Context),
+   ?assertEqual(?msg2, Msg).
 
 encode_test() ->
    {ok, Context} = erlang_fast:create_context(?xmlDescr, [], fun logger/2),
