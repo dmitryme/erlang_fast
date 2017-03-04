@@ -10,18 +10,22 @@
       ,encode/3
    ]).
 
-% Msg = {TemplateId, Fields()}
-% Fields = [Field]
-% Field = {FieldName, Value} | {TemplateId, Fields}
-% Value = Number() | binary() | [Fields]
-% FieldName = string()
 % TemplateId = Number()
+% FieldName = string()
+% Tag() = pos_integer()
+% FieldId = FieldName() | Tag()
+% Value = term() | Fields()
+% Field = {FieldId(), Value()}
+% Fields = [Field] | #{Field}
+% Msg = Fields()
 
 % create_context(TemplatesDescr, Options, Logger) -> {ok, Context}
 %  TemplatesDescr = {file, TemplatesFilename}, TemplatesXmlText
 %  Options = [Option]
 %  Option = use_id - use field id instead of field name in decoded field tuple
 %           force_encode_tid - always encode template ID, even if previous template ID is the same
+%           use_map - decode FAST into map, else list of tuples
+%           use_template_id - use template id instead of template name
 %  TemplatesFilename = String() - path to XML file with templates definitions
 %  TemplatesXmlText = String() - XML text with templates definitions
 %  Logger - is a callback logger function with arity 2, where first param can be
@@ -44,13 +48,13 @@ reset_context(Context = #context{dicts = Dicts}) ->
 % decode(Data, Context) -> {ok, {Name, Msg, DataRest, NewContext}} | {error, Reason}
 %  Data = binary()
 %  Context = Context()
-%  Name = term()
+%  Name = binary() | TemplateId()
 %  DataRest = binary()
 %  NewContext = Context()
 decode(Data, Context) ->
    erlang_fast_segment:decode(Data, Context).
 
-% encode(Msg, Context) -> {ok, {Data, NewContext}} | {error, Reason}
+% encode(TemplateId, Msg, Context) -> {ok, {Data, NewContext}} | {error, Reason}
 %  TemplateId - number() - template ID
 %  Msg = Msg()
 %  Context  = Context()

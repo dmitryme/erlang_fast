@@ -35,11 +35,18 @@ decode(Data, Context) ->
    try
       {Data1, Context1} = decode_pmap(Data, Context),
       {Data2, Context2} = decode_template_id(Data1, Context1),
-      {Map1, Data3, Context3} = decode_fields(Data2, Context2, #{}),
-      {ok, {Context3#context.template#template.name, Map1, Data3, Context3}}
+      {Map1, Data3, Context3} = decode_fields(Data2, Context2, erlang_fast_msg:new(Context2)),
+      TemplateId =
+      case proplists:get_bool(use_template_id, Context#context.options) of
+         true ->
+            Context3#context.template#template.id;
+         false ->
+            Context3#context.template#template.name
+      end,
+      {ok, {TemplateId, Map1, Data3, Context3}}
    catch
       _:Err ->
-         {error, Err}
+         {error, Err, erlang:get_stacktrace()}
    end.
 
 decode(Data, Context, Map) ->
@@ -50,7 +57,7 @@ decode(Data, Context, Map) ->
       {ok, {Context3#context.template#template.name, Map1, Data3, Context3}}
    catch
       _:Err ->
-         {error, Err}
+         {error, Err, erlang:get_stacktrace()}
    end.
 
 decode_template_id(Data, Context = #context{dicts = Dicts, pmap = <<0:1, PMapRest/bits>>}) -> %
@@ -82,7 +89,7 @@ decode_pmap(Data, Context = #context{logger = L}) ->
    end.
 
 decode_fields(Data, Context = #context{template = #template{instructions = []}}, Map) ->
-   {Map, Data, Context};
+   {erlang_fast_msg:reverse(Map), Data, Context};
 
 decode_fields(Data, Context = #context{template = Template = #template{instructions = [Instr | Tail]}}, Map) ->
    {Map1, Data1, Context1} = erlang_fast_field_decode:decode(
@@ -97,13 +104,19 @@ decode_fields(Data, Context = #context{template = Template = #template{instructi
 
 encode(TemplateId, MsgFields, Context) ->
    try
-      Template = erlang_fast_templates:get_by_id(TemplateId, Context#context.templates#templates.tlist),
-      {TidBin, Context1} = encode_template_id(TemplateId, Context#context{pmap = <<>>, template = Template}),
+      Template =
+      case proplists:get_bool(use_template_id, Context#context.options) of
+         true ->
+            erlang_fast_templates:get_by_id(TemplateId, Context#context.templates#templates.tlist);
+         false ->
+            erlang_fast_templates:get_by_name(TemplateId, Context#context.templates#templates.tlist)
+      end,
+      {TidBin, Context1} = encode_template_id(Template#template.id, Context#context{pmap = <<>>, template = Template}),
       {Data, _, Context2 = #context{pmap = PMap}} = encode_fields(MsgFields, Context1),
       {ok, {<<(encode_pmap(PMap))/bits, TidBin/bits, Data/bits>>, Context2}}
    catch
       _:Err ->
-        {error, Err}
+        {error, Err, erlang:get_stacktrace()}
    end.
 
 encode_template_id(Tid, Context = #context{pmap = PMap, dicts = Dicts, options = Options}) ->

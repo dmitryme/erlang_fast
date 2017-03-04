@@ -145,7 +145,7 @@ parse_instruction([I = #xmlElement{name = Type, content = Childs} | Tail], Dicts
             name = get_bin_attribute(name, I),
             disp_name = get_disp_name(Options, GrpInstrLen, get_bin_attribute(name, I), string_to_id(get_attribute(id, I))),
             ns = get_attribute(ns, I),
-            id = string_to_id(get_attribute(id, I)),
+            id = string_to_id(get_attribute(id, I, integer_to_list(Length#field.id))),
             presence = string_to_presence(Presence),
             dictionary = DictName,
             need_pmap = NeedPMap1,
@@ -308,7 +308,7 @@ when (Type =:= int32) or (Type =:= 'Int64') or (Type =:= uInt32) or (Type =:= uI
    catch
       _:_ ->
          Reason = list:flatten(io_lib:format("Unable to convert ~p to number", [Str])),
-         throw({error, 'ERR S3', Reason})
+         throw({error, {'ERR S3', Reason}})
    end;
 string_to_type(decimal, Str) ->
    try
@@ -316,7 +316,7 @@ string_to_type(decimal, Str) ->
    catch
       _:_ ->
          Reason = lists:flatten(io_lib:format("Unable to convert ~p to decimal", [Str])),
-         throw({error, 'ERR S3', Reason})
+         throw({error, {'ERR S3', Reason}})
    end;
 string_to_type(Type, Str) when Type == byteVector orelse Type == string ->
    erlang:list_to_binary(Str).
@@ -334,10 +334,10 @@ get_disp_name(true, _Name, Id) ->
 get_disp_name(Options, GroupInstructions, Name, Id) when is_list(Options) ->
    get_disp_name(proplists:get_value(use_id, Options, false), GroupInstructions, Name, Id);
 
-get_disp_name(false, [#field{disp_name = DispName}|_Rest], _Name, _Id) ->
-   DispName;
-get_disp_name(true, [#field{id = undef, disp_name = DispName}|_Rest], _Name, undef) ->
-   DispName;
+get_disp_name(false, [#field{}|_Rest], Name, _Id) ->
+   Name;
+get_disp_name(true, [#field{id = undef}|_Rest], Name, undef) ->
+   Name;
 get_disp_name(true, [#field{id = Id}|_Rest], _Name, undef) ->
    Id;
 get_disp_name(true, _GroupInstructions, Name, undef) ->

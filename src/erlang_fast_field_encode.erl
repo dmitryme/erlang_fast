@@ -36,20 +36,32 @@
 encode([], F = #field{name = FieldName}, Context) ->
    encode([{FieldName, absent}], F, Context);
 
-encode(MsgFields = [{FieldName1, _Value} | _], F = #field{name = FieldName2}, Context) when (FieldName1 =/= FieldName2) ->
+encode([{FieldId, Value} | Rest], F = #field{name = FieldName, id = FieldId}, Context)
+  when is_integer(FieldId) ->
+   encode([{FieldName, Value} | Rest], F, Context);
+
+encode([{FieldId, Value} | Rest], F = #field_group{name = FieldName, id = FieldId}, Context)
+  when is_integer(FieldId) ->
+   encode([{FieldName, Value} | Rest], F, Context);
+
+encode(MsgFields = [{FieldName1, _Value} | _], F = #field{name = FieldName2}, Context)
+  when is_binary(FieldName1), FieldName1 =/= FieldName2 ->
    encode([{FieldName2, absent} | MsgFields], F, Context);
+
+encode(MsgFields = [{FieldId1, _Value} | _], F = #field{name = FieldName, id = FieldId2}, Context)
+  when is_integer(FieldId1), FieldId1 =/= FieldId2 ->
+   encode([{FieldName, absent} | MsgFields], F, Context);
 
 encode([], F = #field_group{name = GroupName, type = group}, Context) ->
    encode([{GroupName, absent}], F, Context);
 
-encode(MsgFields = [{GroupName1, _Value} | _], F = #field_group{name = GroupName2, type = group}, Context) when (GroupName1 =/= GroupName2) ->
-   encode([{GroupName2, absent} | MsgFields], F, Context);
+encode(MsgFields = [{GroupName1, _Value} | _], F = #field_group{name = GroupName2, type = Type}, Context)
+  when is_binary(GroupName1), GroupName1 =/= GroupName2 ->
+   encode([{GroupName2, if Type == sequence -> []; true -> absent end} | MsgFields], F, Context);
 
-encode([], F = #field_group{name = GroupName, type = sequence}, Context) ->
-   encode([{GroupName, []}], F, Context);
-
-encode(MsgFields = [{GroupName1, _Value} | _], F = #field_group{name = GroupName2, type = sequence}, Context) when (GroupName1 =/= GroupName2) ->
-   encode([{GroupName2, []} | MsgFields], F, Context);
+encode(MsgFields = [{GroupId1, _Value} | _], F = #field_group{name = GroupName, type = Type, id = GroupId2}, Context)
+  when is_integer(GroupId1), GroupId1 =/= GroupId2 ->
+   encode([{GroupName, if Type == sequence -> []; true -> absent end} | MsgFields], F, Context);
 
 %% =========================================================================================================
 %% constant
@@ -59,9 +71,9 @@ encode([{FieldName, Value} | MsgFieldsRest], #field{name = FieldName, presence =
       #constant{value = InitialValue}}, Context = #context{pmap = PMap}) ->
    case Presence of
       mandatory when Value == absent ->
-         throw({error, {'ERR D3', FieldName, "Mandatory constant field not found."}});
+         throw({error, {'ERR D3', FieldName, "Mandatory constant field not found"}});
       mandatory when Value =/= InitialValue ->
-         throw({error, {'ERR D3', FieldName, "Constant initial value is not the same as field one."}});
+         throw({error, {'ERR D3', FieldName, "Constant initial value is not the same as field one"}});
       mandatory ->
          {<<>>, MsgFieldsRest, Context};
       optional when Value == absent ->
@@ -94,7 +106,7 @@ encode([{FieldName, Value} | MsgFieldsRest],
 
 encode([{FieldName, Value} | _], #field{name = FieldName, presence = mandatory, operator = #copy{}}, _Context)
    when (Value == absent) ->
-   throw({error, {'ERR D6', FieldName, "Mandatory field can not be absent with copy operator."}});
+   throw({error, {'ERR D6', FieldName, "Mandatory field can not be absent with copy operator"}});
 
 encode([{FieldName, Value} | MsgFieldsRest],
    #field{type = Type, name = FieldName, presence = optional, operator = #copy{dictionary = D, key = Key}},
@@ -119,22 +131,26 @@ encode([{_, Value} | MsgFieldsRest],
          {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bits, 0:1>>, dicts = Dicts1}};
       undef ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-         {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>, dicts = Dicts1}};
+         {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>,
+                                                                                          dicts = Dicts1}};
       empty ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-         {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>, dicts = Dicts1}};
+         {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>,
+                                                                                          dicts = Dicts1}};
       Value ->
          {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bits, 0:1>>}};
       DictValue when (Value =/= DictValue) ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-         {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>, dicts = Dicts1}}
+         {encode_type(Type, Value, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>,
+                                                                                          dicts = Dicts1}}
    end;
 
 %% =========================================================================================================
 %% delta
 %% =========================================================================================================
 
-encode([{FieldName, Value} | MsgFieldsRest], #field{type = Type, name = FieldName, presence = Presence, operator = #delta{}}, Context)
+encode([{FieldName, Value} | MsgFieldsRest], #field{type = Type, name = FieldName,
+                                                    presence = Presence, operator = #delta{}}, Context)
 when (Value == absent) ->
    {encode_type(Type, null, is_nullable(Presence)), MsgFieldsRest, Context};
 
@@ -145,17 +161,20 @@ encode([{_, Value} | MsgFieldsRest],
    case erlang_fast_dicts:get_value(Dict, Key, Dicts) of
       undef ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-         {encode_delta(Type, get_delta(Value, InitialValue), is_nullable(Presence)), MsgFieldsRest, Context#context{dicts = Dicts1}};
+         {encode_delta(Type, get_delta(Value, InitialValue), is_nullable(Presence)), MsgFieldsRest,
+          Context#context{dicts = Dicts1}};
       DictValue ->
          Dicts1 = erlang_fast_dicts:put_value(Dict, Key, Value, Dicts),
-         {encode_delta(Type, get_delta(Value, DictValue), is_nullable(Presence)), MsgFieldsRest, Context#context{dicts = Dicts1}}
+         {encode_delta(Type, get_delta(Value, DictValue), is_nullable(Presence)), MsgFieldsRest,
+          Context#context{dicts = Dicts1}}
    end;
 
 %% =========================================================================================================
 %% tail
 %% =========================================================================================================
 
-encode([{FieldName, Value} | MsgFieldsRest], #field{type = Type, presence = Presence, name = FieldName, operator = #tail{}},
+encode([{FieldName, Value} | MsgFieldsRest], #field{type = Type, presence = Presence,
+                                                    name = FieldName, operator = #tail{}},
    Context = #context{pmap = PMap}) when (Value == absent) ->
    {encode_type(Type, null, is_nullable(Presence)), MsgFieldsRest, Context#context{pmap = <<PMap/bits, 1:1>>}};
 
@@ -234,7 +253,8 @@ encode([{Tid, MsgRefFields} | MsgFieldsRest], #templateRef{name = undef}, Contex
    {TemplRefBin, MsgFieldsRest,
       Context#context{pmap = <<PMap/bits, (Context1#context.pmap)/bits>>, dicts = Context1#context.dicts}};
 
-encode(MsgFields, #templateRef{name = TemplateName}, Context = #context{template = T = #template{instructions = Instrs}}) ->
+encode(MsgFields, #templateRef{name = TemplateName},
+       Context = #context{template = T = #template{instructions = Instrs}}) ->
    TemplateRef = erlang_fast_templates:get_by_name(TemplateName, Context#context.templates#templates.tlist),
    {<<>>, MsgFields, Context#context{template = T#template{instructions = TemplateRef#template.instructions ++ Instrs}}};
 
@@ -244,19 +264,23 @@ encode(MsgFields, #templateRef{name = TemplateName}, Context = #context{template
 encode(MsgFields = [{FieldName, Value} | MsgFieldsRest],
    F = #field{name = FieldName, presence = Presence, operator = #decFieldOp{exponent = EOp}}, Context)
 when (Value == absent) ->
-   {EBin, [], Context1} = encode(MsgFields, F#field{type = int32, name = FieldName, presence = Presence, operator = EOp}, Context),
+   {EBin, [], Context1} = encode(MsgFields, F#field{type = int32, name = FieldName,
+                                                    presence = Presence, operator = EOp}, Context),
    {EBin, MsgFieldsRest, Context1};
 
 encode([{FieldName, {Mantissa, Exponent}} | MsgFieldsRest],
    F = #field{name = FieldName, presence = Presence, operator = #decFieldOp{exponent = EOp, mantissa = MOp}}, Context) ->
-   {EBin, [], Context1} = encode([{FieldName, Exponent}], F#field{type = int32, presence = Presence, operator = EOp}, Context),
-   {MBin, [], Context2} = encode([{FieldName, Mantissa}], F#field{type = int64, presence = mandatory, operator = MOp}, Context1),
+   {EBin, [], Context1} = encode([{FieldName, Exponent}], F#field{type = int32,
+                                                                  presence = Presence, operator = EOp}, Context),
+   {MBin, [], Context2} = encode([{FieldName, Mantissa}], F#field{type = int64,
+                                                                  presence = mandatory, operator = MOp}, Context1),
    {<<EBin/bits, MBin/bits>>, MsgFieldsRest, Context2};
 
 %% =========================================================================================================
 %% group
 %% =========================================================================================================
-encode([{GroupName, Value} | MsgFieldsRest], #field_group{type = group, name = GroupName}, Context = #context{pmap = PMap})
+encode([{GroupName, Value} | MsgFieldsRest], #field_group{type = group, name = GroupName},
+       Context = #context{pmap = PMap})
 when  (Value == absent) ->
    {<<>>, MsgFieldsRest, Context#context{pmap = <<PMap/bits, 0:1>>}};
 
@@ -321,7 +345,7 @@ appendix_3_2_1_1_test() ->
    Context = create_context(<<>>),
    Dicts = Context#context.dicts,
    ?assertMatch({<<>>, [], #context{pmap = <<>>, dicts = Dicts}}, encode([{<<"Flag">>, 0}], Field, Context)),
-   ?assertThrow({error, {'ERR D3', <<"Flag">>, "Constant initial value is not the same as field one."}},
+   ?assertThrow({error, {'ERR D3', <<"Flag">>, "Constant initial value is not the same as field one"}},
       encode([{<<"Flag">>, 99}], Field, Context)).
 
 appendix_3_2_1_2_test() ->
@@ -330,33 +354,39 @@ appendix_3_2_1_2_test() ->
    Dicts = Context#context.dicts,
    ?assertMatch({<<>>, [], #context{pmap = <<1:1>>, dicts = Dicts}}, encode([{<<"Flag">>, 0}], Field, Context)),
    ?assertMatch({<<>>, [], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag">>, absent}], Field, Context)),
-   ?assertMatch({<<>>, [{<<"Flag1">>, 0}], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag1">>, 0}], Field, Context)).
+   ?assertMatch({<<>>, [{<<"Flag1">>, 0}], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag1">>, 0}],
+                                                                                            Field, Context)).
 
 appendix_3_2_2_1_test() ->
    Field = #field{type = uInt32, presence = mandatory, name = <<"Flag">>, operator = #default{value = 0}},
    Context = create_context(<<>>),
    Dicts = Context#context.dicts,
    ?assertMatch({<<>>, [], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag">>, 0}], Field, Context)),
-   ?assertMatch({<<2#10000001:8>>, [], #context{pmap = <<1:1>>, dicts = Dicts}}, encode([{<<"Flag">>, 1}], Field, Context)).
+   ?assertMatch({<<2#10000001:8>>, [], #context{pmap = <<1:1>>, dicts = Dicts}}, encode([{<<"Flag">>, 1}],
+                                                                                        Field, Context)).
 
 appendix_3_2_2_2_test() ->
    Field = #field{type = uInt32, presence = optional, name = <<"Flag">>, operator = #default{value = undef}},
    Context = create_context(<<>>),
    Dicts = Context#context.dicts,
-   ?assertMatch({<<>>, [{<<"Flag1">>, 0}], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag1">>, 0}], Field, Context)),
+   ?assertMatch({<<>>, [{<<"Flag1">>, 0}], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag1">>, 0}],
+                                                                                            Field, Context)),
    ?assertMatch({<<>>, [], #context{pmap = <<0:1>>, dicts = Dicts}}, encode([{<<"Flag">>, absent}], Field, Context)).
 
 appendix_3_2_3_1_test() ->
-   Field = #field{type = string, presence = mandatory, name = <<"Flag">>, operator = #copy{dictionary = ?template_name, value = undef, key = "key"}},
+   Field = #field{type = string, presence = mandatory, name = <<"Flag">>,
+                  operator = #copy{dictionary = ?template_name, value = undef, key = "key"}},
    Context = create_context(<<>>),
    Res = {_, _, Context1} = encode([{<<"Flag">>, <<"CME">>}], Field, Context),
    ?assertMatch({<<16#43, 16#4d, 16#c5>>, [], #context{pmap = <<1:1>>}}, Res),
    Res1 = {_, _, Context2} = encode([{<<"Flag">>, <<"CME">>}], Field, Context1),
    ?assertMatch({<<>>, [], #context{pmap = <<2#10:2>>}}, Res1),
-   ?assertMatch({<<16#49, 16#53, 16#c5>>, [], #context{pmap = <<2#101:3>>}}, encode([{<<"Flag">>, <<"ISE">>}], Field, Context2)).
+   ?assertMatch({<<16#49, 16#53, 16#c5>>, [], #context{pmap = <<2#101:3>>}},
+                encode([{<<"Flag">>, <<"ISE">>}], Field, Context2)).
 
 appendix_3_2_3_2_test() ->
-   Field = #field{type = string, presence = optional, name = <<"Flag">>, operator = #copy{dictionary = ?template_name, value = undef, key = "key"}},
+   Field = #field{type = string, presence = optional, name = <<"Flag">>,
+                  operator = #copy{dictionary = ?template_name, value = undef, key = "key"}},
    Context = create_context(<<>>),
    Res1 = {_, _, Context1} = encode([{<<"Flag">>, absent}], Field, Context),
    ?assertMatch({<<2#10000000:8>>, [], #context{pmap = <<2#1:1>>}}, Res1),
@@ -392,8 +422,8 @@ appendix_3_2_5_1_test() ->
    ?assertMatch({<<16#80>>, [], #context{pmap = <<>>}}, Res3).
 
 appendix_3_2_5_2_test() ->
-   Field = #field{type = decimal, presence = mandatory, name = <<"Price">>, operator = #delta{dictionary = ?template_name,
-         key = "key"}},
+   Field = #field{type = decimal, presence = mandatory, name = <<"Price">>,
+                  operator = #delta{dictionary = ?template_name, key = "key"}},
    Context = create_context(<<>>),
    Res = {_, _, Context1} = encode([{<<"Price">>, {942755, -2}}], Field, Context),
    ?assertMatch({<<16#fe, 16#39, 16#45, 16#a3>>, [], #context{pmap = <<>>}}, Res),
@@ -403,8 +433,8 @@ appendix_3_2_5_2_test() ->
    ?assertMatch({<<16#80, 16#fb>>, [], #context{pmap = <<>>}}, Res2).
 
 appendix_3_2_5_3_test() ->
-   Field = #field{type = decimal, presence = mandatory, name = <<"Price">>, operator = #delta{dictionary = ?template_name,
-         key = "key", value = {12, 3}}},
+   Field = #field{type = decimal, presence = mandatory, name = <<"Price">>,
+                  operator = #delta{dictionary = ?template_name, key = "key", value = {12, 3}}},
    Context = create_context(<<>>),
    Res = {_, _, Context1} = encode([{<<"Price">>, {1210, 1}}], Field, Context),
    ?assertMatch({<<16#fe, 16#09, 16#ae>>, [], #context{pmap = <<>>}}, Res),
@@ -414,8 +444,8 @@ appendix_3_2_5_3_test() ->
    ?assertMatch({<<16#80, 16#85>>, [], #context{pmap = <<>>}}, Res2).
 
 appendix_3_2_5_4_test() ->
-   Field = #field{type = string, presence = mandatory, name = <<"Security">>, operator = #delta{dictionary = ?template_name,
-         key = "key"}},
+   Field = #field{type = string, presence = mandatory, name = <<"Security">>,
+                  operator = #delta{dictionary = ?template_name, key = "key"}},
    Context = create_context(<<>>),
    Res = {_, _, Context1} = encode([{<<"Security">>, <<"GEH6">>}], Field, Context),
    ?assertMatch({<<16#80, 16#47, 16#45, 16#48, 16#b6>>, [], #context{pmap = <<>>}}, Res),
