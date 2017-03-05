@@ -51,7 +51,7 @@ decode_delta(Type, Data, Nullable) when (Type == int32) or (Type == int64) or (T
 %% privates
 %% =====================================================================================================================
 
-decode_int(<<1:1, 0:7/integer, Rest/bytes>>, true) ->
+decode_int(<<2#10000000:8/integer, Rest/bytes>>, true) ->
    {null, [], Rest};
 decode_int(Data, Nullable) ->
    case decode_int_aux(Data) of
@@ -63,7 +63,7 @@ decode_int(Data, Nullable) ->
          Result
    end.
 
-decode_uint(<<1:1, 0:7/integer, Rest/bytes>>, true) ->
+decode_uint(<<2#10000000:8/integer, Rest/bytes>>, true) ->
    {null, [], Rest};
 decode_uint(Data, Nullable) ->
    Result = decode_uint_aux(Data),
@@ -74,15 +74,15 @@ decode_uint(Data, Nullable) ->
          Result
    end.
 
-decode_string(<<1:1, 0:7/integer, Rest/bytes>>, false) ->
+decode_string(<<2#10000000:8/integer, Rest/bytes>>, false) ->
    {<<"">>, [], Rest};
-decode_string(<<0:8/integer, 1:1, 0:7/integer, Rest/bytes>>, false) ->
-   {<<0>>, [], Rest};
-decode_string(<<1:1, 0:7/integer, Rest/bytes>>, true) ->
+decode_string(<<2#10000000:8/integer, Rest/bytes>>, true) ->
    {null, [], Rest};
-decode_string(<<0:8/integer, 1:1, 0:7/integer, Rest/bytes>>, true) ->
+decode_string(<<2#0000000010000000:16/integer, Rest/bytes>>, false) ->
+   {<<0>>, [], Rest};
+decode_string(<<2#0000000010000000:16/integer, Rest/bytes>>, true) ->
    {<<"">>, [], Rest};
-decode_string(<<0:8/integer, 0:8/integer, 1:1, 0:7/integer, Rest/bytes>>, true) ->
+decode_string(<<2#000000000000000010000000:24/integer, Rest/bytes>>, true) ->
    {<<0>>, [], Rest};
 decode_string(Data, _Nullable) ->
    case decode_string_aux(Data, <<>>) of

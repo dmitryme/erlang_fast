@@ -249,7 +249,7 @@ decode1_test() ->
    ?assertEqual(?msg2, Msg).
 
 encode_test() ->
-   {ok, Context} = erlang_fast:create_context(?xmlDescr, [], fun logger/2),
+   {ok, Context} = erlang_fast:create_context(?xmlDescr, [use_template_id], fun logger/2),
    {ok, {Data, Context1}} = erlang_fast:encode(1, ?msg, Context),
    ?assertEqual(<<192,129,1,57,20,194,35,90,47,95,45,49,66,179,9,74,108,233,131,174,130,28,78,14,128,1,80,218,2,52,25,
                   128,6,71,161,1,189,158,129,130,121,65,145,185,132,176,129,177,6,63,161,

@@ -106,6 +106,8 @@ encode(TemplateId, MsgFields, Context) ->
    try
       Template =
       case proplists:get_bool(use_template_id, Context#context.options) of
+         true ->
+            erlang_fast_templates:get_by_id(TemplateId, Context#context.templates#templates.tlist);
          false ->
             erlang_fast_templates:get_by_name(TemplateId, Context#context.templates#templates.tlist)
       end,
